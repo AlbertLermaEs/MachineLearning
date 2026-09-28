@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Introducción a Ciencia de Datos y ML — Fase 1</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="index.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <span style="color:var(--text-muted);font-variant-numeric:tabular-nums">Fase 1 · 01 de 05</span>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,220px" kicker="Fase 1 · Fundamentos" title="Introducción a Ciencia de Datos y Machine Learning" description="Qué es la ciencia de datos, cómo se ve un proyecto de principio a fin y qué significa, formalmente, que un programa aprenda."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Actualizado el 5 sep 2026 · Fuentes: Alan A1 (TEC IN5148), CS4780 Intro (Weinberger), ISLR Cap. 1</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">Tres disciplinas, una intersección</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">La <b>ciencia de datos</b> es el proceso de extraer conocimiento y decisiones útiles a partir de datos. Para hacerlo bien necesitamos tres cosas a la vez: <b>estadística</b>, para saber si un patrón es real o ruido; <b>programación</b>, para conseguir y transformar datos a escala; y <b>conocimiento del dominio</b>, para saber qué preguntas vale la pena hacer.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">El diagrama de Venn de Drew Conway lo resume. Cada par de áreas sin la tercera produce algo útil, pero incompleto.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,440px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px">
+  <div style="width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;align-items:center">
+    <svg viewBox="0 0 430 360" width="100%" style="max-width:430px;display:block;margin:0 auto">
+      <defs>
+        <clipPath id="vA"><circle cx="160" cy="140" r="105"></circle></clipPath>
+        <clipPath id="vB"><circle cx="270" cy="140" r="105"></circle></clipPath>
+        <clipPath id="vC"><circle cx="215" cy="235" r="105"></circle></clipPath>
+      </defs>
+      <circle cx="160" cy="140" r="105" style="fill:var(--ink-50);stroke:none"></circle>
+      <circle cx="270" cy="140" r="105" style="fill:var(--ink-50);stroke:none"></circle>
+      <circle cx="215" cy="235" r="105" style="fill:var(--ink-50);stroke:none"></circle>
+      <g style="clip-path:url(#vA);opacity:{{ venn.oSP }};transition:opacity 480ms var(--ease-out)"><circle cx="270" cy="140" r="105" style="fill:var(--iris-200)"></circle></g>
+      <g style="clip-path:url(#vB);opacity:{{ venn.oDP }};transition:opacity 480ms var(--ease-out)"><circle cx="215" cy="235" r="105" style="fill:var(--iris-200)"></circle></g>
+      <g style="clip-path:url(#vA);opacity:{{ venn.oSE }};transition:opacity 480ms var(--ease-out)"><circle cx="215" cy="235" r="105" style="fill:var(--iris-200)"></circle></g>
+      <g style="clip-path:url(#vA)"><g style="clip-path:url(#vB)"><circle cx="215" cy="235" r="105" style="fill:var(--iris-400);opacity:{{ venn.oDS }};transition:opacity 480ms var(--ease-out)"></circle></g></g>
+      <circle cx="160" cy="140" r="105" style="fill:none;stroke:var(--ink-600);stroke-width:1.5"></circle>
+      <circle cx="270" cy="140" r="105" style="fill:none;stroke:var(--ink-600);stroke-width:1.5"></circle>
+      <circle cx="215" cy="235" r="105" style="fill:none;stroke:var(--ink-600);stroke-width:1.5"></circle>
+      <text x="112" y="112" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink-800)">Estadística</text>
+      <text x="318" y="112" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink-800)">Programación</text>
+      <text x="215" y="300" text-anchor="middle" style="font-size:15px;font-weight:700;fill:var(--ink-800)">Dominio</text>
+    </svg>
+    <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <div style="display:flex;align-items:center;gap:12px">
+        <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.HoverHint" hint-size="22px,22px" size="22"></x-import>
+        <span style="font-size:14px;color:var(--text-muted)">Elige una combinación</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <sc-for list="{{ vennOpts }}" as="o" hint-placeholder-count="4">
+          <button type="button" onClick="{{ o.pick }}" style="text-align:left;font:inherit;font-size:15px;padding:8px 12px;border-radius:4px;border:1px solid {{ o.border }};background:{{ o.bg }};color:var(--text-body);cursor:pointer;transition:background 240ms var(--ease-out)">{{ o.label }}</button>
+        </sc-for>
+      </div>
+      <div style="border-top:1px solid var(--border-rule);padding-top:12px;min-height:96px">
+        <div style="font-weight:700;color:var(--text-strong);font-size:17px">{{ venn.title }}</div>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty">{{ venn.desc }}</div>
+      </div>
+    </div>
+  </div>
+  <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> Las tres áreas de la ciencia de datos. Elige una combinación para ver qué ocurre cuando falta una de las tres.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">El flujo de un proyecto</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Casi todo proyecto de datos recorre las mismas seis etapas. Primero definimos qué queremos predecir o entender y qué representa una fila. Luego exploramos los datos, los preparamos, entrenamos un modelo, lo evaluamos y comunicamos lo que encontramos.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">En la práctica el ciclo casi nunca es lineal. Es común descubrir un problema de datos solo cuando el modelo falla, o darnos cuenta al evaluar de que estábamos prediciendo la variable equivocada.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,460px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px">
+  <div data-auto="flow" style="width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;align-items:center">
+    <svg viewBox="0 0 480 380" width="100%" style="max-width:480px;display:block;margin:0 auto;overflow:visible">
+      <defs>
+        <marker id="fa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9" style="fill:none;stroke:var(--ink-600);stroke-width:1.5"></path></marker>
+        <marker id="fb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9" style="fill:none;stroke:var(--coral-500);stroke-width:1.5"></path></marker>
+      </defs>
+      <sc-for list="{{ flow.edges }}" as="e" hint-placeholder-count="6">
+        <path d="{{ e.d }}" pathLength="1" style="fill:none;stroke:var(--ink-600);stroke-width:1.5;stroke-dasharray:1;stroke-dashoffset:{{ e.off }};transition:stroke-dashoffset 640ms var(--ease-out)"></path>
+        <path d="{{ e.head }}" style="fill:none;stroke:var(--ink-600);stroke-width:1.5;opacity:{{ e.op }};transition:opacity 240ms var(--ease-out) 480ms"></path>
+      </sc-for>
+      <sc-for list="{{ flow.backs }}" as="b" hint-placeholder-count="2">
+        <path d="{{ b.d }}" style="fill:none;stroke:var(--coral-500);stroke-width:1.5;stroke-dasharray:5 4;opacity:{{ b.op }};transition:opacity 480ms var(--ease-out);marker-end:url(#fb)"></path>
+      </sc-for>
+        <g style="transform:translate(240px,50px);cursor:pointer" onClick="{{ flow.nodes.0.pick }}">
+          <rect x="-78" y="-22" width="156" height="44" rx="6" style="fill:{{ flow.nodes.0.fill }};stroke:{{ flow.nodes.0.stroke }};stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10));transition:fill 480ms var(--ease-out),stroke 480ms var(--ease-out)"></rect>
+          <text x="0" y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">Definir el problema</text>
+        </g>
+        <g style="transform:translate(361px,120px);cursor:pointer" onClick="{{ flow.nodes.1.pick }}">
+          <rect x="-78" y="-22" width="156" height="44" rx="6" style="fill:{{ flow.nodes.1.fill }};stroke:{{ flow.nodes.1.stroke }};stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10));transition:fill 480ms var(--ease-out),stroke 480ms var(--ease-out)"></rect>
+          <text x="0" y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">Explorar (EDA)</text>
+        </g>
+        <g style="transform:translate(361px,260px);cursor:pointer" onClick="{{ flow.nodes.2.pick }}">
+          <rect x="-78" y="-22" width="156" height="44" rx="6" style="fill:{{ flow.nodes.2.fill }};stroke:{{ flow.nodes.2.stroke }};stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10));transition:fill 480ms var(--ease-out),stroke 480ms var(--ease-out)"></rect>
+          <text x="0" y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">Preprocesar</text>
+        </g>
+        <g style="transform:translate(240px,330px);cursor:pointer" onClick="{{ flow.nodes.3.pick }}">
+          <rect x="-78" y="-22" width="156" height="44" rx="6" style="fill:{{ flow.nodes.3.fill }};stroke:{{ flow.nodes.3.stroke }};stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10));transition:fill 480ms var(--ease-out),stroke 480ms var(--ease-out)"></rect>
+          <text x="0" y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">Modelar</text>
+        </g>
+        <g style="transform:translate(119px,260px);cursor:pointer" onClick="{{ flow.nodes.4.pick }}">
+          <rect x="-78" y="-22" width="156" height="44" rx="6" style="fill:{{ flow.nodes.4.fill }};stroke:{{ flow.nodes.4.stroke }};stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10));transition:fill 480ms var(--ease-out),stroke 480ms var(--ease-out)"></rect>
+          <text x="0" y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">Evaluar</text>
+        </g>
+        <g style="transform:translate(119px,120px);cursor:pointer" onClick="{{ flow.nodes.5.pick }}">
+          <rect x="-78" y="-22" width="156" height="44" rx="6" style="fill:{{ flow.nodes.5.fill }};stroke:{{ flow.nodes.5.stroke }};stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10));transition:fill 480ms var(--ease-out),stroke 480ms var(--ease-out)"></rect>
+          <text x="0" y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">Comunicar e iterar</text>
+        </g>
+    </svg>
+    <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Button" hint-size="110px,36px" variant="primary" onClick="{{ playFlow }}">Recorrer</x-import>
+        <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Button" hint-size="90px,36px" onClick="{{ prevFlow }}">Anterior</x-import>
+        <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Button" hint-size="90px,36px" onClick="{{ nextFlow }}">Siguiente</x-import>
+      </div>
+      <div style="border-top:1px solid var(--border-rule);padding-top:12px;min-height:110px">
+        <div style="font-size:13px;color:var(--text-subtle);font-variant-numeric:tabular-nums">{{ flow.count }}</div>
+        <div style="font-weight:700;color:var(--text-strong);font-size:17px">{{ flow.title }}</div>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty">{{ flow.desc }}</div>
+      </div>
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Switch" hint-size="200px,24px" label="Mostrar regresos" checked="{{ showBack }}" onChange="{{ setBack }}"></x-import>
+    </div>
+  </div>
+  <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 2.</b> El ciclo de un proyecto de datos. Las flechas punteadas son los regresos más comunes: de modelar a preprocesar y de evaluar a redefinir el problema.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">¿Qué significa que un programa aprenda?</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">La definición clásica de Tom Mitchell (1997) dice que un programa <b>aprende</b> de una experiencia <i style="font-family:var(--font-math);padding:0 2px">E</i> respecto a una tarea <i style="font-family:var(--font-math);padding:0 2px">T</i> y una métrica <i style="font-family:var(--font-math);padding:0 2px">P</i> si su desempeño en <i style="font-family:var(--font-math);padding:0 2px">P</i> mejora con <i style="font-family:var(--font-math);padding:0 2px">E</i>.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">En la práctica, en lugar de escribir reglas a mano ("si contiene la palabra <i>gratis</i>, es spam"), dejamos que un algoritmo <b>ajuste los parámetros de una función usando datos etiquetados</b>. La regla emerge de los datos.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">CS4780 formaliza el problema con un vocabulario que se usa todo el semestre. Conviene verlo como una cadena: cada pieza alimenta a la siguiente.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,260px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px">
+  <div style="width:100%;display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px">
+      <sc-for list="{{ parts }}" as="p" hint-placeholder-count="6">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div onMouseEnter="{{ p.pick }}" onClick="{{ p.pick }}" style="padding:10px 14px;border-radius:6px;border:1.5px solid {{ p.stroke }};background:{{ p.fill }};box-shadow:1px 2px 0 rgba(0,0,0,.10);cursor:pointer;text-align:center;transition:background 240ms var(--ease-out),border-color 240ms var(--ease-out)">
+            <div style="font-family:var(--font-math);font-style:italic;font-size:20px;color:var(--ink-900);line-height:1.2">{{ p.sym }}</div>
+            <div style="font-size:12px;color:var(--text-muted);white-space:nowrap">{{ p.name }}</div>
+          </div>
+          <span style="color:var(--ink-500);font-size:18px;opacity:{{ p.arrow }}">→</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="max-width:620px;margin:0 auto;text-align:center;min-height:52px;font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-strong)">{{ part.name }}.</b> {{ part.desc }}</div>
+  </div>
+  <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 3.</b> Las piezas formales de un problema de ML. Pasa el cursor sobre cada una para ver su definición.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">La meta es encontrar la <i style="font-family:var(--font-math);padding:0 2px">h</i> ∈ <i style="font-family:var(--font-math);padding:0 2px">ℋ</i> que minimice el error esperado sobre <i>toda</i> la distribución, no solo sobre los <i style="font-family:var(--font-math);padding:0 2px">n</i> ejemplos que vimos. A eso se le llama <b>riesgo</b>:</p>
+  <div><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="1" tex="R(h) = \mathbb{E}_{(x,y)\sim\mathcal{D}}\big[L(h(x),y)\big]"></x-import></div>
+  <p style="margin:0 0 20px;text-wrap:pretty">Como no conocemos <i style="font-family:var(--font-math);padding:0 2px">𝒟</i>, minimizamos el <b>riesgo empírico</b>, el promedio de la pérdida sobre los datos que sí tenemos, y esperamos que se parezca al riesgo real. La brecha entre los dos es el tema del <a href="F1-02-Evaluacion.dc.html">siguiente artículo</a>.</p>
+  <div><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="2" tex="\hat R(h) = \frac{1}{n}\sum_{i=1}^{n} L(h(x_i),y_i)"></x-import></div>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Supervisado y no supervisado</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">La diferencia está en los datos. En el aprendizaje <b>supervisado</b> cada ejemplo trae su etiqueta, pares <i style="font-family:var(--font-math);padding:0 2px">(xᵢ, yᵢ)</i>, y aprendemos a predecir <i style="font-family:var(--font-math);padding:0 2px">y</i>. Si <i style="font-family:var(--font-math);padding:0 2px">y</i> es un número continuo hablamos de <b>regresión</b>; si es una categoría, de <b>clasificación</b>. En el <b>no supervisado</b> solo tenemos <i style="font-family:var(--font-math);padding:0 2px">xᵢ</i> y buscamos estructura.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,420px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px">
+  <div style="width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;align-items:center">
+    <svg viewBox="0 0 560 340" width="100%" style="max-width:560px;display:block;margin:0 auto;overflow:visible">
+      <line x1="30" y1="320" x2="550" y2="320" style="stroke:var(--ink-800)"></line>
+      <line x1="30" y1="10" x2="30" y2="320" style="stroke:var(--ink-800)"></line>
+      <g style="opacity:{{ sup.oReg }};transition:opacity 480ms var(--ease-out)"><text x="550" y="338" text-anchor="end" style="font-family:var(--font-math);font-style:italic;font-size:17px;fill:var(--ink-700)">x</text><text x="40" y="20" style="font-family:var(--font-math);font-style:italic;font-size:17px;fill:var(--ink-700)">y</text></g>
+      <g style="opacity:{{ sup.oNotReg }};transition:opacity 480ms var(--ease-out)"><text x="550" y="338" text-anchor="end" style="font-family:var(--font-math);font-style:italic;font-size:17px;fill:var(--ink-700)">x₁</text><text x="40" y="20" style="font-family:var(--font-math);font-style:italic;font-size:17px;fill:var(--ink-700)">x₂</text></g>
+      <line x1="50" y1="286" x2="530" y2="70" style="stroke:var(--iris-600);stroke-width:2;opacity:{{ sup.oReg }};transition:opacity 480ms var(--ease-out) 300ms"></line>
+      <line x1="120" y1="40" x2="470" y2="310" style="stroke:var(--iris-600);stroke-width:2;stroke-dasharray:6 5;opacity:{{ sup.oCls }};transition:opacity 480ms var(--ease-out) 300ms"></line>
+      <g style="opacity:{{ sup.oUns }};transition:opacity 640ms var(--ease-out) 500ms">
+        <ellipse cx="185" cy="232" rx="105" ry="80" style="fill:var(--iris-100);stroke:var(--iris-400);stroke-width:1.5;stroke-dasharray:5 4"></ellipse>
+        <ellipse cx="398" cy="112" rx="105" ry="80" style="fill:var(--iris-100);stroke:var(--iris-400);stroke-width:1.5;stroke-dasharray:5 4"></ellipse>
+        <text x="185" y="332" text-anchor="middle" style="font-family:var(--font-serif);font-style:italic;font-size:15px;fill:var(--ink-600)">grupo A</text>
+        <text x="398" y="22" text-anchor="middle" style="font-family:var(--font-serif);font-style:italic;font-size:15px;fill:var(--ink-600)">grupo B</text>
+      </g>
+      <sc-for list="{{ sup.pts }}" as="p" hint-placeholder-count="0">
+        <circle cx="0" cy="0" r="6" style="transform:translate({{ p.x }}px,{{ p.y }}px);fill:{{ p.fill }};stroke:{{ p.stroke }};stroke-width:1.5;transition:transform 640ms var(--ease-out) {{ p.delay }}ms,fill 480ms var(--ease-out),stroke 480ms var(--ease-out)"></circle>
+      </sc-for>
+    </svg>
+    <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="300px,32px" options="{{ supOpts }}" value="{{ supMode }}" onChange="{{ setSup }}"></x-import>
+      <div style="border-top:1px solid var(--border-rule);padding-top:12px;min-height:120px">
+        <div style="font-weight:700;color:var(--text-strong);font-size:17px">{{ sup.title }}</div>
+        <div style="font-family:var(--font-mono);font-size:13px;color:var(--iris-600);margin:4px 0 6px">{{ sup.data }}</div>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty">{{ sup.desc }}</div>
+      </div>
+    </div>
+  </div>
+  <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 4.</b> Tres formas de mirar datos. En clasificación y no supervisado los puntos son los mismos: lo único que cambia es si conocemos la etiqueta.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Existe un tercer tipo, el <b>aprendizaje por refuerzo</b>: un agente aprende a actuar en un entorno maximizando una recompensa. No está en el roadmap principal, pero conviene reconocerlo cuando aparezca.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Señal y ruido</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">ISLR llama al mismo campo <i>statistical learning</i> y parte de un supuesto: existe una relación real entre los predictores <i style="font-family:var(--font-math);padding:0 2px">X</i> y la respuesta <i style="font-family:var(--font-math);padding:0 2px">Y</i>.</p>
+  <div><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,48px" display="{{ true }}" number="3" tex="Y = f(X) + \varepsilon"></x-import></div>
+  <p style="margin:0 0 20px;text-wrap:pretty"><i style="font-family:var(--font-math);padding:0 2px">f</i> es la información sistemática que <i style="font-family:var(--font-math);padding:0 2px">X</i> aporta sobre <i style="font-family:var(--font-math);padding:0 2px">Y</i>: fija y desconocida. <i style="font-family:var(--font-math);padding:0 2px">ε</i> es todo lo que <i style="font-family:var(--font-math);padding:0 2px">X</i> no puede explicar, con media cero. <b>Aprender</b> es estimar <i style="font-family:var(--font-math);padding:0 2px">f̂</i> a partir de los datos.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">Cuando predecimos, el error tiene dos fuentes. El <b>error reducible</b> viene de que <i style="font-family:var(--font-math);padding:0 2px">f̂ ≠ f</i> y baja con un mejor método. El <b>error irreducible</b> viene de <i style="font-family:var(--font-math);padding:0 2px">ε</i>: ni siquiera con <i style="font-family:var(--font-math);padding:0 2px">f̂ = f</i> desaparece.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,460px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px">
+  <div style="width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;align-items:center">
+    <svg viewBox="0 0 600 320" width="100%" style="max-width:600px;display:block;margin:0 auto;overflow:visible">
+      <line x1="30" y1="300" x2="590" y2="300" style="stroke:var(--ink-800)"></line>
+      <text x="590" y="318" text-anchor="end" style="font-family:var(--font-math);font-style:italic;font-size:16px;fill:var(--ink-700)">X</text>
+      <path d="{{ noise.gap }}" style="fill:var(--iris-200);opacity:0.7;stroke:none"></path>
+      <sc-for list="{{ noise.pts }}" as="p" hint-placeholder-count="0">
+        <line x1="{{ p.x }}" y1="{{ p.fy }}" x2="{{ p.x }}" y2="{{ p.y }}" style="stroke:var(--coral-400);stroke-width:1.5"></line>
+      </sc-for>
+      <path d="{{ noise.f }}" style="fill:none;stroke:var(--ink-800);stroke-width:2;stroke-dasharray:6 4"></path>
+      <path d="{{ noise.fh }}" style="fill:none;stroke:var(--iris-600);stroke-width:2"></path>
+      <sc-for list="{{ noise.pts }}" as="p" hint-placeholder-count="0">
+        <circle cx="0" cy="0" r="4.5" style="transform:translate({{ p.x }}px,{{ p.y }}px);fill:var(--ink-200);stroke:var(--ink-600);stroke-width:1.5;transition:transform 480ms var(--ease-out)"></circle>
+      </sc-for>
+      <text x="596" y="{{ noise.fLabelY }}" style="font-family:var(--font-math);font-style:italic;font-size:17px;fill:var(--ink-800)">f</text>
+      <text x="596" y="{{ noise.fhLabelY }}" style="font-family:var(--font-math);font-style:italic;font-size:17px;fill:var(--iris-600)">f̂</text>
+    </svg>
+    <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="260px,44px" label="Ruido σ" min="{{ 0 }}" max="{{ 1.5 }}" step="{{ 0.05 }}" width="{{ 260 }}" tone="positive" value="{{ sigma }}" onChange="{{ setSigma }}"></x-import>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:14px;color:var(--text-muted)">Nuestra estimación</span>
+        <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="260px,32px" options="{{ fhOpts }}" value="{{ fhMode }}" onChange="{{ setFh }}"></x-import>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--border-rule);padding-top:12px">
+        <div style="display:grid;grid-template-columns:96px minmax(0,1fr) 48px;gap:10px;align-items:center;font-size:14px">
+          <span style="color:var(--text-muted)">Reducible</span>
+          <div style="height:14px;background:var(--ink-50);border-radius:3px;overflow:hidden"><div style="height:100%;width:{{ noise.redW }}%;background:var(--iris-400);border-radius:3px;transition:width 240ms var(--ease-out)"></div></div>
+          <span style="font-family:var(--font-mono);font-size:13px;text-align:right">{{ noise.red }}</span>
+          <span style="color:var(--text-muted)">Irreducible</span>
+          <div style="height:14px;background:var(--ink-50);border-radius:3px;overflow:hidden"><div style="height:100%;width:{{ noise.irrW }}%;background:var(--coral-400);border-radius:3px;transition:width 240ms var(--ease-out)"></div></div>
+          <span style="font-family:var(--font-mono);font-size:13px;text-align:right">{{ noise.irr }}</span>
+        </div>
+        <div style="font-family:var(--font-serif);font-style:italic;font-size:15px;color:var(--text-muted)">Error cuadrático esperado ≈ reducible + irreducible (σ²)</div>
+      </div>
+      <div><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Button" hint-size="140px,36px" onClick="{{ resample }}">Nueva muestra</x-import></div>
+    </div>
+  </div>
+  <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 5.</b> Datos generados con Y = f(X) + ε. Las líneas rojas son el ruido ε de cada punto; el área morada es la distancia entre f̂ y f. Sube σ: el error irreducible crece aunque f̂ sea perfecta.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">¿Para qué estimamos f?</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Hay dos razones y cada una pide algo distinto del modelo. En <b>predicción</b> nos importa <i style="font-family:var(--font-math);padding:0 2px">Ŷ = f̂(X)</i>, no la forma de <i style="font-family:var(--font-math);padding:0 2px">f</i>; una caja negra está bien si predice bien. En <b>inferencia</b> queremos entender cómo cambia <i style="font-family:var(--font-math);padding:0 2px">Y</i> con <i style="font-family:var(--font-math);padding:0 2px">X</i>: qué predictores importan, con qué signo y con qué fuerza. Ahí la interpretabilidad pesa.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">Esto produce un tradeoff que se repite en todo ISLR: los métodos más flexibles suelen predecir mejor y son más difíciles de interpretar. Ningún método domina en ambos ejes.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,400px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px">
+  <div style="width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;align-items:center">
+    <svg viewBox="0 0 560 330" width="100%" style="max-width:560px;display:block;margin:0 auto;overflow:visible">
+      <path d="M40,10 L300,10 L40,200 Z" style="fill:var(--sky-100);opacity:{{ goal.oInf }};transition:opacity 480ms var(--ease-out)"></path>
+      <path d="M540,300 L290,300 L540,110 Z" style="fill:var(--coral-100);opacity:{{ goal.oPred }};transition:opacity 480ms var(--ease-out)"></path>
+      <line x1="40" y1="300" x2="550" y2="300" style="stroke:var(--ink-800)"></line>
+      <line x1="40" y1="10" x2="40" y2="300" style="stroke:var(--ink-800)"></line>
+      <text x="550" y="322" text-anchor="end" style="font-size:14px;fill:var(--ink-600)">Flexibilidad →</text>
+      <text x="40" y="322" style="font-size:13px;fill:var(--ink-500)">baja</text>
+      <text transform="translate(26,300) rotate(-90)" style="font-size:14px;fill:var(--ink-600)">Interpretabilidad →</text>
+      <g style="transform:translate(66px,40px)"><circle r="6" style="fill:var(--ink-200);stroke:var(--ink-600);stroke-width:1.5"></circle><text x="12" y="5" style="font-size:14px;fill:var(--ink-800)">Lasso</text></g>
+      <g style="transform:translate(128px,82px)"><circle r="6" style="fill:var(--ink-200);stroke:var(--ink-600);stroke-width:1.5"></circle><text x="12" y="5" style="font-size:14px;fill:var(--ink-800)">Mínimos cuadrados</text></g>
+      <g style="transform:translate(225px,146px)"><circle r="6" style="fill:var(--ink-200);stroke:var(--ink-600);stroke-width:1.5"></circle><text x="12" y="5" style="font-size:14px;fill:var(--ink-800)">Modelos aditivos</text></g>
+      <g style="transform:translate(260px,174px)"><circle r="6" style="fill:var(--ink-200);stroke:var(--ink-600);stroke-width:1.5"></circle><text x="12" y="5" style="font-size:14px;fill:var(--ink-800)">Árboles</text></g>
+      <g style="transform:translate(313px,205px)"><circle r="6" style="fill:var(--ink-200);stroke:var(--ink-600);stroke-width:1.5"></circle><text x="12" y="5" style="font-size:14px;fill:var(--ink-800)">KNN</text></g>
+      <g style="transform:translate(357px,244px)"><circle r="6" style="fill:var(--ink-200);stroke:var(--ink-600);stroke-width:1.5"></circle><text x="12" y="5" style="font-size:14px;fill:var(--ink-800)">Bagging, boosting</text></g>
+      <g style="transform:translate(401px,280px)"><circle r="6" style="fill:var(--ink-200);stroke:var(--ink-600);stroke-width:1.5"></circle><text x="12" y="5" style="font-size:14px;fill:var(--ink-800)">Redes neuronales</text></g>
+    </svg>
+    <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="240px,32px" options="{{ goalOpts }}" value="{{ goalMode }}" onChange="{{ setGoal }}"></x-import>
+      <div style="border-top:1px solid var(--border-rule);padding-top:12px;min-height:110px">
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty">{{ goal.desc }}</div>
+      </div>
+    </div>
+  </div>
+  <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 6.</b> Flexibilidad frente a interpretabilidad, después de ISLR Fig. 2.7. La región sombreada muestra dónde conviene buscar según el objetivo.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <h3 style="font-size:20px;line-height:1.25;margin:40px 0 12px;color:var(--text-strong)">Paramétricos y no paramétricos</h3>
+  <p style="margin:0 0 20px;text-wrap:pretty">Los métodos <b>paramétricos</b> asumen una forma para <i style="font-family:var(--font-math);padding:0 2px">f</i>, por ejemplo lineal, <i style="font-family:var(--font-math);padding:0 2px">f(X) ≈ β₀ + β₁X₁ + … + βₚXₚ</i>, y reducen el problema a estimar un número fijo de parámetros. Son simples, piden pocos datos y se interpretan bien. El riesgo: si la forma asumida está lejos de la real, el sesgo es alto sin importar cuántos datos tengamos.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">Los <b>no paramétricos</b> (KNN, splines, árboles) no asumen forma; buscan una <i style="font-family:var(--font-math);padding:0 2px">f̂</i> tan suave como sea razonable. Capturan formas mucho más variadas, pero necesitan más datos y tienden más al overfitting.</p>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="index.html" style="text-decoration:none;color:var(--text-muted)"><div style="font-size:13px;color:var(--text-subtle)">← Volver</div><div style="font-weight:600;color:var(--text-strong)">Índice</div></a>
+  <a href="F1-02-Evaluacion.dc.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Siguiente →</div><div style="font-weight:600;color:var(--text-strong)">Fundamentos de ML: evaluación y sesgo-varianza</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    
+    const r = this.rng(7);
+    this.supPts = Array.from({ length: 40 }, (_, i) => {
+      const c = i % 2;
+      const rx = 55 + (i / 39) * 470 + (r() - 0.5) * 10;
+      return {
+        c,
+        cx: (c ? 398 : 185) + this.gauss(r) * 38,
+        cy: (c ? 112 : 232) + this.gauss(r) * 30,
+        rx, ry: 286 - (rx - 50) * 0.45 + this.gauss(r) * 20,
+        delay: Math.round(r() * 200)
+      };
+    });
+    this.nx = Array.from({ length: 28 }, (_, i) => 0.2 + (i / 27) * 9.6 + (r() - 0.5) * 0.25);
+    this.state = { venn: 'ds', flowStep: -1, showBack: false, part: 0, supMode: 'reg', sigma: 0.5, fhMode: 'lin', z: this.nx.map(() => this.gauss(r)), goalMode: 'inf' };
+  }
+  rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  componentDidMount() { this.watch('flow', this.playFlow); }
+  watch(key, fn) {
+    const check = () => {
+      const el = document.querySelector('[data-auto="' + key + '"]');
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      if (r.top < innerHeight * 0.75 && r.bottom > innerHeight * 0.2) { window.removeEventListener('scroll', check); fn(); }
+    };
+    window.addEventListener('scroll', check, { passive: true });
+    (this.unw = this.unw || []).push(() => window.removeEventListener('scroll', check));
+    setTimeout(check, 600);
+  }
+  componentDidMountOld() {
+  }
+  componentWillUnmount() { clearInterval(this.timer); (this.unw || []).forEach(u => u()); }
+  playFlow = () => {
+    clearInterval(this.timer);
+    this.setState({ flowStep: 0, showBack: false });
+    this.timer = setInterval(() => {
+      const s = this.state.flowStep;
+      if (s >= 5) { clearInterval(this.timer); this.setState({ showBack: true }); return; }
+      this.setState({ flowStep: s + 1 });
+    }, 1100);
+  };
+  flowData() {
+    const labels = ['Definir el problema', 'Explorar (EDA)', 'Preprocesar', 'Modelar', 'Evaluar', 'Comunicar e iterar'];
+    const descs = [
+      '¿Qué queremos predecir o entender? ¿Qué representa una fila, cuál es la unidad de observación?',
+      'Recolectamos y exploramos: tipos de variables, valores faltantes, distribuciones y primeras hipótesis.',
+      'Limpiamos, codificamos las variables categóricas y escalamos las numéricas.',
+      'Elegimos un algoritmo y lo entrenamos.',
+      '¿El modelo generaliza a datos nuevos o solo memorizó los de entrenamiento?',
+      'Comunicamos con visualizaciones y reportes, y ajustamos. El ciclo vuelve a empezar.'
+    ];
+    const P = labels.map((_, i) => { const a = (-90 + 60 * i) * Math.PI / 180; return [240 + 140 * Math.cos(a), 190 + 140 * Math.sin(a)]; });
+    const st = this.state.flowStep;
+    const clip = (a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy); const t = Math.min(84 / Math.abs(dx || 1e-9), 28 / Math.abs(dy || 1e-9)) * L; return t / L; };
+    const edges = P.map((a, i) => {
+      const b = P[(i + 1) % 6]; const k = clip(a, b);
+      const s = [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k], e = [b[0] - (b[0] - a[0]) * k, b[1] - (b[1] - a[1]) * k];
+      const ang = Math.atan2(e[1] - s[1], e[0] - s[0]);
+      const h1 = [e[0] - 9 * Math.cos(ang - 0.45), e[1] - 9 * Math.sin(ang - 0.45)], h2 = [e[0] - 9 * Math.cos(ang + 0.45), e[1] - 9 * Math.sin(ang + 0.45)];
+      const on = i < 5 ? st > i : st >= 5;
+      return { d: `M${s[0]},${s[1]} L${e[0]},${e[1]}`, head: `M${h1[0]},${h1[1]} L${e[0]},${e[1]} L${h2[0]},${h2[1]}`, off: on ? 0 : 1, op: on ? 1 : 0 };
+    });
+    const backs = [
+      { d: `M${P[3][0] - 40},${P[3][1] - 24} Q240,250 ${P[2][0] - 80},${P[2][1] + 8}` },
+      { d: `M${P[4][0] + 10},${P[4][1] - 24} Q230,170 ${P[0][0] - 10},${P[0][1] + 24}` }
+    ].map(b => ({ ...b, op: this.state.showBack ? 1 : 0 }));
+    const nodes = P.map((p, i) => ({
+      x: p[0], y: p[1], label: labels[i],
+      fill: i === st ? 'var(--iris-200)' : (i < st ? 'var(--paper)' : 'var(--ink-50)'),
+      stroke: i === st ? 'var(--iris-600)' : (i < st ? 'var(--ink-600)' : 'var(--ink-300)'),
+      pick: () => { clearInterval(this.timer); this.setState({ flowStep: i }); }
+    }));
+    const cur = Math.max(0, st);
+    return { edges, backs, nodes, title: st < 0 ? 'Seis etapas' : labels[cur], desc: st < 0 ? 'Pulsa Recorrer para seguir el ciclo paso a paso.' : descs[cur], count: st < 0 ? '' : `Paso ${cur + 1} de 6` };
+  }
+  noiseData() {
+    const { sigma, z, fhMode } = this.state;
+    const f = x => 2.6 + 1.6 * Math.sin(0.75 * x) + 0.12 * x;
+    const sx = x => 30 + x / 10 * 560, sy = y => 300 - (y + 0.5) / 7 * 290;
+    const xs = this.nx, ys = xs.map((x, i) => f(x) + sigma * z[i]);
+    let fh = f;
+    if (fhMode === 'lin') {
+      const n = xs.length, mx = xs.reduce((a, b) => a + b) / n, my = ys.reduce((a, b) => a + b) / n;
+      let sxy = 0, sxx = 0; xs.forEach((x, i) => { sxy += (x - mx) * (ys[i] - my); sxx += (x - mx) ** 2; });
+      const b1 = sxy / sxx, b0 = my - b1 * mx; fh = x => b0 + b1 * x;
+    }
+    const grid = Array.from({ length: 81 }, (_, i) => i / 8);
+    const path = g => grid.map((x, i) => `${i ? 'L' : 'M'}${sx(x).toFixed(1)},${sy(g(x)).toFixed(1)}`).join(' ');
+    const gap = path(f) + ' ' + grid.slice().reverse().map(x => `L${sx(x).toFixed(1)},${sy(fh(x)).toFixed(1)}`).join(' ') + ' Z';
+    const red = grid.reduce((a, x) => a + (f(x) - fh(x)) ** 2, 0) / grid.length, irr = sigma * sigma;
+    return {
+      pts: xs.map((x, i) => ({ x: sx(x), y: sy(ys[i]), fy: sy(f(x)) })),
+      f: path(f), fh: path(fh), gap,
+      fLabelY: sy(f(10)) + 5, fhLabelY: sy(fh(10)) + (Math.abs(fh(10) - f(10)) < 0.35 ? 20 : 5),
+      red: red.toFixed(2), irr: irr.toFixed(2), redW: Math.min(100, red / 2.25 * 100), irrW: Math.min(100, irr / 2.25 * 100)
+    };
+  }
+  renderVals() {
+    const V = {
+      ds: ['Ciencia de datos', 'Vive en la intersección de las tres: las preguntas vienen del dominio, la escala de la programación y el rigor de la estadística.'],
+      sp: ['Análisis de laboratorio', 'Estadística y programación sin dominio: técnicamente correcto, pero sin contexto para saber qué preguntar ni si la respuesta tiene sentido.'],
+      dp: ['Ingeniería de software', 'Dominio y programación sin estadística: sistemas que funcionan, sin forma de saber si un patrón es real o ruido.'],
+      se: ['Investigación tradicional', 'Estadística y dominio sin programación: rigurosa, pero no escala a volúmenes grandes de datos.']
+    };
+    const vv = this.state.venn;
+    const vennOpts = [['ds', 'Las tres'], ['sp', 'Estadística + programación'], ['dp', 'Programación + dominio'], ['se', 'Estadística + dominio']].map(([k, label]) => ({
+      label, pick: () => this.setState({ venn: k }), bg: vv === k ? 'var(--iris-100)' : 'var(--paper)', border: vv === k ? 'var(--iris-400)' : 'var(--border-rule)'
+    }));
+    const partsRaw = [
+      ['𝒟', 'Distribución', 'Distribución de probabilidad desconocida sobre pares (x, y) ∈ 𝒳 × 𝒴. Suponemos que de ahí vienen nuestros datos.'],
+      ['{(xᵢ, yᵢ)}', 'Entrenamiento', 'Una muestra i.i.d. de n pares extraída de 𝒟. Es lo único que realmente vemos.'],
+      ['𝒳 → 𝒴', 'Entradas y salidas', '𝒳 es el conjunto de todas las entradas posibles (por ejemplo, imágenes de 28×28); 𝒴 el de todas las respuestas (por ejemplo, los dígitos 0–9).'],
+      ['ℋ', 'Espacio de hipótesis', 'Las funciones que el algoritmo puede producir, por ejemplo todas las rectas. Elegir un algoritmo es, en el fondo, elegir un ℋ.'],
+      ['h', 'Hipótesis', 'La función candidata h: 𝒳 → 𝒴 que el algoritmo elige dentro de ℋ.'],
+      ['L(h(x), y)', 'Pérdida', 'Qué tan mal predijo h comparado con la verdad y. Su promedio define el riesgo.']
+    ];
+    const pi = this.state.part;
+    const parts = partsRaw.map(([sym, name], i) => ({ sym, name, arrow: i < 5 ? 1 : 0, fill: i === pi ? 'var(--iris-200)' : 'var(--paper)', stroke: i === pi ? 'var(--iris-600)' : 'var(--ink-600)', pick: () => this.setState({ part: i }) }));
+    const sm = this.state.supMode;
+    const SUP = {
+      reg: ['Regresión', '(xᵢ, yᵢ),  y ∈ ℝ', 'Supervisado. Cada punto trae su etiqueta y, un número continuo, como el precio de una casa. Aprendemos h: 𝒳 → ℝ para predecir y en casos nuevos.', 'x', 'y'],
+      cls: ['Clasificación', '(xᵢ, yᵢ),  y ∈ {0, 1}', 'Supervisado. La etiqueta es una categoría de un conjunto finito, como spam / no spam. Aprendemos una frontera que separa las clases.', 'x₁', 'x₂'],
+      uns: ['No supervisado', 'xᵢ', 'Los mismos puntos, sin etiqueta. No hay una respuesta que predecir: buscamos estructura, como grupos (clustering) o direcciones principales (PCA).', 'x₁', 'x₂']
+    }[sm];
+    const sup = {
+      title: SUP[0], data: SUP[1], desc: SUP[2], xl: SUP[3], yl: SUP[4],
+      oReg: sm === 'reg' ? 1 : 0, oNotReg: sm === 'reg' ? 0 : 1, oCls: sm === 'cls' ? 1 : 0, oUns: sm === 'uns' ? 1 : 0,
+      pts: this.supPts.map(p => ({
+        x: sm === 'reg' ? p.rx : p.cx, y: sm === 'reg' ? p.ry : p.cy, delay: p.delay,
+        fill: sm === 'cls' ? (p.c ? 'var(--coral-200)' : 'var(--sky-200)') : 'var(--ink-100)',
+        stroke: sm === 'cls' ? (p.c ? 'var(--coral-400)' : 'var(--sky-400)') : 'var(--ink-600)'
+      }))
+    };
+    const gm = this.state.goalMode;
+    const M = [['Lasso', 0.06, 0.93], ['Mínimos cuadrados', 0.2, 0.78], ['Modelos aditivos', 0.42, 0.55], ['Árboles', 0.5, 0.45], ['KNN', 0.62, 0.34], ['Bagging, boosting', 0.72, 0.2], ['Redes neuronales', 0.82, 0.07]];
+    return {
+      venn: { title: V[vv][0], desc: V[vv][1], oDS: vv === 'ds' ? 1 : 0, oSP: vv === 'sp' ? 1 : 0, oDP: vv === 'dp' ? 1 : 0, oSE: vv === 'se' ? 1 : 0 },
+      vennOpts,
+      flow: this.flowData(), showBack: this.state.showBack,
+      setBack: v => this.setState({ showBack: v }),
+      prevFlow: () => { clearInterval(this.timer); this.setState(s => ({ flowStep: Math.max(0, s.flowStep - 1) })); },
+      nextFlow: () => { clearInterval(this.timer); this.setState(s => ({ flowStep: Math.min(5, s.flowStep + 1), showBack: s.flowStep + 1 >= 5 ? true : s.showBack })); },
+      playFlow: this.playFlow,
+      parts, part: { name: partsRaw[pi][1], desc: partsRaw[pi][2] },
+      supOpts: [{ value: 'reg', label: 'Regresión' }, { value: 'cls', label: 'Clasificación' }, { value: 'uns', label: 'No supervisado' }],
+      supMode: sm, setSup: v => this.setState({ supMode: v }), sup,
+      sigma: this.state.sigma, setSigma: v => this.setState({ sigma: v }),
+      fhOpts: [{ value: 'lin', label: 'f̂ = recta' }, { value: 'f', label: 'f̂ = f' }], fhMode: this.state.fhMode, setFh: v => this.setState({ fhMode: v }),
+      resample: () => { const r = this.rng(Date.now() % 100000); this.setState({ z: this.nx.map(() => this.gauss(r)) }); },
+      noise: this.noiseData(),
+      goalOpts: [{ value: 'inf', label: 'Inferencia' }, { value: 'pred', label: 'Predicción' }], goalMode: gm, setGoal: v => this.setState({ goalMode: v }),
+      goal: {
+        oInf: gm === 'inf' ? 1 : 0, oPred: gm === 'pred' ? 1 : 0,
+        desc: gm === 'inf' ? 'Si queremos entender la relación entre X y Y, preferimos modelos restrictivos: pocos parámetros, cada uno con un significado claro.' : 'Si solo importa acertar, podemos usar modelos flexibles aunque no podamos leer su interior. Aun así, más flexibilidad no garantiza mejor predicción: lo veremos con el overfitting.'
+      },
+      methods: M.map(([name, a, b]) => ({ name, x: 40 + a * 440, y: 300 - b * 280 }))
+    };
+  }
+}
+</script>
+</body>
+</html>

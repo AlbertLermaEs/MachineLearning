@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Fundamentos de ML: evaluación y sesgo-varianza — Fase 1</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="index.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <span style="color:var(--text-muted);font-variant-numeric:tabular-nums">Fase 1 · 02 de 05</span>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Fase 1 · Fundamentos" title="Fundamentos de ML: cómo se evalúa un modelo" description="Por qué un modelo que ajusta perfecto sus datos puede ser inútil, y cómo el sesgo y la varianza explican la curva en forma de U."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Actualizado el 5 sep 2026 · Fuentes: CS4780 Fundamentos de ML (Weinberger), ISLR Cap. 2</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">Generalizar, no memorizar</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Un modelo puede ajustar perfecto los datos con los que se entrenó y fallar con datos nuevos. A esto se le llama <b>overfitting</b>. En el vocabulario del <a href="F1-01-Introduccion.dc.html">artículo anterior</a>: lo que nos importa es el riesgo real <i style="font-family:var(--font-math);padding:0 2px">R(h)</i>, pero solo podemos calcular el riesgo empírico <i style="font-family:var(--font-math);padding:0 2px">R̂(h)</i>.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">La diferencia <i style="font-family:var(--font-math);padding:0 2px">R(h) − R̂(h)</i> es la <b>brecha de generalización</b> (<i>generalization gap</i>). Crece con la complejidad del espacio de hipótesis <i style="font-family:var(--font-math);padding:0 2px">ℋ</i> y se reduce entre más datos tengamos. Por eso nunca evaluamos un modelo con los mismos datos con los que lo entrenamos.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Train, validación y test</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Primero separamos los datos. El conjunto de <b>entrenamiento</b> es con el que el modelo ajusta sus parámetros. El de <b>prueba</b> (test) el modelo nunca lo ve durante el entrenamiento: es una muestra fresca de <i style="font-family:var(--font-math);padding:0 2px">𝒟</i> que aproxima el riesgo real.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,380px" width="page">
+  <div data-auto="split" style="width:100%;display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-items:center">
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Button" hint-size="100px,36px" variant="primary" onClick="{{ toggleSplit }}">{{ splitLabel }}</x-import>
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="300px,32px" options="{{ splitOpts }}" value="{{ splitMode }}" onChange="{{ setSplitMode }}"></x-import>
+    </div>
+    <svg viewBox="0 0 600 165" width="100%" style="max-width:640px;display:block;margin:0 auto;overflow:visible">
+      <g style="transform:translate({{ regions.0.x }}px,52px);opacity:{{ regions.0.op }};transition:transform 640ms var(--ease-out),opacity 480ms var(--ease-out) {{ regions.0.delay }}ms">
+        <rect x="-14" y="-14" width="{{ regions.0.w }}" height="100" rx="10" style="fill:{{ regions.0.tint }};stroke:none"></rect>
+        <text x="-12" y="-24" style="font-size:14px;font-weight:700;fill:var(--ink-800)">Entrenamiento</text>
+      </g>
+      <g style="transform:translate({{ regions.1.x }}px,52px);opacity:{{ regions.1.op }};transition:transform 640ms var(--ease-out),opacity 480ms var(--ease-out) {{ regions.1.delay }}ms">
+        <rect x="-14" y="-14" width="{{ regions.1.w }}" height="100" rx="10" style="fill:{{ regions.1.tint }};stroke:none"></rect>
+        <text x="-12" y="-24" style="font-size:14px;font-weight:700;fill:var(--iris-600)">Validación</text>
+      </g>
+      <g style="transform:translate({{ regions.2.x }}px,52px);opacity:{{ regions.2.op }};transition:transform 640ms var(--ease-out),opacity 480ms var(--ease-out) {{ regions.2.delay }}ms">
+        <rect x="-14" y="-14" width="{{ regions.2.w }}" height="100" rx="10" style="fill:{{ regions.2.tint }};stroke:none"></rect>
+        <text x="-12" y="-24" style="font-size:14px;font-weight:700;fill:var(--coral-600)">Prueba</text>
+      </g>
+      <text x="300" y="20" text-anchor="middle" style="font-size:14px;font-weight:700;fill:var(--ink-700);opacity:{{ allOp }};transition:opacity 240ms var(--ease-out)">Datos disponibles · 40</text>
+      <sc-for list="{{ dots }}" as="d" hint-placeholder-count="0">
+        <circle r="7" cx="0" cy="0" style="transform:translate({{ d.x }}px,{{ d.y }}px);fill:{{ d.fill }};stroke:{{ d.stroke }};stroke-width:1.5;transition:transform 720ms var(--ease-out) {{ d.delay }}ms,fill 480ms var(--ease-out) {{ d.delay }}ms,stroke 480ms var(--ease-out) {{ d.delay }}ms"></circle>
+      </sc-for>
+    </svg>
+    <div style="max-width:620px;margin:0 auto;text-align:center;font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:50px">{{ splitDesc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> Separamos los datos antes de hacer cualquier otra cosa. Cada punto es una observación; el reparto es aleatorio.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Hay una regla de oro. Si tomamos decisiones (hiperparámetros, variables, algoritmo) mirando el desempeño en test, ese test se <b>contamina</b>: deja de aproximar <i style="font-family:var(--font-math);padding:0 2px">R(h)</i> honestamente y se comporta como parte del entrenamiento. Para eso existe un tercer conjunto, el de <b>validación</b>, o técnicas como k-fold cross-validation, que veremos formalmente en la Fase 4.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">La curva en forma de U</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Ahora hacemos crecer la flexibilidad del modelo. El <b>error de entrenamiento</b> casi siempre baja: más parámetros permiten pasar más cerca de cada punto. El <b>error de prueba</b> baja al principio, mientras el modelo aprende la forma real de <i style="font-family:var(--font-math);padding:0 2px">f</i>, llega a un mínimo… y luego sube, cuando el modelo empieza a ajustar el ruido <i style="font-family:var(--font-math);padding:0 2px">ε</i> propio de la muestra.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,460px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;flex-wrap:wrap;gap:20px;justify-content:center;align-items:flex-end">
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="280px,44px" label="Grado del polinomio" min="{{ 1 }}" max="{{ 12 }}" step="{{ 1 }}" width="{{ 280 }}" tone="focus" value="{{ deg }}" onChange="{{ setDeg }}"></x-import>
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Button" hint-size="130px,36px" onClick="{{ resample }}">Nueva muestra</x-import>
+    </div>
+    <div style="width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;align-items:start">
+      <svg viewBox="0 0 420 300" width="100%" style="max-width:440px;display:block;margin:0 auto;overflow:visible">
+        <line x1="10" y1="150" x2="410" y2="150" style="stroke:var(--ink-200)"></line>
+        <path d="{{ fit.truth }}" style="fill:none;stroke:var(--ink-700);stroke-width:1.5;stroke-dasharray:6 4"></path>
+        <sc-for list="{{ fit.test }}" as="p" hint-placeholder-count="0">
+          <circle cx="{{ p.x }}" cy="{{ p.y }}" r="3.5" style="fill:var(--coral-200);stroke:var(--coral-400);stroke-width:1"></circle>
+        </sc-for>
+        <path d="{{ fit.curve }}" style="fill:none;stroke:var(--iris-600);stroke-width:2.5"></path>
+        <sc-for list="{{ fit.train }}" as="p" hint-placeholder-count="0">
+          <circle cx="0" cy="0" r="5" style="transform:translate({{ p.x }}px,{{ p.y }}px);fill:var(--ink-200);stroke:var(--ink-800);stroke-width:1.5;transition:transform 480ms var(--ease-out)"></circle>
+        </sc-for>
+        <g style="font-size:13px">
+          <circle cx="18" cy="284" r="4.5" style="fill:var(--ink-200);stroke:var(--ink-800);stroke-width:1.5"></circle><text x="28" y="288" style="fill:var(--ink-700)">entrenamiento</text>
+          <circle cx="130" cy="284" r="3.5" style="fill:var(--coral-200);stroke:var(--coral-400)"></circle><text x="140" y="288" style="fill:var(--ink-700)">prueba</text>
+          <line x1="200" y1="284" x2="222" y2="284" style="stroke:var(--iris-600);stroke-width:2.5"></line><text x="228" y="288" style="fill:var(--ink-700)">modelo</text>
+          <line x1="284" y1="284" x2="306" y2="284" style="stroke:var(--ink-700);stroke-width:1.5;stroke-dasharray:6 4"></line><text x="312" y="288" style="fill:var(--ink-700)">f real</text>
+        </g>
+      </svg>
+      <svg viewBox="0 0 380 300" width="100%" style="max-width:400px;display:block;margin:0 auto;overflow:visible">
+        <line x1="50" y1="260" x2="340" y2="260" style="stroke:var(--ink-800)"></line>
+        <line x1="50" y1="20" x2="50" y2="260" style="stroke:var(--ink-800)"></line>
+        <text x="340" y="292" text-anchor="end" style="font-size:13px;fill:var(--ink-600)">flexibilidad (grado) →</text>
+        <text transform="translate(18,260) rotate(-90)" style="font-size:13px;fill:var(--ink-600)">error cuadrático medio</text>
+        <text x="50.0" y="276" text-anchor="middle" style="font-size:12px;fill:var(--ink-600);font-variant-numeric:tabular-nums">1</text>
+        <text x="99.1" y="276" text-anchor="middle" style="font-size:12px;fill:var(--ink-600);font-variant-numeric:tabular-nums">3</text>
+        <text x="172.7" y="276" text-anchor="middle" style="font-size:12px;fill:var(--ink-600);font-variant-numeric:tabular-nums">6</text>
+        <text x="246.4" y="276" text-anchor="middle" style="font-size:12px;fill:var(--ink-600);font-variant-numeric:tabular-nums">9</text>
+        <text x="320.0" y="276" text-anchor="middle" style="font-size:12px;fill:var(--ink-600);font-variant-numeric:tabular-nums">12</text>
+        <line x1="{{ curve.mx }}" y1="20" x2="{{ curve.mx }}" y2="260" style="stroke:var(--iris-400);stroke-width:1.5;stroke-dasharray:3 3"></line>
+        <path d="{{ curve.train }}" style="fill:none;stroke:var(--ink-600);stroke-width:2"></path>
+        <path d="{{ curve.test }}" style="fill:none;stroke:var(--coral-500);stroke-width:2"></path>
+        <circle cx="0" cy="0" r="5" style="transform:translate({{ curve.mx }}px,{{ curve.trY }}px);fill:var(--paper);stroke:var(--ink-600);stroke-width:2;transition:transform 240ms var(--ease-out)"></circle>
+        <circle cx="0" cy="0" r="5" style="transform:translate({{ curve.mx }}px,{{ curve.teY }}px);fill:var(--paper);stroke:var(--coral-500);stroke-width:2;transition:transform 240ms var(--ease-out)"></circle>
+        <text x="{{ curve.labX }}" y="{{ curve.teLabY }}" style="font-size:13px;font-weight:600;fill:var(--coral-600)">test</text>
+        <text x="{{ curve.labX }}" y="{{ curve.trLabY }}" style="font-size:13px;font-weight:600;fill:var(--ink-600)">train</text>
+        <text x="62" y="36" style="font-family:var(--font-serif);font-style:italic;font-size:14px;fill:var(--ink-600)">underfitting</text>
+        <text x="330" y="36" text-anchor="end" style="font-family:var(--font-serif);font-style:italic;font-size:14px;fill:var(--ink-600)">overfitting</text>
+      </svg>
+    </div>
+    <div style="max-width:620px;margin:0 auto;text-align:center;font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:50px"><b style="color:var(--text-strong)">{{ fitMsg.title }}</b> {{ fitMsg.desc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 2.</b> Ajustamos polinomios de grado creciente a 18 puntos de entrenamiento y medimos el error en 80 puntos de prueba. Mueve el grado y observa cómo el error de test dibuja una U mientras el de train solo baja.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">El mínimo de la U es, por definición, el nivel de complejidad que mejor generaliza para ese problema: ni underfitting ni overfitting. Esta curva reaparece en regularización (Fase 4), selección de modelos (Fase 5) y profundidad de árboles (Fase 6).</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Sesgo y varianza</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">¿Por qué la U? Imaginemos que pudiéramos repetir el experimento muchas veces, cada vez con una muestra de entrenamiento distinta de la misma <i style="font-family:var(--font-math);padding:0 2px">𝒟</i>. Para un punto fijo <i style="font-family:var(--font-math);padding:0 2px">x<sub>0</sub></i>, con error cuadrático, el error esperado se descompone exactamente en tres partes:</p>
+  <div><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,72px" display="{{ true }}" number="1" tex="\mathbb{E}\big[(y_0 - \hat f(x_0))^2\big] = \underbrace{\mathrm{Var}(\hat f(x_0)) }_{\text{varianza} } + \underbrace{[\mathrm{Bias}(\hat f(x_0))]^2 }_{\text{sesgo}^2 } + \underbrace{\mathrm{Var}(\varepsilon) }_{\text{ruido irreducible} }"></x-import></div>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:8px">
+    <li style="text-wrap:pretty"><b>Sesgo</b>, <i style="font-family:var(--font-math);padding:0 2px">𝔼[f̂(x<sub>0</sub>)] − f(x<sub>0</sub>)</i>: el error sistemático por usar un modelo demasiado rígido. Una recta tiene sesgo alto si la relación real es curva, sin importar cuántos datos le demos.</li>
+    <li style="text-wrap:pretty"><b>Varianza</b>: cuánto cambiaría <i style="font-family:var(--font-math);padding:0 2px">f̂</i> si la entrenáramos con otra muestra. Un modelo muy flexible cambia mucho con pequeños cambios en los datos.</li>
+    <li style="text-wrap:pretty"><b>Ruido irreducible</b>, <i style="font-family:var(--font-math);padding:0 2px">Var(ε) = σ²</i>: viene de <i style="font-family:var(--font-math);padding:0 2px">Y = f(X) + ε</i>. Ningún modelo lo elimina.</li>
+  </ul>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,440px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px">
+    <div style="width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;align-items:center">
+      <svg viewBox="0 0 420 300" width="100%" style="max-width:460px;display:block;margin:0 auto;overflow:visible">
+        <sc-for list="{{ bv.lines }}" as="l" hint-placeholder-count="0">
+          <path d="{{ l.d }}" style="fill:none;stroke:var(--iris-400);stroke-width:1.2;opacity:{{ l.op }};transition:{{ l.tr }}"></path>
+        </sc-for>
+        <path d="{{ bv.truth }}" style="fill:none;stroke:var(--ink-800);stroke-width:2;stroke-dasharray:6 4"></path>
+        <path d="{{ bv.mean }}" style="fill:none;stroke:var(--iris-600);stroke-width:3;opacity:{{ bv.meanOp }};transition:opacity 480ms var(--ease-out) 900ms"></path>
+        <g style="font-size:13px">
+          <line x1="14" y1="288" x2="36" y2="288" style="stroke:var(--iris-400);stroke-width:1.2"></line><text x="42" y="292" style="fill:var(--ink-700)">20 modelos, 20 muestras</text>
+          <line x1="196" y1="288" x2="218" y2="288" style="stroke:var(--iris-600);stroke-width:3"></line><text x="224" y="292" style="fill:var(--ink-700)">promedio</text>
+          <line x1="292" y1="288" x2="314" y2="288" style="stroke:var(--ink-800);stroke-width:2;stroke-dasharray:6 4"></line><text x="320" y="292" style="fill:var(--ink-700)">f real</text>
+        </g>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+        <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="280px,32px" options="{{ bvOpts }}" value="{{ bvMode }}" onChange="{{ setBv }}"></x-import>
+        <div style="display:grid;grid-template-columns:84px minmax(0,1fr) 48px;gap:10px;align-items:center;font-size:14px">
+          <span style="color:var(--text-muted)">Sesgo²</span>
+          <div style="height:14px;background:var(--ink-50);border-radius:3px;overflow:hidden"><div style="height:100%;width:{{ bv.bW }}%;background:var(--sky-400);border-radius:3px;transition:width 640ms var(--ease-out)"></div></div>
+          <span style="font-family:var(--font-mono);font-size:13px;text-align:right">{{ bv.b }}</span>
+          <span style="color:var(--text-muted)">Varianza</span>
+          <div style="height:14px;background:var(--ink-50);border-radius:3px;overflow:hidden"><div style="height:100%;width:{{ bv.vW }}%;background:var(--coral-400);border-radius:3px;transition:width 640ms var(--ease-out)"></div></div>
+          <span style="font-family:var(--font-mono);font-size:13px;text-align:right">{{ bv.v }}</span>
+          <span style="color:var(--text-muted)">Ruido σ²</span>
+          <div style="height:14px;background:var(--ink-50);border-radius:3px;overflow:hidden"><div style="height:100%;width:{{ bv.nW }}%;background:var(--ink-400);border-radius:3px"></div></div>
+          <span style="font-family:var(--font-mono);font-size:13px;text-align:right">{{ bv.n }}</span>
+        </div>
+        <div style="border-top:1px solid var(--border-rule);padding-top:12px;font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:96px"><b style="color:var(--text-strong)">{{ bv.title }}</b> {{ bv.desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 3.</b> Entrenamos el mismo tipo de modelo con 20 muestras distintas. La distancia entre el promedio y f es el sesgo; la dispersión de las líneas alrededor del promedio es la varianza.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">La demostración de la ecuación (1) sale de sumar y restar <i style="font-family:var(--font-math);padding:0 2px">𝔼[f̂(x<sub>0</sub>)]</i> dentro del cuadrado y expandir. Los términos cruzados se cancelan porque <i style="font-family:var(--font-math);padding:0 2px">ε</i> tiene media cero y es independiente de <i style="font-family:var(--font-math);padding:0 2px">f̂</i>. No hace falta memorizarla; sí entender que cualquier fuente de error de predicción cae en una de esas tres categorías.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">En resumen: modelos simples → sesgo alto, varianza baja → <b>underfitting</b>. Modelos complejos → sesgo bajo, varianza alta → <b>overfitting</b>. El mínimo de sesgo² + varianza coincide con el mínimo de la U.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Clasificación: Bayes y KNN</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">En clasificación, el equivalente del ruido irreducible es la <b>tasa de error de Bayes</b>. El <b>clasificador de Bayes</b> asigna a cada <i style="font-family:var(--font-math);padding:0 2px">x<sub>0</sub></i> la clase <i style="font-family:var(--font-math);padding:0 2px">j</i> que maximiza <i style="font-family:var(--font-math);padding:0 2px">Pr(Y = j | X = x<sub>0</sub>)</i>. Es el óptimo: ninguno tiene, en promedio, menor error, porque usa la distribución condicional verdadera, que en la práctica no conocemos.</p>
+  <div><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="2" tex="\text{error de Bayes} = 1 - \mathbb{E}\Big[\max_j \Pr(Y = j \mid X)\Big]"></x-import></div>
+  <p style="margin:0 0 20px;text-wrap:pretty"><b>K vecinos más cercanos</b> (KNN) estima esa probabilidad mirando las <i style="font-family:var(--font-math);padding:0 2px">K</i> observaciones de entrenamiento más cercanas a <i style="font-family:var(--font-math);padding:0 2px">x<sub>0</sub></i> y usando la proporción de cada clase entre ellas. <i style="font-family:var(--font-math);padding:0 2px">K</i> controla directamente el tradeoff.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,480px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px">
+    <div style="width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;align-items:center">
+      <svg viewBox="0 0 480 340" width="100%" style="max-width:500px;display:block;margin:0 auto;border-radius:6px">
+        <sc-for list="{{ knn.cells }}" as="c" hint-placeholder-count="0">
+          <rect x="{{ c.x }}" y="{{ c.y }}" width="12.2" height="12.3" style="fill:{{ c.fill }};transition:fill 240ms var(--ease-out)"></rect>
+        </sc-for>
+        <sc-for list="{{ knn.pts }}" as="p" hint-placeholder-count="0">
+          <circle cx="{{ p.x }}" cy="{{ p.y }}" r="4.5" style="fill:{{ p.fill }};stroke:{{ p.stroke }};stroke-width:1.5"></circle>
+        </sc-for>
+        <rect x="0" y="0" width="480" height="340" rx="6" style="fill:none;stroke:var(--ink-600);stroke-width:1.5"></rect>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+        <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="260px,44px" label="Vecinos K" min="{{ 1 }}" max="{{ 61 }}" step="{{ 2 }}" width="{{ 260 }}" tone="focus" value="{{ k }}" onChange="{{ setK }}"></x-import>
+        <div style="display:flex;gap:32px">
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="100px,70px" label="Error train" value="{{ knn.trainErr }}" unit="%" size="sm"></x-import>
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="100px,70px" label="Error test" value="{{ knn.testErr }}" unit="%" size="sm"></x-import>
+        </div>
+        <div style="border-top:1px solid var(--border-rule);padding-top:12px;font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:96px"><b style="color:var(--text-strong)">{{ knn.title }}</b> {{ knn.desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 4.</b> Frontera de decisión de KNN sobre 100 puntos de entrenamiento de dos clases. El fondo muestra la clase que KNN predeciría en cada lugar; el error de test se mide en 300 puntos nuevos.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Con <i style="font-family:var(--font-math);padding:0 2px">K = 1</i> cada punto se predice a sí mismo: error de entrenamiento cero y varianza máxima. Con <i style="font-family:var(--font-math);padding:0 2px">K</i> grande la frontera se vuelve suave, casi lineal: sesgo alto, varianza baja. KNN es el primer clasificador no paramétrico que veremos formalmente en la Fase 2.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Cómo lo medimos en la práctica</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">En <b>regresión</b> usamos el error cuadrático medio. Penaliza fuerte los errores grandes, por el cuadrado. Lo calculamos en train y en test; el que importa es el de test.</p>
+  <div><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="3" tex="\mathrm{MSE} = \frac{1}{n}\sum_{i=1}^{n} (y_i - \hat y_i)^2"></x-import></div>
+  <p style="margin:0 0 20px;text-wrap:pretty">En <b>clasificación</b> usamos la tasa de error, 1 − accuracy. Con clases desbalanceadas la accuracy engaña; métricas como precision y recall llegan en la Fase 5.</p>
+  <div><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="4" tex="\text{tasa de error} = \frac{1}{n}\sum_{i=1}^{n} \mathbb{1}(y_i \neq \hat y_i)"></x-import></div>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F1-01-Introduccion.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Anterior</div><div style="font-weight:600;color:var(--text-strong)">Introducción a Ciencia de Datos y ML</div></a>
+  <a href="F1-03-Python-Pandas.dc.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Siguiente →</div><div style="font-weight:600;color:var(--text-strong)">Python y Pandas</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    this.f = x => Math.sin(2.6 * x) + 0.3 * x;
+    this.sig = 0.3;
+    const r = this.rng(11);
+    this.testSet = Array.from({ length: 80 }, () => { const x = r() * 2 - 1; return [x, this.f(x) + this.sig * this.gauss(r)]; });
+    this.perm = Array.from({ length: 40 }, (_, i) => i);
+    for (let i = 39; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [this.perm[i], this.perm[j]] = [this.perm[j], this.perm[i]]; }
+    this.dotDelay = this.perm.map(() => Math.round(r() * 260));
+    this.bvCache = {};
+    this.initKnn();
+    this.state = { split: 0, splitMode: 'tt', deg: 3, seed: 5, bvMode: 'low', bvShow: true, k: 15 };
+    this.makeTrain(5);
+  }
+  rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  componentDidMount() { this.watch('split', () => setTimeout(() => this.setState({ split: 1 }), 300)); }
+  componentWillUnmount() { (this.unw || []).forEach(u => u()); clearTimeout(this.bvT); }
+  watch(key, fn) {
+    const check = () => {
+      const el = document.querySelector('[data-auto="' + key + '"]');
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      if (r.top < innerHeight * 0.75 && r.bottom > innerHeight * 0.2) { window.removeEventListener('scroll', check); fn(); }
+    };
+    window.addEventListener('scroll', check, { passive: true });
+    (this.unw = this.unw || []).push(() => window.removeEventListener('scroll', check));
+    setTimeout(check, 600);
+  }
+  sample(seed, n) { const r = this.rng(seed); return Array.from({ length: n }, (_, i) => { const x = -1 + (i + 0.5) * 2 / n + (r() - 0.5) * 1.6 / n; return [x, this.f(x) + this.sig * this.gauss(r)]; }); }
+  fitPoly(pts, d) {
+    const m = d + 1, A = Array.from({ length: m }, () => new Array(m + 1).fill(0));
+    pts.forEach(([x, y]) => { const pw = [1]; for (let k = 1; k < 2 * m; k++) pw.push(pw[k - 1] * x); for (let i = 0; i < m; i++) { for (let j = 0; j < m; j++) A[i][j] += pw[i + j]; A[i][m] += pw[i] * y; } });
+    for (let i = 0; i < m; i++) A[i][i] += 1e-9;
+    for (let c = 0; c < m; c++) {
+      let p = c; for (let i = c + 1; i < m; i++) if (Math.abs(A[i][c]) > Math.abs(A[p][c])) p = i;
+      [A[c], A[p]] = [A[p], A[c]];
+      for (let i = 0; i < m; i++) if (i !== c) { const k = A[i][c] / A[c][c]; for (let j = c; j <= m; j++) A[i][j] -= k * A[c][j]; }
+    }
+    const w = A.map((row, i) => row[m] / row[i]);
+    return x => { let s = 0; for (let i = m - 1; i >= 0; i--) s = s * x + w[i]; return s; };
+  }
+  makeTrain(seed) {
+    this.train = this.sample(seed, 18);
+    this.fits = []; this.errs = [];
+    for (let d = 1; d <= 12; d++) {
+      const g = this.fitPoly(this.train, d); this.fits.push(g);
+      const mse = s => s.reduce((a, [x, y]) => a + (y - g(x)) ** 2, 0) / s.length;
+      this.errs.push([mse(this.train), mse(this.testSet)]);
+    }
+  }
+  bvData(mode) {
+    if (this.bvCache[mode]) return this.bvCache[mode];
+    const d = { low: 1, mid: 3, high: 9 }[mode];
+    const grid = Array.from({ length: 61 }, (_, i) => -0.95 + i * 1.9 / 60);
+    const fits = Array.from({ length: 20 }, (_, i) => this.fitPoly(this.sample(200 + i, 20), d));
+    const vals = fits.map(g => grid.map(x => g(x)));
+    const mean = grid.map((_, j) => vals.reduce((a, v) => a + v[j], 0) / vals.length);
+    const b2 = grid.reduce((a, x, j) => a + (mean[j] - this.f(x)) ** 2, 0) / grid.length;
+    const vr = grid.reduce((a, _, j) => a + vals.reduce((s, v) => s + (v[j] - mean[j]) ** 2, 0) / vals.length, 0) / grid.length;
+    const sx = x => 20 + (x + 1) / 2 * 380, sy = y => 140 - Math.max(-2.2, Math.min(2.2, y)) / 2.4 * 125;
+    const path = arr => arr.map((y, j) => `${j ? 'L' : 'M'}${sx(grid[j]).toFixed(1)},${sy(y).toFixed(1)}`).join(' ');
+    return (this.bvCache[mode] = { lines: vals.map(path), mean: path(mean), truth: path(grid.map(this.f)), b2, vr });
+  }
+  initKnn() {
+    const r = this.rng(42);
+    const centers = [[[-0.5, 0.35], [0.1, -0.35], [-0.2, -0.1]], [[0.5, 0.3], [-0.1, 0.45], [0.45, -0.3]]];
+    const gen = n => Array.from({ length: n }, (_, i) => { const c = i % 2, m = centers[c][Math.floor(r() * 3)]; return [m[0] + this.gauss(r) * 0.22, m[1] + this.gauss(r) * 0.2, c]; });
+    this.kTrain = gen(100); this.kTest = gen(300); this.kCache = {};
+    this.cellsXY = []; for (let j = 0; j < 28; j++) for (let i = 0; i < 40; i++) this.cellsXY.push([i, j]);
+  }
+  knnPred(x, y, K, skip) {
+    const ds = this.kTrain.map((p, i) => [(p[0] - x) ** 2 + (p[1] - y) ** 2, p[2]]);
+    ds.sort((a, b) => a[0] - b[0]);
+    let s = 0; for (let i = 0; i < K; i++) s += ds[i][1];
+    return s / K > 0.5 ? 1 : 0;
+  }
+  knnData(K) {
+    if (this.kCache[K]) return this.kCache[K];
+    const ux = i => -1.2 + (i + 0.5) * 2.4 / 40, uy = j => 0.85 - (j + 0.5) * 1.7 / 28;
+    const cells = this.cellsXY.map(([i, j]) => ({ x: i * 12, y: j * 12.15, fill: this.knnPred(ux(i), uy(j), K) ? 'var(--coral-100)' : 'var(--sky-100)' }));
+    const err = s => s.reduce((a, p) => a + (this.knnPred(p[0], p[1], K) !== p[2] ? 1 : 0), 0) / s.length * 100;
+    const px = x => (x + 1.2) / 2.4 * 480, py = y => (0.85 - y) / 1.7 * 340;
+    const pts = this.kTrain.map(p => ({ x: px(p[0]), y: py(p[1]), fill: p[2] ? 'var(--coral-200)' : 'var(--sky-200)', stroke: p[2] ? 'var(--coral-500)' : 'var(--sky-600)' }));
+    return (this.kCache[K] = { cells, pts, trainErr: err(this.kTrain).toFixed(1), testErr: err(this.kTest).toFixed(1) });
+  }
+  renderVals() {
+    const S = this.state;
+    const mode = S.splitMode, split = S.split;
+    const groups = mode === 'tt' ? [['train', 32], ['test', 8]] : [['train', 24], ['valid', 8], ['test', 8]];
+    const colsOf = n => n / 4, gap = 56;
+    const totalW = groups.reduce((a, [, n]) => a + colsOf(n) * 24, 0) + gap * (groups.length - 1);
+    let x0 = 300 - totalW / 2 + 12; const gx = {}, gStart = {};
+    groups.forEach(([k, n]) => { gx[k] = x0; x0 += colsOf(n) * 24 + gap; });
+    const bounds = mode === 'tt' ? { train: [0, 32], test: [32, 40] } : { train: [0, 24], valid: [24, 32], test: [32, 40] };
+    const COL = { train: ['var(--ink-200)', 'var(--ink-700)', 'var(--ink-50)', 'var(--ink-800)', 'Entrenamiento'], valid: ['var(--iris-200)', 'var(--iris-600)', 'var(--iris-100)', 'var(--iris-600)', 'Validación'], test: ['var(--coral-200)', 'var(--coral-400)', 'var(--coral-100)', 'var(--coral-600)', 'Prueba'] };
+    const dots = this.perm.map((rank, i) => {
+      if (!split) return { x: 192 + (i % 10) * 24, y: 52 + Math.floor(i / 10) * 24, fill: 'var(--ink-100)', stroke: 'var(--ink-500)', delay: 0 };
+      const g = Object.keys(bounds).find(k => rank >= bounds[k][0] && rank < bounds[k][1]);
+      const local = rank - bounds[g][0], cols = colsOf(bounds[g][1] - bounds[g][0]);
+      return { x: gx[g] + (local % cols) * 24, y: 52 + Math.floor(local / cols) * 24, fill: COL[g][0], stroke: COL[g][1], delay: this.dotDelay[i] };
+    });
+    const regions = ['train', 'valid', 'test'].map(k => {
+      const on = split && bounds[k]; const n = bounds[k] ? bounds[k][1] - bounds[k][0] : 8; const w = colsOf(n) * 24 + 4;
+      return { x: gx[k] ?? 300, w, wl: w - 20, op: on ? 1 : 0, delay: on ? 500 : 0, tint: COL[k][2], ink: COL[k][3], label: COL[k][4], n: `${n}` };
+    });
+    const splitDesc = !split ? 'Cuarenta observaciones. Antes de entrenar nada, las repartimos al azar.'
+      : mode === 'tt' ? 'El 80 % entrena el modelo. El 20 % queda guardado: lo usamos una sola vez, al final, para estimar cómo le irá con datos nuevos.'
+      : 'La validación absorbe las decisiones: con ella elegimos hiperparámetros y variables. Así el test sigue intacto para la estimación final.';
+
+    const d = S.deg, g = this.fits[d - 1];
+    const sx = x => 20 + (x + 1) / 2 * 380, sy = y => 150 - Math.max(-2.3, Math.min(2.3, y)) / 2.4 * 130;
+    const grid = Array.from({ length: 161 }, (_, i) => -1 + i / 80);
+    const pth = h => grid.map((x, i) => `${i ? 'L' : 'M'}${sx(x).toFixed(1)},${sy(h(x)).toFixed(1)}`).join(' ');
+    const ex = dd => 50 + (dd - 1) / 11 * 270, ey = e => 260 - Math.min(e, 0.3) / 0.3 * 220;
+    const cpath = k => this.errs.map((e, i) => `${i ? 'L' : 'M'}${ex(i + 1).toFixed(1)},${ey(e[k]).toFixed(1)}`).join(' ');
+    const [trE, teE] = this.errs[d - 1];
+    const minE = Math.min(...this.errs.map(e => e[1])); const okD = this.errs.map((e, i) => e[1] <= minE * 1.12 ? i + 1 : 0).filter(Boolean); const lo = okD[0], hi = okD[okD.length - 1];
+    const fitMsg = d < lo ? { title: 'Demasiado rígido.', desc: `Con grado ${d} el modelo no alcanza a seguir la curva real: los dos errores son altos.` }
+      : d <= hi ? { title: 'Cerca del mínimo.', desc: `Con grado ${d} el error de test está cerca del más bajo de esta muestra: el modelo sigue la señal sin perseguir el ruido.` }
+      : { title: 'Demasiado flexible.', desc: `Con grado ${d} el error de entrenamiento sigue bajando (${trE.toFixed(3)}), pero el modelo ya persigue el ruido y el error de test sube.` };
+
+    const bm = S.bvMode, B = this.bvData(bm);
+    const BVT = { low: ['Grado 1, una recta.', 'Todas las rectas se parecen entre sí (varianza baja), pero su promedio está lejos de la curva real (sesgo alto).'], mid: ['Grado 3.', 'El promedio casi coincide con f y las líneas se mantienen juntas: el balance que buscamos.'], high: ['Grado 9.', 'En promedio acierta (sesgo bajo), pero cada muestra produce un modelo muy distinto, sobre todo en los extremos (varianza alta).'] }[bm];
+    const scale = v => Math.min(100, v / 0.25 * 100);
+    const knn = this.knnData(S.k);
+    const K = S.k;
+    const kt = K <= 3 ? ['Varianza alta.', 'La frontera rodea puntos sueltos: memoriza el entrenamiento y generaliza peor.'] : K >= 41 ? ['Sesgo alto.', 'La frontera se vuelve casi una recta y pierde la forma real de las clases.'] : ['Balance.', 'La frontera es suave pero todavía sigue la forma de las clases.'];
+    return {
+      splitLabel: split ? 'Juntar' : 'Dividir', toggleSplit: () => this.setState(s => ({ split: s.split ? 0 : 1 })),
+      splitOpts: [{ value: 'tt', label: 'Train / test' }, { value: 'tvt', label: 'Train / validación / test' }], splitMode: mode,
+      setSplitMode: v => this.setState({ splitMode: v, split: 1 }), dots, regions, allOp: split ? 0 : 1, splitDesc,
+      deg: d, setDeg: v => this.setState({ deg: Math.round(v) }),
+      resample: () => { const s = this.state.seed + 1; this.makeTrain(s); this.setState({ seed: s }); },
+      fit: { truth: pth(this.f), curve: pth(g), train: this.train.map(([x, y]) => ({ x: sx(x), y: sy(y) })), test: this.testSet.map(([x, y]) => ({ x: sx(x), y: sy(y) })) },
+      curve: {
+        train: cpath(0), test: cpath(1), mx: ex(d), trY: ey(trE), teY: ey(teE), labX: ex(12) + 8, teLabY: Math.max(58, ey(this.errs[11][1]) + 4), trLabY: ey(this.errs[11][0]) + 4,
+        ticks: [1, 3, 6, 9, 12].map(v => ({ x: ex(v), v }))
+      },
+      fitMsg,
+      bvOpts: [{ value: 'low', label: 'Rígido' }, { value: 'mid', label: 'Intermedio' }, { value: 'high', label: 'Flexible' }], bvMode: bm,
+      setBv: v => { clearTimeout(this.bvT); this.setState({ bvMode: v, bvShow: false }); this.bvT = setTimeout(() => this.setState({ bvShow: true }), 40); },
+      bv: {
+        lines: B.lines.map((dd, i) => ({ d: dd, op: S.bvShow ? 0.55 : 0, tr: S.bvShow ? `opacity 360ms var(--ease-out) ${i * 40}ms` : 'none' })),
+        mean: B.mean, truth: B.truth, meanOp: S.bvShow ? 1 : 0,
+        b: B.b2.toFixed(3), v: B.vr.toFixed(3), n: (this.sig ** 2).toFixed(3), bW: scale(B.b2), vW: scale(B.vr), nW: scale(this.sig ** 2),
+        title: BVT[0], desc: BVT[1]
+      },
+      k: K, setK: v => this.setState({ k: Math.round(v) }),
+      knn: { ...knn, title: kt[0], desc: kt[1] }
+    };
+  }
+}
+</script>
+</body>
+</html>

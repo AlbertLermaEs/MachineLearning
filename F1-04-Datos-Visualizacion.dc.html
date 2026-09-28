@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Tipos de datos y visualización — Fase 1</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="index.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <span style="color:var(--text-muted);font-variant-numeric:tabular-nums">Fase 1 · 04 de 05</span>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Fase 1 · Fundamentos" title="Tipos de datos y visualización" description="El tipo de una variable decide qué modelo y qué gráfica tienen sentido. Y una buena gráfica responde una pregunta, sin engañarnos."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Actualizado el 5 sep 2026 · Fuente: Alan A3 (TEC IN5148)</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">Tipos de variables</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Las variables <b>cuantitativas</b> miden cantidades: <b>continuas</b> si pueden tomar cualquier valor en un rango, <b>discretas</b> si cuentan cosas. Las <b>cualitativas</b> o categóricas nombran grupos: <b>nominales</b> sin orden, <b>ordinales</b> con orden pero sin una distancia numérica clara. Las <b>binarias</b> son nominales con dos categorías.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,460px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:720px">
+      <sc-for list="{{ vars }}" as="v" hint-placeholder-count="9">
+        <button type="button" onClick="{{ v.pick }}" style="font:inherit;font-size:14px;font-weight:600;padding:4px 12px;border-radius:999px;border:1px solid {{ v.border }};background:{{ v.bg }};color:{{ v.color }};cursor:pointer;transition:background 240ms var(--ease-out)">{{ v.name }}</button>
+      </sc-for>
+    </div>
+    <svg viewBox="0 0 720 320" width="100%" style="max-width:720px;display:block;overflow:visible">
+      <sc-for list="{{ tree.edges }}" as="e" hint-placeholder-count="7">
+        <path d="{{ e.d }}" style="fill:none;stroke:{{ e.c }};stroke-width:{{ e.w }};transition:stroke 320ms var(--ease-out)"></path>
+      </sc-for>
+      <g style="transform:translate(360px,30px)"><rect x="-60" y="-18" width="120" height="36" rx="6" style="fill:{{ tree.n0.f }};stroke:{{ tree.n0.s }};stroke-width:1.5;transition:fill 320ms,stroke 320ms"></rect><text y="5" text-anchor="middle" style="font-size:14px;font-weight:700;fill:var(--ink-900)">Variable</text></g>
+      <g style="transform:translate(180px,115px)"><rect x="-70" y="-18" width="140" height="36" rx="6" style="fill:{{ tree.n1.f }};stroke:{{ tree.n1.s }};stroke-width:1.5;transition:fill 320ms,stroke 320ms"></rect><text y="5" text-anchor="middle" style="font-size:14px;font-weight:700;fill:var(--ink-900)">Cuantitativa</text></g>
+      <g style="transform:translate(540px,115px)"><rect x="-70" y="-18" width="140" height="36" rx="6" style="fill:{{ tree.n2.f }};stroke:{{ tree.n2.s }};stroke-width:1.5;transition:fill 320ms,stroke 320ms"></rect><text y="5" text-anchor="middle" style="font-size:14px;font-weight:700;fill:var(--ink-900)">Cualitativa</text></g>
+      <g style="transform:translate(90px,205px)"><rect x="-60" y="-18" width="120" height="36" rx="6" style="fill:{{ tree.n3.f }};stroke:{{ tree.n3.s }};stroke-width:1.5;transition:fill 320ms,stroke 320ms"></rect><text y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">Continua</text></g>
+      <g style="transform:translate(270px,205px)"><rect x="-60" y="-18" width="120" height="36" rx="6" style="fill:{{ tree.n4.f }};stroke:{{ tree.n4.s }};stroke-width:1.5;transition:fill 320ms,stroke 320ms"></rect><text y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">Discreta</text></g>
+      <g style="transform:translate(450px,205px)"><rect x="-60" y="-18" width="120" height="36" rx="6" style="fill:{{ tree.n5.f }};stroke:{{ tree.n5.s }};stroke-width:1.5;transition:fill 320ms,stroke 320ms"></rect><text y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">Nominal</text></g>
+      <g style="transform:translate(630px,205px)"><rect x="-60" y="-18" width="120" height="36" rx="6" style="fill:{{ tree.n6.f }};stroke:{{ tree.n6.s }};stroke-width:1.5;transition:fill 320ms,stroke 320ms"></rect><text y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">Ordinal</text></g>
+      <g style="transform:translate(450px,290px)"><rect x="-60" y="-18" width="120" height="36" rx="6" style="fill:{{ tree.n7.f }};stroke:{{ tree.n7.s }};stroke-width:1.5;transition:fill 320ms,stroke 320ms"></rect><text y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">Binaria</text></g>
+    </svg>
+    <div style="max-width:600px;text-align:center;font-size:16px;line-height:1.55;color:var(--text-muted);min-height:74px;text-wrap:pretty"><b style="color:var(--text-strong)">{{ vsel.title }}</b> {{ vsel.desc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> Clasificación de variables. Elige un ejemplo para ver su camino en el árbol y qué implica para el modelo.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">El tipo importa porque un modelo lineal no puede usar directamente una nominal: no tiene sentido multiplicar "rojo" por un coeficiente. Necesita codificación, que veremos en <a href="F1-05-Preprocesamiento.dc.html">Preprocesamiento</a>. Una ordinal a veces sí se trata como numérica, si el espaciado entre niveles tiene sentido.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Describir antes de graficar</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Para la <b>tendencia central</b> tenemos la media, la mediana y la moda (la única que aplica a categóricas). Para la <b>dispersión</b>, varianza, desviación estándar, rango y rango intercuartílico, <i style="font-family:var(--font-math);padding:0 2px">IQR = Q3 − Q1</i>. Para la <b>forma</b>, el sesgo (<i>skewness</i>) y la curtosis. La diferencia entre media y mediana se entiende mejor moviendo un solo dato.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,300px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="300px,44px" label="Ingreso de la última persona (miles)" min="{{ 30 }}" max="{{ 300 }}" step="{{ 1 }}" width="{{ 300 }}" tone="focus" value="{{ outlier }}" onChange="{{ setOutlier }}"></x-import>
+    <svg viewBox="0 0 700 150" width="100%" style="max-width:720px;display:block;overflow:visible">
+      <line x1="20" y1="90" x2="680" y2="90" style="stroke:var(--ink-800)"></line>
+      <line x1="20" y1="90" x2="20" y2="95" style="stroke:var(--ink-800)"></line><text x="20" y="112" text-anchor="middle" style="font-size:12px;fill:var(--ink-600)">0</text>
+      <line x1="130" y1="90" x2="130" y2="95" style="stroke:var(--ink-800)"></line><text x="130" y="112" text-anchor="middle" style="font-size:12px;fill:var(--ink-600)">50</text>
+      <line x1="240" y1="90" x2="240" y2="95" style="stroke:var(--ink-800)"></line><text x="240" y="112" text-anchor="middle" style="font-size:12px;fill:var(--ink-600)">100</text>
+      <line x1="350" y1="90" x2="350" y2="95" style="stroke:var(--ink-800)"></line><text x="350" y="112" text-anchor="middle" style="font-size:12px;fill:var(--ink-600)">150</text>
+      <line x1="460" y1="90" x2="460" y2="95" style="stroke:var(--ink-800)"></line><text x="460" y="112" text-anchor="middle" style="font-size:12px;fill:var(--ink-600)">200</text>
+      <line x1="570" y1="90" x2="570" y2="95" style="stroke:var(--ink-800)"></line><text x="570" y="112" text-anchor="middle" style="font-size:12px;fill:var(--ink-600)">250</text>
+      <line x1="680" y1="90" x2="680" y2="95" style="stroke:var(--ink-800)"></line><text x="680" y="112" text-anchor="middle" style="font-size:12px;fill:var(--ink-600)">300</text>
+      <g style="transform:translateX({{ strip.med }}px);transition:transform 240ms var(--ease-out)">
+        <line x1="0" y1="24" x2="0" y2="90" style="stroke:var(--sky-600);stroke-width:2"></line>
+        <text x="0" y="16" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--sky-600)">mediana</text>
+      </g>
+      <g style="transform:translateX({{ strip.mean }}px);transition:transform 240ms var(--ease-out)">
+        <line x1="0" y1="44" x2="0" y2="90" style="stroke:var(--coral-600);stroke-width:2"></line>
+        <text x="0" y="38" text-anchor="middle" style="font-size:13px;font-weight:700;fill:var(--coral-600)">media</text>
+      </g>
+      <sc-for list="{{ strip.pts }}" as="p" hint-placeholder-count="0">
+        <circle cx="0" cy="0" r="6" style="transform:translate({{ p.x }}px,{{ p.y }}px);fill:{{ p.fill }};stroke:{{ p.stroke }};stroke-width:1.5"></circle>
+      </sc-for>
+      <text x="680" y="140" text-anchor="end" style="font-size:13px;fill:var(--ink-600)">ingreso mensual (miles)</text>
+    </svg>
+    <div style="display:flex;gap:40px;flex-wrap:wrap;justify-content:center">
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="100px,70px" label="Media" value="{{ strip.meanV }}" size="sm"></x-import>
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="100px,70px" label="Mediana" value="{{ strip.medV }}" size="sm"></x-import>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 2.</b> Doce ingresos. Arrastra el último hacia la derecha: la media lo persigue, la mediana apenas se mueve. Por eso la mediana es robusta a outliers y la preferimos en variables sesgadas.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Un sesgo <b>positivo</b> significa cola larga a la derecha, como los ingresos; uno <b>negativo</b>, cola larga a la izquierda. La curtosis mide qué tan pesadas son las colas comparadas con una normal. Los cuantiles, <code>df["col"].quantile([0.25, 0.5, 0.75])</code>, son la base del boxplot.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Principios de una buena visualización</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>Cada gráfica responde una pregunta.</b> Si no podemos decir en una frase cuál, sobra o le falta contexto.</li>
+    <li style="text-wrap:pretty"><b>Minimizar el chartjunk.</b> Cuadrículas pesadas, 3D innecesario, colores decorativos. El principio de Tufte: maximizar la proporción dato-tinta.</li>
+    <li style="text-wrap:pretty"><b>El eje Y de una barra empieza en cero.</b> En líneas y dispersión sí puede tener sentido acotar el rango.</li>
+    <li style="text-wrap:pretty"><b>Color con propósito.</b> Secuencial para numéricas ordenadas, cualitativa para categorías, divergente cuando hay un punto medio con significado (correlaciones de −1 a 1).</li>
+    <li style="text-wrap:pretty"><b>Etiquetar todo.</b> Título, ejes con unidades, leyenda.</li>
+  </ul>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,340px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Switch" hint-size="200px,24px" label="Eje Y desde cero" checked="{{ zero }}" onChange="{{ setZero }}"></x-import>
+    <div style="display:grid;grid-template-columns:40px repeat(3,80px);gap:0 24px;align-items:end;height:220px;border-bottom:1px solid var(--ink-800);padding:0 8px">
+      <div style="height:100%;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;font-size:12px;color:var(--ink-600);font-family:var(--font-mono)"><span>{{ bars.top }}</span><span>{{ bars.bottom }}</span></div>
+      <sc-for list="{{ bars.items }}" as="b" hint-placeholder-count="3">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end">
+          <span style="font-family:var(--font-mono);font-size:13px">{{ b.v }}</span>
+          <div style="width:100%;height:{{ b.h }}%;background:{{ b.fill }};border:1.5px solid {{ b.stroke }};border-bottom:none;border-radius:3px 3px 0 0;transition:height 640ms var(--ease-out)"></div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:grid;grid-template-columns:40px repeat(3,80px);gap:0 24px;padding:0 8px;font-size:14px;color:var(--ink-700);text-align:center"><span></span><span>Grupo A</span><span>Grupo B</span><span>Grupo C</span></div>
+    <div style="max-width:560px;text-align:center;font-size:16px;line-height:1.55;color:var(--text-muted);min-height:50px;text-wrap:pretty">{{ bars.desc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 3.</b> Los mismos tres números con dos ejes distintos.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Qué gráfica usar según la pregunta</h2>
+  <div style="margin:0 0 24px;border-top:2px solid var(--ink-800);border-bottom:2px solid var(--ink-800);font-size:16px">
+    <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;padding:8px 0;border-bottom:1px solid var(--ink-400);font-weight:700;color:var(--ink-900)"><span>Pregunta</span><span>Gráfica</span></div>
+    <sc-for list="{{ chartTable }}" as="r" hint-placeholder-count="7">
+      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px;padding:8px 0;border-bottom:1px solid var(--ink-100)"><span style="text-wrap:pretty">{{ r.q }}</span><span style="color:var(--ink-700);text-wrap:pretty">{{ r.g }}</span></div>
+    </sc-for>
+  </div>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">sns.histplot(df["columna"], kde=True)          # distribución
+sns.boxplot(data=df, x="categoria", y="valor")  # numérica por grupo
+sns.scatterplot(data=df, x="var1", y="var2",
+                hue="categoria", size="var3")   # relación, 3+ variables
+sns.heatmap(df.corr(numeric_only=True), annot=True,
+            cmap="coolwarm", vmin=-1, vmax=1)   # correlaciones
+sns.catplot(data=df, x="categoria", y="valor",
+            col="region", kind="box")           # pequeños múltiplos</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Cosas a vigilar al leer una gráfica</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Un histograma con pocos bins puede ocultar que los datos tienen dos modas; con demasiados, ocultar la forma general. Conviene probar varios valores de <code>bins</code>.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,340px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="280px,44px" label="Número de bins" min="{{ 2 }}" max="{{ 80 }}" step="{{ 1 }}" width="{{ 280 }}" tone="focus" value="{{ bins }}" onChange="{{ setBins }}"></x-import>
+    <svg viewBox="0 0 640 220" width="100%" style="max-width:680px;display:block;overflow:visible">
+      <sc-for list="{{ hist.bars }}" as="b" hint-placeholder-count="0">
+        <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" style="fill:var(--iris-200);stroke:var(--iris-400);stroke-width:1"></rect>
+      </sc-for>
+      <line x1="20" y1="200" x2="620" y2="200" style="stroke:var(--ink-800)"></line>
+    </svg>
+    <div style="max-width:560px;text-align:center;font-size:16px;line-height:1.55;color:var(--text-muted);min-height:50px;text-wrap:pretty">{{ hist.desc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 4.</b> 500 observaciones de una variable con dos modas. La forma que vemos depende del número de bins.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">En un scatter con muchos puntos superpuestos la densidad real se esconde: usamos <code>alpha</code>, <code>sns.kdeplot</code> en 2D o un <code>hexbin</code>. Un boxplot esconde el tamaño de muestra: un grupo de 3 observaciones se ve igual de sólido que uno de 3000, así que siempre verificamos <i style="font-family:var(--font-math);padding:0 2px">n</i> por grupo.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">Y dos cuidados con la correlación. Primero, <b>correlación no implica causalidad</b>: puede haber una variable confusora detrás, o causalidad inversa. Segundo, el coeficiente de <b>Pearson</b> solo mide relación <b>lineal</b>.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,420px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px">
+    <div style="width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;align-items:center">
+      <svg viewBox="0 0 400 300" width="100%" style="max-width:420px;display:block;margin:0 auto;overflow:visible">
+        <line x1="10" y1="290" x2="390" y2="290" style="stroke:var(--ink-800)"></line>
+        <line x1="10" y1="10" x2="10" y2="290" style="stroke:var(--ink-800)"></line>
+        <sc-for list="{{ corr.pts }}" as="p" hint-placeholder-count="0">
+          <circle cx="0" cy="0" r="5" style="transform:translate({{ p.x }}px,{{ p.y }}px);fill:var(--sky-200);stroke:var(--sky-600);stroke-width:1.2;transition:transform 720ms var(--ease-out) {{ p.delay }}ms"></circle>
+        </sc-for>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+        <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="320px,32px" options="{{ corrOpts }}" value="{{ corrMode }}" onChange="{{ setCorr }}"></x-import>
+        <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="120px,70px" label="Pearson r" value="{{ corr.r }}" size="md"></x-import>
+        <div style="border-top:1px solid var(--border-rule);padding-top:12px;font-size:16px;line-height:1.55;color:var(--text-muted);min-height:74px;text-wrap:pretty">{{ corr.desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 5.</b> Los mismos 60 puntos acomodados de cuatro formas. En la curva en U la relación es fuerte y aun así r queda cerca de 0. Siempre revisamos el scatter, no solo el número.</figcaption>
+  </div>
+</x-import>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F1-03-Python-Pandas.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Anterior</div><div style="font-weight:600;color:var(--text-strong)">Python y Pandas</div></a>
+  <a href="F1-05-Preprocesamiento.dc.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Siguiente →</div><div style="font-weight:600;color:var(--text-strong)">Preprocesamiento</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    const r = this.rng(21);
+    this.hdata = Array.from({ length: 500 }, (_, i) => i % 5 < 3 ? 35 + this.gauss(r) * 8 : 68 + this.gauss(r) * 7);
+    const base = Array.from({ length: 60 }, (_, i) => -1 + i * 2 / 59);
+    const nz = base.map(() => this.gauss(r)), nz2 = base.map(() => this.gauss(r));
+    this.corrSets = {
+      lin: base.map((x, i) => [x, 0.8 * x + 0.22 * nz[i]]),
+      u: base.map((x, i) => [x, 1.6 * x * x - 0.6 + 0.12 * nz[i]]),
+      none: base.map((x, i) => [nz2[i] * 0.45, nz[i] * 0.45]),
+      out: base.map((x, i) => i === 59 ? [0.95, 1.05] : [x * 0.25 - 0.55 + 0.12 * nz2[i], 0.28 * nz[i] - 0.6])
+    };
+    this.corrDelay = base.map(() => Math.round(r() * 220));
+    this.state = { vsel: 0, outlier: 60, zero: false, bins: 5, corrMode: 'lin' };
+  }
+  rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  renderVals() {
+    const S = this.state;
+    const VARS = [
+      ['precio', [0, 1, 3], 'Cuantitativa continua.', 'Puede tomar cualquier valor en un rango. Entra directo al modelo, quizá con escalado o una transformación log.'],
+      ['temperatura', [0, 1, 3], 'Cuantitativa continua.', 'Cualquier valor en un rango; los decimales tienen sentido.'],
+      ['número de hijos', [0, 1, 4], 'Cuantitativa discreta.', 'Cuenta cosas: solo valores enteros. Se trata como numérica.'],
+      ['número de clics', [0, 1, 4], 'Cuantitativa discreta.', 'Un conteo. Suele estar sesgado a la derecha.'],
+      ['color', [0, 2, 5], 'Cualitativa nominal.', 'Sin orden. Un modelo lineal necesita one-hot encoding: no tiene sentido multiplicar "rojo" por un coeficiente.'],
+      ['ciudad', [0, 2, 5], 'Cualitativa nominal.', 'Sin orden y a veces con muchas categorías. One-hot, o target encoding con cuidado.'],
+      ['nivel educativo', [0, 2, 6], 'Cualitativa ordinal.', 'Tiene orden pero no una distancia clara entre niveles. Codificación ordinal explícita.'],
+      ['calificación en estrellas', [0, 2, 6], 'Cualitativa ordinal.', 'Ordenada. A veces se trata como numérica si el espaciado entre niveles tiene sentido.'],
+      ['aprobó / reprobó', [0, 2, 5, 7], 'Binaria.', 'Nominal con dos categorías. Se codifica directo como 0/1 y se trata casi como numérica.']
+    ];
+    const vs = VARS[S.vsel], path = vs[1];
+    const on = i => path.includes(i);
+    const node = i => ({ f: on(i) ? 'var(--iris-200)' : 'var(--paper)', s: on(i) ? 'var(--iris-600)' : 'var(--ink-400)' });
+    const P = [[360, 30], [180, 115], [540, 115], [90, 205], [270, 205], [450, 205], [630, 205], [450, 290]];
+    const E = [[0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6], [5, 7]];
+    const edges = E.map(([a, b]) => { const A = P[a], B = P[b], my = (A[1] + B[1]) / 2; const act = on(a) && on(b); return { d: `M${A[0]},${A[1] + 18} C${A[0]},${my} ${B[0]},${my} ${B[0]},${B[1] - 18}`, c: act ? 'var(--iris-600)' : 'var(--ink-300)', w: act ? 2 : 1.5 }; });
+    const tree = { edges }; for (let i = 0; i < 8; i++) tree['n' + i] = node(i);
+
+    const inc = [12, 15, 17, 18, 20, 21, 23, 25, 26, 28, 31, S.outlier];
+    const sorted = inc.slice().sort((a, b) => a - b);
+    const mean = inc.reduce((a, b) => a + b) / inc.length, med = (sorted[5] + sorted[6]) / 2;
+    const sx = v => 20 + v / 300 * 660;
+    const stack = {};
+    const pts = inc.map((v, i) => { const k = Math.round(v / 4); stack[k] = (stack[k] || 0) + 1; return { x: sx(v), y: 83 - (stack[k] - 1) * 13, fill: i === 11 ? 'var(--iris-200)' : 'var(--ink-200)', stroke: i === 11 ? 'var(--iris-600)' : 'var(--ink-600)' }; });
+
+    const vals = [52, 55, 58];
+    const lo = S.zero ? 0 : 50, hi = 60;
+    const bars = {
+      top: hi, bottom: lo,
+      items: vals.map((v, i) => ({ v, h: (v - lo) / (hi - lo) * 88, fill: i === 2 ? 'var(--sky-200)' : 'var(--ink-200)', stroke: i === 2 ? 'var(--sky-600)' : 'var(--ink-600)' })),
+      desc: S.zero ? 'Desde cero las diferencias se ven como lo que son: alrededor de un 10 %.' : 'Con el eje cortado en 50, C parece cuatro veces más grande que A. La longitud de una barra se lee como proporción; cortarla exagera.'
+    };
+
+    const B = Math.round(S.bins), lo2 = 5, hi2 = 95, w = (hi2 - lo2) / B;
+    const counts = new Array(B).fill(0);
+    this.hdata.forEach(v => { const k = Math.floor((v - lo2) / w); if (k >= 0 && k < B) counts[k]++; });
+    const mx = Math.max(...counts);
+    const bw = 600 / B;
+    const hist = {
+      bars: counts.map((c, i) => ({ x: 20 + i * bw, w: Math.max(0.5, bw - 1), h: c / mx * 180, y: 200 - c / mx * 180 })),
+      desc: B <= 5 ? 'Con tan pocos bins parece una sola joroba. Las dos modas desaparecen.' : B >= 50 ? 'Con demasiados bins el ruido domina y la forma general se vuelve difícil de leer.' : 'En este rango las dos modas son visibles sin que el ruido tape la forma.'
+    };
+
+    const cm = S.corrMode, set = this.corrSets[cm];
+    const n = set.length, mxx = set.reduce((a, p) => a + p[0], 0) / n, myy = set.reduce((a, p) => a + p[1], 0) / n;
+    let sxy = 0, sxx = 0, syy = 0; set.forEach(([x, y]) => { sxy += (x - mxx) * (y - myy); sxx += (x - mxx) ** 2; syy += (y - myy) ** 2; });
+    const rr = sxy / Math.sqrt(sxx * syy);
+    const CD = { lin: 'Relación lineal fuerte: r lo captura bien.', u: 'Relación fuerte pero no lineal. Pearson no la ve: r ≈ 0.', none: 'Sin relación: r ≈ 0, y aquí sí significa que no hay patrón.', out: 'Casi sin relación en el grupo principal, pero un solo punto extremo infla r.' };
+    return {
+      vars: VARS.map((v, i) => ({ name: v[0], pick: () => this.setState({ vsel: i }), bg: i === S.vsel ? 'var(--iris-100)' : 'var(--paper)', border: i === S.vsel ? 'var(--iris-400)' : 'var(--border-rule)', color: i === S.vsel ? 'var(--iris-600)' : 'var(--ink-700)' })),
+      tree, vsel: { title: vs[2], desc: vs[3] },
+      outlier: S.outlier, setOutlier: v => this.setState({ outlier: v }),
+      strip: { pts, mean: sx(mean), med: sx(med), meanV: mean.toFixed(1), medV: med.toFixed(1), ticks: [0, 50, 100, 150, 200, 250, 300].map(v => ({ x: sx(v), v })) },
+      zero: S.zero, setZero: v => this.setState({ zero: v }), bars,
+      chartTable: [
+        ['¿Cómo se distribuye una variable numérica?', 'Histograma, boxplot, KDE (densidad)'],
+        ['¿Cómo se distribuye una variable categórica?', 'Barras (conteo o frecuencia)'],
+        ['¿Hay relación entre dos variables numéricas?', 'Scatter plot'],
+        ['¿Cómo varía una numérica según categorías?', 'Boxplot por grupo, violin plot, barras con error'],
+        ['¿Hay correlación entre muchas variables numéricas?', 'Heatmap de matriz de correlación'],
+        ['¿Cómo cambia algo en el tiempo?', 'Línea de tiempo (line plot)'],
+        ['¿Cómo se relacionan 3+ variables a la vez?', 'Scatter con color/tamaño (hue, size), o pequeños múltiplos (facetas)']
+      ].map(([q, g]) => ({ q, g })),
+      bins: B, setBins: v => this.setState({ bins: v }), hist,
+      corrOpts: [{ value: 'lin', label: 'Lineal' }, { value: 'u', label: 'Curva en U' }, { value: 'none', label: 'Ninguna' }, { value: 'out', label: 'Un outlier' }],
+      corrMode: cm, setCorr: v => this.setState({ corrMode: v }),
+      corr: { pts: set.map(([x, y], i) => ({ x: 200 + x * 175, y: 150 - y * 120, delay: this.corrDelay[i] })), r: rr.toFixed(2), desc: CD[cm] }
+    };
+  }
+}
+</script>
+</body>
+</html>

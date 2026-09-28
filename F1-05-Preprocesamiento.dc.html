@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Preprocesamiento de datos — Fase 1</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="index.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <span style="color:var(--text-muted);font-variant-numeric:tabular-nums">Fase 1 · 05 de 05</span>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Fase 1 · Fundamentos" title="Preprocesamiento de datos" description="Casi ningún dataset real está listo para un modelo. Aquí se va la mayor parte del tiempo, y aquí se cuelan los errores silenciosos que invalidan la evaluación."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Actualizado el 5 sep 2026 · Fuente: Alan A4 (TEC IN5148)</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">1. Valores faltantes</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Antes de contar cuántos faltan, diagnosticamos el <b>patrón</b>. Si la ausencia no depende de nada es <b>MCAR</b> (<i>missing completely at random</i>). Si depende de otras variables que sí observamos es <b>MAR</b>. Si depende del propio valor faltante es <b>MNAR</b>, el caso difícil.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,440px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px">
+    <div style="width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;align-items:center">
+      <svg viewBox="0 0 420 300" width="100%" style="max-width:440px;display:block;margin:0 auto;overflow:visible">
+        <line x1="30" y1="280" x2="410" y2="280" style="stroke:var(--ink-800)"></line>
+        <line x1="30" y1="10" x2="30" y2="280" style="stroke:var(--ink-800)"></line>
+        <text x="410" y="298" text-anchor="end" style="font-size:13px;fill:var(--ink-600)">duración de la encuesta →</text>
+        <text transform="translate(18,280) rotate(-90)" style="font-size:13px;fill:var(--ink-600)">ingreso →</text>
+        <line x1="30" x2="410" y1="{{ miss.trueY }}" y2="{{ miss.trueY }}" style="stroke:var(--ink-700);stroke-width:1.5;stroke-dasharray:6 4"></line>
+        <line x1="30" x2="410" y1="0" y2="0" style="transform:translateY({{ miss.obsY }}px);stroke:var(--coral-500);stroke-width:2;transition:transform 640ms var(--ease-out)"></line>
+        <sc-for list="{{ miss.pts }}" as="p" hint-placeholder-count="0">
+          <circle cx="{{ p.x }}" cy="{{ p.y }}" r="5.5" style="fill:{{ p.fill }};stroke:{{ p.stroke }};stroke-width:1.5;stroke-dasharray:{{ p.dash }};opacity:{{ p.op }};transition:fill 480ms var(--ease-out) {{ p.delay }}ms,stroke 480ms var(--ease-out) {{ p.delay }}ms,opacity 480ms var(--ease-out) {{ p.delay }}ms"></circle>
+        </sc-for>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="220px,32px" options="{{ missOpts }}" value="{{ missMode }}" onChange="{{ setMiss }}"></x-import>
+        <div style="display:flex;gap:28px;flex-wrap:wrap">
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="100px,70px" label="Media real" value="{{ miss.trueM }}" size="sm"></x-import>
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="100px,70px" label="Media observada" value="{{ miss.obsM }}" size="sm"></x-import>
+        </div>
+        <div style="border-top:1px solid var(--border-rule);padding-top:12px;font-size:16px;line-height:1.55;color:var(--text-muted);min-height:96px;text-wrap:pretty"><b style="color:var(--text-strong)">{{ miss.title }}</b> {{ miss.desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> Cuarenta respuestas de una encuesta; los círculos punteados son ingresos que no se reportaron. La línea punteada es la media real; la roja, la que calcularíamos solo con los datos observados.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Las opciones de tratamiento, de más simple a más elaborada:</p>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>Eliminar</b> filas o columnas con muchos nulos (<code>df.dropna()</code>). Razonable si son pocas filas y el patrón parece MCAR.</li>
+    <li style="text-wrap:pretty"><b>Imputar con un valor fijo</b>: media o mediana en numéricas (mediana si hay outliers o sesgo); moda o una categoría "desconocido" en categóricas.</li>
+    <li style="text-wrap:pretty"><b>Imputar con un modelo</b> (<code>KNNImputer</code>, o una regresión sobre las demás variables). Útil cuando el patrón es MAR.</li>
+    <li style="text-wrap:pretty"><b>Agregar un indicador</b> además de imputar: <code>df["a_faltante"] = df["a"].isna().astype(int)</code>. Así el modelo puede aprender que faltar ya es informativo.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">2. Codificar variables categóricas</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Un modelo necesita números. La pregunta es cómo convertir una categoría sin inventar información que no está en los datos.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,360px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:20px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="380px,32px" options="{{ encOpts }}" value="{{ encMode }}" onChange="{{ setEnc }}"></x-import>
+    <div style="display:flex;flex-wrap:wrap;gap:28px;justify-content:center;align-items:flex-start;font-size:14px">
+      <div style="display:grid;grid-template-columns:90px;border-top:2px solid var(--ink-800);border-bottom:2px solid var(--ink-800)">
+        <div style="padding:6px 10px;font-weight:700;border-bottom:1px solid var(--ink-400)">color</div>
+        <sc-for list="{{ enc.src }}" as="c" hint-placeholder-count="5"><div style="padding:6px 10px;display:flex;align-items:center;gap:8px"><span style="width:9px;height:9px;border-radius:50%;background:{{ c.dot }}"></span>{{ c.v }}</div></sc-for>
+      </div>
+      <span style="padding-top:70px;font-size:20px;color:var(--ink-500)">→</span>
+      <div style="display:grid;grid-template-columns:{{ enc.grid }};border-top:2px solid var(--ink-800);border-bottom:2px solid var(--ink-800)">
+        <sc-for list="{{ enc.head }}" as="h" hint-placeholder-count="3"><div style="padding:6px 10px;font-weight:700;font-family:var(--font-mono);font-size:13px;border-bottom:1px solid var(--ink-400)">{{ h }}</div></sc-for>
+        <sc-for list="{{ enc.cells }}" as="c" hint-placeholder-count="15"><div style="padding:6px 10px;font-family:var(--font-mono);text-align:center;background:{{ c.bg }};color:{{ c.color }};transition:background 320ms var(--ease-out) {{ c.delay }}ms">{{ c.v }}</div></sc-for>
+      </div>
+    </div>
+    <div style="max-width:580px;text-align:center;font-size:16px;line-height:1.55;color:var(--text-muted);min-height:74px;text-wrap:pretty"><code style="color:var(--iris-600)">{{ enc.code }}</code><br>{{ enc.desc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 2.</b> Tres formas de codificar una variable nominal de tres categorías.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">El <b>target encoding</b> reemplaza cada categoría por el promedio de <i style="font-family:var(--font-math);padding:0 2px">y</i> en esa categoría. Es poderoso con muchas categorías, pero se calcula solo con datos de train para no filtrar información. Y siempre decidimos explícitamente qué hacer con <b>categorías nuevas en test</b> que no aparecieron en train: ignorarlas, mandarlas a "otros", pero nunca fallar en silencio.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">3. Escalar variables numéricas</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Los modelos que miden distancias o usan descenso de gradiente (KNN, SVM, regresión regularizada, redes neuronales, PCA) son sensibles a la escala. Un ingreso en miles domina a una edad en años solo por su magnitud, no porque importe más.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,380px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:20px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="380px,32px" options="{{ scOpts }}" value="{{ scMode }}" onChange="{{ setSc }}"></x-import>
+    <div style="position:relative;width:100%;max-width:720px">
+      <svg viewBox="0 0 720 190" width="100%" style="display:block;overflow:visible">
+        <text x="0" y="46" style="font-size:14px;font-weight:700;fill:var(--sky-600)">edad</text>
+        <text x="0" y="116" style="font-size:14px;font-weight:700;fill:var(--coral-600)">ingreso</text>
+        <line x1="90" y1="42" x2="710" y2="42" style="stroke:var(--ink-200)"></line>
+        <line x1="90" y1="112" x2="710" y2="112" style="stroke:var(--ink-200)"></line>
+        <line x1="90" y1="160" x2="710" y2="160" style="stroke:var(--ink-800)"></line>
+        <sc-for list="{{ sc.ticks }}" as="t" hint-placeholder-count="0">
+          <line x1="0" y1="160" x2="0" y2="166" style="transform:translateX({{ t.x }}px);stroke:var(--ink-800)"></line>
+        </sc-for>
+        <sc-for list="{{ sc.age }}" as="p" hint-placeholder-count="0">
+          <circle cx="0" cy="42" r="6" style="transform:translateX({{ p.x }}px);fill:var(--sky-200);stroke:var(--sky-600);stroke-width:1.2;opacity:0.85;transition:transform 720ms var(--ease-out) {{ p.delay }}ms"></circle>
+        </sc-for>
+        <sc-for list="{{ sc.inc }}" as="p" hint-placeholder-count="0">
+          <circle cx="0" cy="112" r="6" style="transform:translateX({{ p.x }}px);fill:var(--coral-200);stroke:var(--coral-500);stroke-width:1.2;opacity:0.85;transition:transform 720ms var(--ease-out) {{ p.delay }}ms"></circle>
+        </sc-for>
+      </svg>
+      <sc-for list="{{ sc.ticks }}" as="t" hint-placeholder-count="0">
+        <span style="position:absolute;top:{{ t.top }}%;left:{{ t.pct }}%;transform:translateX(-50%);font-size:12px;color:var(--ink-600);font-family:var(--font-mono)">{{ t.v }}</span>
+      </sc-for>
+    </div>
+    <div style="max-width:580px;text-align:center;font-size:16px;line-height:1.55;color:var(--text-muted);min-height:74px;margin-top:10px;text-wrap:pretty"><b style="color:var(--text-strong)">{{ sc.title }}</b> {{ sc.desc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 3.</b> Treinta personas, con edad e ingreso dibujados sobre el mismo eje. Una tiene un ingreso extremo. Cambia el escalado y observa cómo se reparten las dos variables.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <div style="display:flex;flex-direction:column;gap:0">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="1" tex="\text{z-score:}\quad x' = \frac{x - \mu}{\sigma}"></x-import>
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="2" tex="\text{min-max:}\quad x' = \frac{x - \min}{\max - \min}"></x-import>
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="3" tex="\text{robust:}\quad x' = \frac{x - \text{mediana} }{\mathrm{IQR} }"></x-import>
+  </div>
+  <p style="margin:0 0 20px;text-wrap:pretty">La estandarización es la opción por defecto. Min-max lleva todo a <i style="font-family:var(--font-math);padding:0 2px">[0, 1]</i> y es sensible a outliers: un solo valor extremo comprime a todos los demás. Robust usa mediana e IQR, así que el outlier no dicta la escala.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">Los <b>árboles</b> (Fase 6) generalmente no necesitan escalado: dividen por umbrales en cada variable de forma independiente, no por distancia.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">4. Transformar variables sesgadas</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Cuando una variable tiene una cola larga a la derecha, como ingresos o precios, <i style="font-family:var(--font-math);padding:0 2px">log(x)</i> o <i style="font-family:var(--font-math);padding:0 2px">log(1 + x)</i> (<code>np.log1p</code>, útil si hay ceros) la acerca a una forma simétrica. Los outliers pesan menos en la escala transformada.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,320px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="220px,32px" options="{{ logOpts }}" value="{{ logMode }}" onChange="{{ setLog }}"></x-import>
+    <div style="width:100%;max-width:640px;height:180px;display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--ink-800)">
+      <sc-for list="{{ logBars }}" as="b" hint-placeholder-count="30">
+        <div style="flex:1;height:{{ b.h }}%;background:var(--iris-200);border:1px solid var(--iris-400);border-bottom:none;border-radius:2px 2px 0 0;transition:height 720ms var(--ease-out) {{ b.delay }}ms"></div>
+      </sc-for>
+    </div>
+    <div style="width:100%;max-width:640px;display:flex;justify-content:space-between;font-size:12px;color:var(--ink-600);font-family:var(--font-mono)"><span>{{ logAxis.lo }}</span><span>{{ logAxis.mid }}</span><span>{{ logAxis.hi }}</span></div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 4.</b> 600 ingresos simulados. En escala original casi todo se amontona a la izquierda; después de log1p la distribución es casi simétrica.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">5. Outliers</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Una regla común para detectarlos: todo lo que quede fuera de <i style="font-family:var(--font-math);padding:0 2px">[Q1 − 1.5·IQR, Q3 + 1.5·IQR]</i>. Otra, <i style="font-family:var(--font-math);padding:0 2px">|z| > 3</i>. Ninguna decide por nosotros.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,300px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="280px,44px" label="Multiplicador del IQR" min="{{ 0.5 }}" max="{{ 3 }}" step="{{ 0.1 }}" width="{{ 280 }}" tone="focus" value="{{ kIqr }}" onChange="{{ setK }}" format="{{ fmt1 }}"></x-import>
+    <svg viewBox="0 0 700 130" width="100%" style="max-width:720px;display:block;overflow:visible">
+      <rect x="{{ box.q1 }}" y="30" width="{{ box.w }}" height="44" rx="3" style="fill:var(--ink-50);stroke:var(--ink-600);stroke-width:1.5"></rect>
+      <line x1="{{ box.med }}" x2="{{ box.med }}" y1="30" y2="74" style="stroke:var(--ink-800);stroke-width:2"></line>
+      <line x1="0" x2="0" y1="18" y2="86" style="transform:translateX({{ box.lo }}px);stroke:var(--coral-500);stroke-width:1.5;stroke-dasharray:4 3;transition:transform 240ms var(--ease-out)"></line>
+      <line x1="0" x2="0" y1="18" y2="86" style="transform:translateX({{ box.hi }}px);stroke:var(--coral-500);stroke-width:1.5;stroke-dasharray:4 3;transition:transform 240ms var(--ease-out)"></line>
+      <sc-for list="{{ box.pts }}" as="p" hint-placeholder-count="0">
+        <circle cx="{{ p.x }}" cy="{{ p.y }}" r="5" style="fill:{{ p.fill }};stroke:{{ p.stroke }};stroke-width:1.5;transition:fill 240ms var(--ease-out),stroke 240ms var(--ease-out)"></circle>
+      </sc-for>
+      <line x1="20" y1="110" x2="680" y2="110" style="stroke:var(--ink-800)"></line>
+      <text x="680" y="128" text-anchor="end" style="font-size:13px;fill:var(--ink-600)">monto de la transacción</text>
+    </svg>
+    <div style="max-width:580px;text-align:center;font-size:16px;line-height:1.55;color:var(--text-muted);min-height:50px;text-wrap:pretty"><b style="color:var(--coral-600)">{{ box.n }}</b> {{ box.desc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 5.</b> Boxplot con las cercas Q1 − k·IQR y Q3 + k·IQR (líneas rojas). Cambiar k cambia qué llamamos outlier; los datos son los mismos.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Detectado un outlier, preguntamos: ¿es un <b>error de captura</b> (se corrige o se elimina) o una <b>observación real pero extrema</b> (se conserva, quizá con un modelo robusto o una transformación log)? Eliminar outliers reales sin justificación sesga el modelo hacia el caso típico y lo hace fallar justo en los casos raros, que a veces son los importantes: fraude, fallas, eventos extremos.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">6. Feature engineering</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Crear variables nuevas suele importar más que el algoritmo elegido: combinaciones (<code>ingreso / num_personas</code>), binning de una continua (<code>pd.cut</code>), componentes de fecha (día de la semana, fin de semana) o interacciones. Lo profundizaremos en fases posteriores.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">La regla más importante: evitar data leakage</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty"><b>Ajustamos (<code>fit</code>) el preprocesamiento solo con datos de entrenamiento y lo aplicamos (<code>transform</code>) igual a train y test.</b> Si calculamos la media para imputar, los límites para escalar o las categorías de un encoder con todo el dataset, filtramos información del test al entrenamiento. Eso es <b>data leakage</b>, y hace que la evaluación sea optimista de forma falsa.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,400px" width="page">
+  <div data-auto="leak" style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="260px,32px" options="{{ leakOpts }}" value="{{ leakMode }}" onChange="{{ setLeak }}"></x-import>
+    <svg viewBox="0 0 760 250" width="100%" style="max-width:760px;display:block;overflow:visible">
+      <defs>
+        <marker id="la" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L9,5 L0,9" style="fill:none;stroke:var(--ink-600);stroke-width:1.5"></path></marker>
+        <marker id="lb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L9,5 L0,9" style="fill:none;stroke:var(--coral-500);stroke-width:1.5"></path></marker>
+      </defs>
+      <g style="opacity:{{ leak.okOp }};transition:opacity 480ms var(--ease-out)">
+        <sc-for list="{{ leak.okEdges }}" as="e" hint-placeholder-count="0">
+          <path d="{{ e.d }}" pathLength="1" style="fill:none;stroke:{{ e.c }};stroke-width:1.5;stroke-dasharray:1;stroke-dashoffset:{{ e.off }};transition:stroke-dashoffset 560ms var(--ease-out) {{ e.delay }}ms"></path>
+        </sc-for>
+        <g style="transform:translate(60px,125px)"><rect x="-50" y="-20" width="100" height="40" rx="6" style="fill:var(--paper);stroke:var(--ink-600);stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10))"></rect><text y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">Datos</text></g>
+        <g style="transform:translate(200px,125px)"><rect x="-60" y="-15" width="120" height="30" rx="15" style="fill:var(--ink-100);stroke:var(--ink-400);stroke-width:1"></rect><text y="5" text-anchor="middle" style="font-size:13px;font-family:var(--font-mono);fill:var(--ink-800)">split</text></g>
+        <g style="transform:translate(340px,60px)"><rect x="-50" y="-20" width="100" height="40" rx="6" style="fill:var(--ink-50);stroke:var(--ink-700);stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10))"></rect><text y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">X_train</text></g>
+        <g style="transform:translate(340px,190px)"><rect x="-50" y="-20" width="100" height="40" rx="6" style="fill:var(--coral-100);stroke:var(--coral-400);stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10))"></rect><text y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">X_test</text></g>
+        <g style="transform:translate(500px,60px)"><rect x="-58" y="-20" width="116" height="40" rx="6" style="fill:var(--iris-200);stroke:var(--iris-600);stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10))"></rect><text y="5" text-anchor="middle" style="font-size:13px;font-family:var(--font-mono);fill:var(--ink-900)">fit → μ, σ</text></g>
+        <g style="transform:translate(670px,60px)"><rect x="-62" y="-20" width="124" height="40" rx="6" style="fill:var(--paper);stroke:var(--ink-600);stroke-width:1.5"></rect><text y="5" text-anchor="middle" style="font-size:13px;font-family:var(--font-mono);fill:var(--ink-900)">transform</text></g>
+        <g style="transform:translate(670px,190px)"><rect x="-62" y="-20" width="124" height="40" rx="6" style="fill:var(--paper);stroke:var(--ink-600);stroke-width:1.5"></rect><text y="5" text-anchor="middle" style="font-size:13px;font-family:var(--font-mono);fill:var(--ink-900)">transform</text></g>
+        <text x="518" y="138" style="font-family:var(--font-serif);font-style:italic;font-size:14px;fill:var(--iris-600)">mismos μ, σ</text>
+      </g>
+      <g style="opacity:{{ leak.badOp }};transition:opacity 480ms var(--ease-out)">
+        <sc-for list="{{ leak.badEdges }}" as="e" hint-placeholder-count="0">
+          <path d="{{ e.d }}" pathLength="1" style="fill:none;stroke:{{ e.c }};stroke-width:{{ e.w }};stroke-dasharray:1;stroke-dashoffset:{{ e.off }};transition:stroke-dashoffset 560ms var(--ease-out) {{ e.delay }}ms"></path>
+        </sc-for>
+        <g style="transform:translate(60px,125px)"><rect x="-50" y="-20" width="100" height="40" rx="6" style="fill:var(--paper);stroke:var(--ink-600);stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10))"></rect><text y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">Datos</text></g>
+        <g style="transform:translate(210px,125px)"><rect x="-66" y="-20" width="132" height="40" rx="6" style="fill:var(--coral-200);stroke:var(--coral-500);stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10))"></rect><text y="5" text-anchor="middle" style="font-size:13px;font-family:var(--font-mono);fill:var(--ink-900)">fit_transform</text></g>
+        <g style="transform:translate(370px,125px)"><rect x="-60" y="-15" width="120" height="30" rx="15" style="fill:var(--ink-100);stroke:var(--ink-400);stroke-width:1"></rect><text y="5" text-anchor="middle" style="font-size:13px;font-family:var(--font-mono);fill:var(--ink-800)">split</text></g>
+        <g style="transform:translate(530px,60px)"><rect x="-50" y="-20" width="100" height="40" rx="6" style="fill:var(--ink-50);stroke:var(--ink-700);stroke-width:1.5"></rect><text y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">X_train</text></g>
+        <g style="transform:translate(530px,190px)"><rect x="-50" y="-20" width="100" height="40" rx="6" style="fill:var(--coral-100);stroke:var(--coral-400);stroke-width:1.5"></rect><text y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">X_test</text></g>
+        <text x="210" y="178" text-anchor="middle" style="font-family:var(--font-serif);font-style:italic;font-size:14px;fill:var(--coral-600)">μ y σ ya incluyen al test</text>
+        <text x="640" y="130" style="font-family:var(--font-serif);font-style:italic;font-size:14px;fill:var(--coral-600)">el modelo</text>
+        <text x="640" y="148" style="font-family:var(--font-serif);font-style:italic;font-size:14px;fill:var(--coral-600)">"ya vio" el test</text>
+      </g>
+    </svg>
+    <div style="max-width:580px;text-align:center;font-size:16px;line-height:1.55;color:var(--text-muted);min-height:74px;text-wrap:pretty">{{ leak.desc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 6.</b> El orden de las operaciones con un StandardScaler. Arriba de todo está la misma pregunta: ¿de qué datos salieron μ y σ?</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42)
+
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)  # aprende μ, σ SOLO de train
+X_test_scaled = scaler.transform(X_test)        # aplica esos mismos valores</pre>
+  <p style="margin:0 0 20px;text-wrap:pretty">La misma regla aplica a cualquier paso que aprenda algo de los datos: imputación, encoding, selección de variables. El orden correcto siempre es separar train y test primero, y ajustar todo lo demás después, solo sobre train.</p>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F1-04-Datos-Visualizacion.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Anterior</div><div style="font-weight:600;color:var(--text-strong)">Tipos de datos y visualización</div></a>
+  <a href="index.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Fin de la fase →</div><div style="font-weight:600;color:var(--text-strong)">Volver al índice</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    const r = this.rng(5);
+    this.people = Array.from({ length: 40 }, () => { const d = 5 + r() * 25; return { d, y: 18 + 1.1 * d + this.gauss(r) * 6, u: r(), delay: Math.round(r() * 300) }; });
+    const ys = this.people.map(p => p.y).sort((a, b) => a - b); this.yRank = this.people.map(p => ys.indexOf(p.y) / 39);
+    this.age = Array.from({ length: 30 }, () => 22 + r() * 43);
+    this.inc = Array.from({ length: 30 }, (_, i) => i === 29 ? 420000 : Math.round(12000 + Math.exp(this.gauss(r) * 0.5) * 30000));
+    this.scDelay = this.age.map(() => Math.round(r() * 200));
+    this.logData = Array.from({ length: 600 }, () => Math.exp(10 + this.gauss(r) * 0.8));
+    this.tx = [18, 22, 25, 27, 28, 30, 31, 33, 34, 35, 36, 38, 40, 41, 43, 46, 48, 52, 58, 64, 75, 96, 140].map((v, i) => [v, i]);
+    this.state = { missMode: 'mcar', encMode: 'onehot', scMode: 'raw', logMode: 'raw', kIqr: 1.5, leakMode: 'ok', leakDrawn: false };
+  }
+  rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  componentDidMount() { this.watch('leak', () => this.setState({ leakDrawn: true })); }
+  componentWillUnmount() { (this.unw || []).forEach(u => u()); clearTimeout(this.lt); }
+  watch(key, fn) {
+    const check = () => {
+      const el = document.querySelector('[data-auto="' + key + '"]');
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      if (r.top < innerHeight * 0.75 && r.bottom > innerHeight * 0.2) { window.removeEventListener('scroll', check); fn(); }
+    };
+    window.addEventListener('scroll', check, { passive: true });
+    (this.unw = this.unw || []).push(() => window.removeEventListener('scroll', check));
+    setTimeout(check, 600);
+  }
+  q(arr, p) { const s = arr.slice().sort((a, b) => a - b), i = (s.length - 1) * p, lo = Math.floor(i); return s[lo] + (s[Math.ceil(i)] - s[lo]) * (i - lo); }
+  renderVals() {
+    const S = this.state;
+    const mm = S.missMode;
+    const miss = this.people.map((p, i) => mm === 'mcar' ? p.u < 0.3 : mm === 'mar' ? (p.d < 13 ? p.u < 0.8 : p.u < 0.08) : (this.yRank[i] > 0.62 ? p.u < 0.8 : p.u < 0.05));
+    const sx = d => 30 + (d - 3) / 29 * 380, sy = y => 280 - (y - 10) / 50 * 260;
+    const trueM = this.people.reduce((a, p) => a + p.y, 0) / 40;
+    const obs = this.people.filter((_, i) => !miss[i]), obsM = obs.reduce((a, p) => a + p.y, 0) / obs.length;
+    const MT = {
+      mcar: ['MCAR.', 'Faltan al azar. La media observada queda cerca de la real; imputar con media o mediana es razonablemente seguro.'],
+      mar: ['MAR.', 'Faltan más en encuestas cortas, y la duración sí la observamos. Hay sesgo, pero podemos corregirlo imputando condicionado a la duración.'],
+      mnar: ['MNAR.', 'Quienes ganan más no reportan su ingreso. La ausencia depende del propio valor: cualquier imputación simple hereda el sesgo.']
+    }[mm];
+    const cats = ['rojo', 'verde', 'azul', 'verde', 'rojo'], dots = { rojo: 'var(--coral-400)', verde: 'var(--cat-8)', azul: 'var(--sky-400)' };
+    const em = S.encMode;
+    let head, rowsE, grid, code, desc;
+    if (em === 'label') { head = ['color_cod']; rowsE = cats.map(c => [{ rojo: 1, verde: 2, azul: 3 }[c]]); grid = '100px'; code = 'df["color"].map({"rojo": 1, "verde": 2, "azul": 3})'; desc = 'Un entero por categoría. El modelo leerá que azul es "el triple" de rojo y que verde está entre ambos: un orden y una distancia que no existen. Solo tiene sentido en ordinales.'; }
+    else { const cs = em === 'onehot' ? ['azul', 'rojo', 'verde'] : ['rojo', 'verde']; head = cs.map(c => 'color_' + c); rowsE = cats.map(c => cs.map(k => (c === k ? 1 : 0))); grid = cs.map(() => '104px').join(' '); code = em === 'onehot' ? 'pd.get_dummies(df, columns=["color"])' : 'pd.get_dummies(df, columns=["color"], drop_first=True)'; desc = em === 'onehot' ? 'Una columna binaria por categoría, sin orden inventado. En un modelo lineal, las tres columnas siempre suman 1: colinealidad perfecta, la trampa de la variable dummy.' : 'Quitamos una columna, que queda como referencia: azul es la fila con ceros en ambas. Se rompe la colinealidad sin perder información.'; }
+    const cells = []; rowsE.forEach((row, i) => row.forEach((v, j) => cells.push({ v, bg: em !== 'label' && v === 1 ? 'var(--iris-200)' : 'transparent', color: em !== 'label' && v === 0 ? 'var(--ink-400)' : 'var(--ink-900)', delay: (i * row.length + j) * 30 })));
+
+    const sm = S.scMode;
+    const tf = (arr) => { if (sm === 'raw') return arr; if (sm === 'z') { const m = arr.reduce((a, b) => a + b) / arr.length, s = Math.sqrt(arr.reduce((a, b) => a + (b - m) ** 2, 0) / arr.length); return arr.map(v => (v - m) / s); } if (sm === 'mm') { const lo = Math.min(...arr), hi = Math.max(...arr); return arr.map(v => (v - lo) / (hi - lo)); } const md = this.q(arr, 0.5), iqr = this.q(arr, 0.75) - this.q(arr, 0.25); return arr.map(v => (v - md) / iqr); };
+    const A = tf(this.age), I = tf(this.inc);
+    const dom = { raw: [0, 450000], z: [-2, 6], mm: [0, 1], rob: [-3, 15] }[sm];
+    const tks = { raw: [0, 100000, 200000, 300000, 400000], z: [-2, 0, 2, 4, 6], mm: [0, 0.25, 0.5, 0.75, 1], rob: [-3, 0, 3, 6, 9, 12, 15] }[sm];
+    const px = v => 90 + (v - dom[0]) / (dom[1] - dom[0]) * 620;
+    const fmt = v => sm === 'raw' ? (v === 0 ? '0' : (v / 1000) + 'k') : String(v);
+    const SCT = {
+      raw: ['Sin escalar.', 'En la misma escala, toda la variación de la edad cabe en un punto junto al cero. En una distancia euclidiana, el ingreso decidiría todo.'],
+      z: ['z-score.', 'Ambas quedan centradas en 0 con desviación 1 y se vuelven comparables. El outlier sigue lejos, a más de 5 desviaciones.'],
+      mm: ['Min-max.', 'Todo cabe en [0, 1], pero el ingreso extremo fija el máximo y comprime a las demás personas cerca de 0.'],
+      rob: ['Robust.', 'Mediana e IQR no dependen del outlier: el grupo principal conserva su dispersión y el extremo queda claramente aparte.']
+    }[sm];
+
+    const lm = S.logMode;
+    const vals = lm === 'raw' ? this.logData : this.logData.map(Math.log1p);
+    const lo = lm === 'raw' ? 0 : 7, hi = lm === 'raw' ? 150000 : 13, nb = 30, bw = (hi - lo) / nb;
+    const cnt = new Array(nb).fill(0); vals.forEach(v => { const k = Math.floor((v - lo) / bw); if (k >= 0 && k < nb) cnt[k]++; });
+    const mx = Math.max(...cnt);
+
+    const k = S.kIqr, T = this.tx.map(t => t[0]);
+    const q1 = this.q(T, 0.25), q3 = this.q(T, 0.75), med = this.q(T, 0.5), iqr = q3 - q1, f1 = q1 - k * iqr, f2 = q3 + k * iqr;
+    const bx = v => 20 + v / 150 * 660;
+    const st = {};
+    const bpts = T.map(v => { const out = v < f1 || v > f2; const kk = Math.round(v / 3); st[kk] = (st[kk] || 0) + 1; return { x: bx(v), y: 96 - (st[kk] - 1) * 0, fill: out ? 'var(--coral-200)' : 'var(--ink-200)', stroke: out ? 'var(--coral-500)' : 'var(--ink-600)', out }; });
+    const nOut = bpts.filter(p => p.out).length;
+
+    const lmode = S.leakMode, drawn = S.leakDrawn;
+    const E = (d, c, i, w) => ({ d, c, w: w || 1.5, off: drawn ? 0 : 1, delay: i * 180 });
+    const okEdges = [
+      E('M110,125 L140,125', 'var(--ink-600)', 0), E('M260,125 C280,125 270,60 290,60', 'var(--ink-600)', 1), E('M260,125 C280,125 270,190 290,190', 'var(--ink-600)', 1),
+      E('M390,60 L442,60', 'var(--iris-600)', 2), E('M558,60 L608,60', 'var(--iris-600)', 3), E('M500,80 C500,150 560,190 608,190', 'var(--iris-600)', 4), E('M390,190 L608,190', 'var(--ink-400)', 3)
+    ];
+    const badEdges = [
+      E('M110,125 L144,125', 'var(--ink-600)', 0), E('M276,125 L310,125', 'var(--ink-600)', 1),
+      E('M430,125 C450,125 460,60 480,60', 'var(--ink-600)', 2), E('M430,125 C450,125 460,190 480,190', 'var(--ink-600)', 2),
+      E('M580,190 C640,190 640,100 580,70', 'var(--coral-500)', 4, 2), E('M210,145 C210,230 480,240 520,212', 'var(--coral-500)', 3, 2)
+    ];
+    return {
+      missOpts: [{ value: 'mcar', label: 'MCAR' }, { value: 'mar', label: 'MAR' }, { value: 'mnar', label: 'MNAR' }], missMode: mm, setMiss: v => this.setState({ missMode: v }),
+      miss: {
+        pts: this.people.map((p, i) => ({ x: sx(p.d), y: sy(p.y), fill: miss[i] ? 'var(--paper)' : 'var(--sky-200)', stroke: miss[i] ? 'var(--ink-400)' : 'var(--sky-600)', dash: miss[i] ? '2 2' : 'none', op: miss[i] ? 0.8 : 1, delay: p.delay })),
+        trueY: sy(trueM), obsY: sy(obsM), trueM: trueM.toFixed(1), obsM: obsM.toFixed(1), title: MT[0], desc: MT[1]
+      },
+      encOpts: [{ value: 'label', label: 'Label encoding' }, { value: 'onehot', label: 'One-hot' }, { value: 'drop', label: 'One-hot, drop_first' }], encMode: em, setEnc: v => this.setState({ encMode: v }),
+      enc: { src: cats.map(v => ({ v, dot: dots[v] })), head, cells, grid, code, desc },
+      scOpts: [{ value: 'raw', label: 'Original' }, { value: 'z', label: 'z-score' }, { value: 'mm', label: 'Min-max' }, { value: 'rob', label: 'Robust' }], scMode: sm, setSc: v => this.setState({ scMode: v }),
+      sc: {
+        age: A.map((v, i) => ({ x: px(v), delay: this.scDelay[i] })), inc: I.map((v, i) => ({ x: px(v), delay: this.scDelay[i] })),
+        ticks: tks.map(v => ({ x: px(v), pct: px(v) / 720 * 100, top: 180 / 190 * 100, v: fmt(v) })), title: SCT[0], desc: SCT[1]
+      },
+      logOpts: [{ value: 'raw', label: 'Original' }, { value: 'log', label: 'log1p' }], logMode: lm, setLog: v => this.setState({ logMode: v }),
+      logBars: cnt.map((c, i) => ({ h: c / mx * 100, delay: i * 15 })),
+      logAxis: lm === 'raw' ? { lo: '0', mid: '75 000', hi: '150 000' } : { lo: '7', mid: '10', hi: '13' },
+      kIqr: k, setK: v => this.setState({ kIqr: v }), fmt1: v => (+v).toFixed(1),
+      box: { q1: bx(q1), w: bx(q3) - bx(q1), med: bx(med), lo: bx(Math.max(0, f1)), hi: bx(Math.min(150, f2)), pts: bpts, n: `${nOut} ${nOut === 1 ? 'outlier' : 'outliers'} con k = ${k.toFixed(1)}.`, desc: k < 1 ? 'Con cercas tan estrechas, transacciones normales se marcan como sospechosas.' : k > 2.2 ? 'Con cercas tan anchas, solo el caso más extremo queda fuera.' : 'La regla estándar marca la cola larga de montos altos.' },
+      leakOpts: [{ value: 'ok', label: 'Correcto' }, { value: 'bad', label: 'Con leakage' }], leakMode: lmode,
+      setLeak: v => { clearTimeout(this.lt); this.setState({ leakMode: v, leakDrawn: false }); this.lt = setTimeout(() => this.setState({ leakDrawn: true }), 60); },
+      leak: {
+        okOp: lmode === 'ok' ? 1 : 0, badOp: lmode === 'bad' ? 1 : 0, okEdges, badEdges,
+        desc: lmode === 'ok' ? 'Primero separamos. El scaler aprende μ y σ solo de X_train, y aplicamos exactamente esos valores a X_test. El test sigue siendo una muestra nueva.' : 'Si ajustamos el scaler con todos los datos antes de separar, μ y σ ya contienen información del test. La evaluación sale mejor de lo que el modelo merece.'
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

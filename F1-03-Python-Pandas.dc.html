@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Python y Pandas para Ciencia de Datos — Fase 1</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="index.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <span style="color:var(--text-muted);font-variant-numeric:tabular-nums">Fase 1 · 03 de 05</span>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Fase 1 · Fundamentos" title="Python y Pandas para Ciencia de Datos" description="Las ideas detrás de numpy y pandas: operar sobre arreglos completos, seleccionar por etiqueta o por posición, agrupar y unir tablas."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Actualizado el 5 sep 2026 · Fuente: Alan A2 (TEC IN5148)</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">numpy: operar sobre todo a la vez</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">pandas está construido sobre <b>numpy</b>. Su estructura central, <code>ndarray</code>, es un arreglo n-dimensional <b>homogéneo</b>: todos los elementos son del mismo tipo y viven en memoria contigua. Eso permite que las operaciones corran en código C por debajo.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">La consecuencia práctica es la <b>vectorización</b>: escribimos <code>arr * 2</code> en lugar de <code>[x*2 for x in arr]</code>. El resultado es el mismo; la velocidad cambia en órdenes de magnitud.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,360px" width="page">
+  <div data-auto="vec" style="width:100%;display:flex;flex-direction:column;gap:22px;align-items:center">
+    <div style="display:flex;flex-direction:column;gap:18px;width:100%;max-width:640px">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><span style="font-weight:700;color:var(--text-strong);font-size:15px">Loop de Python</span><code style="font-size:13px;color:var(--ink-600)">[x*2 for x in arr]</code></div>
+        <div style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px">
+          <sc-for list="{{ loopCells }}" as="c" hint-placeholder-count="8">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="height:36px;border-radius:6px;border:1.5px solid {{ c.inStroke }};background:{{ c.inFill }};display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:14px;transition:background 160ms var(--ease-out),border-color 160ms var(--ease-out)">{{ c.v }}</div>
+              <div style="height:36px;border-radius:6px;border:1.5px solid var(--ink-300);background:var(--paper);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:14px;color:var(--ink-900);box-shadow:1px 2px 0 rgba(0,0,0,.10)"><span style="opacity:{{ c.outOp }};transition:opacity 200ms var(--ease-out)">{{ c.out }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="height:4px;background:var(--ink-100);border-radius:2px;overflow:hidden"><div style="height:100%;width:{{ loopPct }}%;background:var(--ink-600);transition:width 300ms linear"></div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><span style="font-weight:700;color:var(--text-strong);font-size:15px">Vectorizado</span><code style="font-size:13px;color:var(--iris-600)">arr * 2</code></div>
+        <div style="display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px">
+          <sc-for list="{{ vecCells }}" as="c" hint-placeholder-count="8">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="height:36px;border-radius:6px;border:1.5px solid {{ c.inStroke }};background:{{ c.inFill }};display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:14px;transition:background 200ms var(--ease-out)">{{ c.v }}</div>
+              <div style="height:36px;border-radius:6px;border:1.5px solid var(--ink-300);background:var(--paper);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:14px;color:var(--ink-900);box-shadow:1px 2px 0 rgba(0,0,0,.10)"><span style="opacity:{{ c.outOp }};transition:opacity 200ms var(--ease-out)">{{ c.out }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="height:4px;background:var(--ink-100);border-radius:2px;overflow:hidden"><div style="height:100%;width:{{ vecPct }}%;background:var(--iris-600);transition:width 300ms linear"></div></div>
+      </div>
+    </div>
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Button" hint-size="110px,36px" variant="primary" onClick="{{ runVec }}">Ejecutar</x-import>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> El loop visita un elemento a la vez desde Python. La versión vectorizada entrega el arreglo completo a código compilado en una sola llamada. La diferencia de tiempo está exagerada para verla, pero la dirección es real.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">El <b>broadcasting</b> lleva la idea más lejos: numpy "expande" arreglos de forma distinta para que la operación tenga sentido, sin copiar datos de más. Sumar un arreglo de forma <code>(n, p)</code> con uno de forma <code>(p,)</code> suma ese vector a cada fila.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,320px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:22px;align-items:center">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:center;gap:18px;font-family:var(--font-mono);font-size:15px">
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+        <span style="font-family:var(--font-sans);font-size:13px;color:var(--text-muted)">b · forma (2, 3)</span>
+        <div style="display:grid;grid-template-columns:repeat(3,44px);gap:4px">
+          <sc-for list="{{ bc.b }}" as="v" hint-placeholder-count="6"><div style="height:40px;border-radius:6px;border:1.5px solid var(--ink-600);background:var(--paper);display:flex;align-items:center;justify-content:center;box-shadow:1px 2px 0 rgba(0,0,0,.10)">{{ v }}</div></sc-for>
+        </div>
+      </div>
+      <span style="padding-top:44px;font-size:20px;color:var(--ink-600)">+</span>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+        <span style="font-family:var(--font-sans);font-size:13px;color:var(--text-muted)">a · forma (3,)</span>
+        <div style="display:grid;grid-template-columns:repeat(3,44px);gap:4px">
+          <sc-for list="{{ bc.a }}" as="v" hint-placeholder-count="3"><div style="height:40px;border-radius:6px;border:1.5px solid var(--sky-400);background:var(--sky-200);display:flex;align-items:center;justify-content:center;box-shadow:1px 2px 0 rgba(0,0,0,.10)">{{ v }}</div></sc-for>
+          <sc-for list="{{ bc.a }}" as="v" hint-placeholder-count="3"><div style="height:40px;border-radius:6px;border:1.5px dashed var(--sky-400);background:var(--sky-100);display:flex;align-items:center;justify-content:center;color:var(--ink-600);opacity:{{ bc.ghostOp }};transform:translateY({{ bc.ghostY }}px);transition:opacity 480ms var(--ease-out),transform 640ms var(--ease-out)">{{ v }}</div></sc-for>
+        </div>
+      </div>
+      <span style="padding-top:44px;font-size:20px;color:var(--ink-600)">=</span>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
+        <span style="font-family:var(--font-sans);font-size:13px;color:var(--text-muted)">b + a · forma (2, 3)</span>
+        <div style="display:grid;grid-template-columns:repeat(3,44px);gap:4px">
+          <sc-for list="{{ bc.r }}" as="c" hint-placeholder-count="6"><div style="height:40px;border-radius:6px;border:1.5px solid var(--iris-600);background:var(--iris-200);display:flex;align-items:center;justify-content:center;opacity:{{ c.op }};transform:translateY({{ c.y }}px);transition:opacity 480ms var(--ease-out) {{ c.delay }}ms,transform 480ms var(--ease-out) {{ c.delay }}ms">{{ c.v }}</div></sc-for>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Button" hint-size="130px,36px" variant="primary" onClick="{{ bcNext }}">{{ bc.btn }}</x-import>
+    </div>
+    <div style="max-width:560px;text-align:center;font-size:16px;line-height:1.55;color:var(--text-muted);min-height:50px;text-wrap:pretty">{{ bc.desc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 2.</b> Broadcasting de un vector sobre una matriz. La copia punteada es conceptual: numpy no la guarda en memoria.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Las estructuras de pandas</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Una <b>Series</b> es una columna: un arreglo más un índice de etiquetas. Un <b>DataFrame</b> es una tabla: filas = observaciones, columnas = variables. Internamente cada columna es una Series y todas comparten el mismo <b>Index</b>, que puede ser un rango numérico, fechas (<code>DatetimeIndex</code>) o varios niveles (<code>MultiIndex</code>).</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">Al cargar un CSV, el primer comando que conviene correr siempre es <code>df.info()</code>: tipos de dato y nulos por columna.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">df = pd.read_csv("datos.csv")
+df.head(); df.tail()           # primeras/últimas filas
+df.info()                      # tipos y nulos por columna
+df.describe()                  # estadísticos de columnas numéricas
+df.describe(include="object")  # conteos y moda de categóricas
+df.shape                       # (filas, columnas)
+df.nunique()                   # valores únicos: detecta categóricas</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Seleccionar: por etiqueta o por posición</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Casi toda la confusión inicial con pandas viene de aquí. <code>.loc</code> selecciona por <b>etiqueta</b> o por condición; <code>.iloc</code> por <b>posición</b> entera. Los corchetes solos seleccionan columnas.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,420px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px">
+    <div style="width:100%;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+        <sc-for list="{{ ops }}" as="o" hint-placeholder-count="6">
+          <button type="button" onClick="{{ o.pick }}" style="text-align:left;font-family:var(--font-mono);font-size:13.5px;padding:8px 12px;border-radius:4px;border:1px solid {{ o.border }};background:{{ o.bg }};color:var(--ink-900);cursor:pointer;transition:background 240ms var(--ease-out)">{{ o.code }}</button>
+        </sc-for>
+        <div style="border-top:1px solid var(--border-rule);margin-top:10px;padding-top:12px;font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:72px"><span style="display:inline-flex;margin-right:6px"><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Tag" hint-size="80px,22px" tone="focus" mono="{{ true }}">{{ op.ret }}</x-import></span>{{ op.desc }}</div>
+      </div>
+      <div style="min-width:0;overflow-x:auto">
+        <div style="display:grid;grid-template-columns:44px repeat(4,minmax(64px,1fr));font-size:14px;min-width:340px">
+          <div style="font-family:var(--font-serif);font-style:italic;font-size:13px;color:var(--ink-500);padding:0 8px 4px">Index</div>
+          <div style="grid-column:span 4;font-family:var(--font-serif);font-style:italic;font-size:13px;color:var(--ink-500);padding:0 8px 4px;text-align:center">columnas →</div>
+          <div style="padding:8px;border-top:2px solid var(--ink-800);border-bottom:1px solid var(--ink-400)"></div>
+          <sc-for list="{{ table.cols }}" as="c" hint-placeholder-count="4">
+            <div style="padding:8px;border-top:2px solid var(--ink-800);border-bottom:1px solid var(--ink-400);font-weight:700;color:var(--ink-900);background:{{ c.bg }};transition:background 320ms var(--ease-out)">{{ c.name }}</div>
+          </sc-for>
+          <sc-for list="{{ table.cells }}" as="c" hint-placeholder-count="30">
+            <div style="padding:8px;font-family:{{ c.font }};color:{{ c.color }};background:{{ c.bg }};opacity:{{ c.op }};border-bottom:1px solid var(--ink-100);transition:background 320ms var(--ease-out),opacity 320ms var(--ease-out)">{{ c.v }}</div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 3.</b> Un DataFrame de seis filas. Elige una expresión para ver qué celdas selecciona y qué tipo de objeto regresa.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Para combinar condiciones usamos <code>&amp;</code> y <code>|</code>, nunca <code>and</code> / <code>or</code>, y <b>siempre</b> con paréntesis alrededor de cada condición:</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">df[(df["a"] > 1) &amp; (df["b"] &lt; 2)]
+df[df["categoria"].isin(["A", "B"])]</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Transformar columnas</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Crear columnas es vectorizado igual que en numpy. Los <i>accessors</i> <code>.str</code> y <code>.dt</code> vectorizan operaciones de texto y de fechas. <code>apply</code> es flexible pero lento: lo reservamos para lógica que de verdad no se puede vectorizar.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">df["nueva"] = df["a"] + df["b"]
+df["log_a"] = np.log1p(df["a"])                  # si "a" está sesgada
+df["categoria"] = df["categoria"].map({"A": 1, "B": 2})
+df["texto"] = df["texto"].str.lower().str.strip()
+df["fecha"] = pd.to_datetime(df["fecha"])
+df["mes"] = df["fecha"].dt.month</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Agrupar: dividir, aplicar, combinar</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty"><code>groupby</code> hace tres cosas seguidas. Primero divide las filas por el valor de una columna. Luego aplica una agregación a cada grupo. Finalmente combina los resultados en una tabla nueva. Es el <code>GROUP BY</code> de SQL.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,480px" width="page">
+  <div data-auto="gb" style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <code style="font-size:14px;color:var(--ink-800)">df.groupby("categoria")["valor"].mean()</code>
+    <div style="position:relative;width:100%;max-width:520px;height:340px">
+      <sc-for list="{{ gb.rows }}" as="r" hint-placeholder-count="0">
+        <div style="position:absolute;left:0;top:0;width:200px;height:30px;display:grid;grid-template-columns:1fr 1fr;align-items:center;border-radius:6px;border:1.5px solid {{ r.stroke }};background:{{ r.fill }};font-size:14px;transform:translateY({{ r.y }}px);opacity:{{ r.op }};transition:transform 640ms var(--ease-out) {{ r.delay }}ms,opacity 480ms var(--ease-out)"><span style="padding-left:12px;font-weight:600">{{ r.cat }}</span><span style="font-family:var(--font-mono);text-align:right;padding-right:12px">{{ r.v }}</span></div>
+      </sc-for>
+      <sc-for list="{{ gb.aggs }}" as="r" hint-placeholder-count="0">
+        <div style="position:absolute;left:0;top:0;width:200px;height:30px;display:grid;grid-template-columns:1fr 1fr;align-items:center;border-radius:6px;border:1.5px solid {{ r.stroke }};background:{{ r.fill }};box-shadow:1px 2px 0 rgba(0,0,0,.10);font-size:14px;transform:translate({{ r.x }}px,{{ r.y }}px);opacity:{{ r.op }};transition:transform 640ms var(--ease-out),opacity 480ms var(--ease-out) {{ r.delay }}ms"><span style="padding-left:12px;font-weight:700">{{ r.cat }}</span><span style="font-family:var(--font-mono);text-align:right;padding-right:12px">{{ r.v }}</span></div>
+      </sc-for>
+      <div style="position:absolute;left:0;top:-4px;font-size:12px;color:var(--text-subtle);transform:translateY(-100%)">categoria · valor</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Button" hint-size="110px,36px" variant="primary" onClick="{{ gbPlay }}">Reproducir</x-import>
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Button" hint-size="100px,36px" onClick="{{ gbNext }}">Siguiente</x-import>
+    </div>
+    <div style="max-width:560px;text-align:center;font-size:16px;line-height:1.55;color:var(--text-muted);min-height:50px;text-wrap:pretty"><b style="color:var(--text-strong)">{{ gb.title }}</b> {{ gb.desc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 4.</b> Dividir, aplicar, combinar sobre ocho filas y tres categorías.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">df.groupby("categoria").agg(promedio=("valor", "mean"),
+                            total=("valor", "sum"),
+                            n=("valor", "count"))
+df.groupby(["categoria", "region"])["valor"].mean().reset_index()
+df.pivot_table(values="valor", index="categoria",
+               columns="region", aggfunc="mean")</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Unir tablas</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty"><code>pd.concat</code> apila filas con el mismo esquema. <code>pd.merge</code> une dos tablas por una columna clave, como un <code>JOIN</code> de SQL. El argumento <code>how</code> decide qué pasa con las claves que no aparecen en ambas.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,380px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:20px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="320px,32px" options="{{ joinOpts }}" value="{{ how }}" onChange="{{ setHow }}"></x-import>
+    <div style="display:flex;flex-wrap:wrap;gap:28px;justify-content:center;align-items:flex-start;font-size:14px">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span style="font-size:13px;color:var(--text-muted)">df1</span>
+        <div style="display:grid;grid-template-columns:40px 80px;border-top:2px solid var(--ink-800)">
+          <div style="padding:6px 8px;font-weight:700;border-bottom:1px solid var(--ink-400)">id</div><div style="padding:6px 8px;font-weight:700;border-bottom:1px solid var(--ink-400)">nombre</div>
+          <sc-for list="{{ join.L }}" as="r" hint-placeholder-count="3">
+            <div style="padding:6px 8px;font-family:var(--font-mono);background:var(--sky-100);opacity:{{ r.op }};transition:opacity 320ms var(--ease-out)">{{ r.id }}</div><div style="padding:6px 8px;background:var(--sky-100);opacity:{{ r.op }};transition:opacity 320ms var(--ease-out)">{{ r.v }}</div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span style="font-size:13px;color:var(--text-muted)">df2</span>
+        <div style="display:grid;grid-template-columns:40px 90px;border-top:2px solid var(--ink-800)">
+          <div style="padding:6px 8px;font-weight:700;border-bottom:1px solid var(--ink-400)">id</div><div style="padding:6px 8px;font-weight:700;border-bottom:1px solid var(--ink-400)">curso</div>
+          <sc-for list="{{ join.R }}" as="r" hint-placeholder-count="3">
+            <div style="padding:6px 8px;font-family:var(--font-mono);background:var(--coral-100);opacity:{{ r.op }};transition:opacity 320ms var(--ease-out)">{{ r.id }}</div><div style="padding:6px 8px;background:var(--coral-100);opacity:{{ r.op }};transition:opacity 320ms var(--ease-out)">{{ r.v }}</div>
+          </sc-for>
+        </div>
+      </div>
+      <span style="padding-top:60px;font-size:20px;color:var(--ink-500)">→</span>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <span style="font-size:13px;color:var(--text-muted)">resultado</span>
+        <div style="display:grid;grid-template-columns:40px 80px 90px;border-top:2px solid var(--ink-800);border-bottom:2px solid var(--ink-800)">
+          <div style="padding:6px 8px;font-weight:700;border-bottom:1px solid var(--ink-400)">id</div><div style="padding:6px 8px;font-weight:700;border-bottom:1px solid var(--ink-400)">nombre</div><div style="padding:6px 8px;font-weight:700;border-bottom:1px solid var(--ink-400)">curso</div>
+          <sc-for list="{{ join.out }}" as="r" hint-placeholder-count="3">
+            <div style="padding:6px 8px;font-family:var(--font-mono)">{{ r.id }}</div><div style="padding:6px 8px;color:{{ r.nc }};font-style:{{ r.ns }}">{{ r.n }}</div><div style="padding:6px 8px;color:{{ r.cc }};font-style:{{ r.cs }}">{{ r.c }}</div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:560px;text-align:center;font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:50px"><code style="color:var(--iris-600)">{{ join.code }}</code><br>{{ join.desc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 5.</b> Cuatro formas de unir dos tablas por <code>id</code>. Las filas atenuadas no aparecen en el resultado; NaN marca los valores que no tuvieron pareja.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Ordenar y limpiar</h2>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">df.sort_values("columna", ascending=False)
+df.drop_duplicates()
+df.drop(columns=["col_innecesaria"])
+df.rename(columns={"col_vieja": "col_nueva"})
+df.isna().sum()           # nulos por columna
+df.isna().mean() * 100    # porcentaje de nulos: más útil que el conteo</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Errores típicos al empezar</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty">Confundir <code>.loc</code> (etiqueta) con <code>.iloc</code> (posición). El error más común.</li>
+    <li style="text-wrap:pretty">Encadenar filtros sin paréntesis: <code>df[df.a > 1 &amp; df.b &lt; 2]</code> falla por precedencia de operadores.</li>
+    <li style="text-wrap:pretty">Modificar una vista sin darnos cuenta (<code>SettingWithCopyWarning</code>). Usamos <code>.copy()</code> explícito: <code>sub = df[df.a > 1].copy()</code>.</li>
+    <li style="text-wrap:pretty">Olvidar que casi todas las operaciones regresan un <b>objeto nuevo</b>. <code>inplace=True</code> conviene evitarlo: dificulta depurar y encadenar.</li>
+    <li style="text-wrap:pretty">Usar <code>apply</code> fila por fila cuando existe una operación vectorizada. Es la diferencia entre segundos y minutos.</li>
+  </ul>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F1-02-Evaluacion.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Anterior</div><div style="font-weight:600;color:var(--text-strong)">Fundamentos de ML: evaluación</div></a>
+  <a href="F1-04-Datos-Visualizacion.dc.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Siguiente →</div><div style="font-weight:600;color:var(--text-strong)">Tipos de datos y visualización</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { loopI: -1, vecDone: false, bcStep: 0, op: 0, gbStep: 0, how: 'inner' };
+  componentDidMount() { this.watch('vec', this.runVec); this.watch('gb', this.gbPlay); }
+  componentWillUnmount() { clearInterval(this.lt); clearInterval(this.gt); clearTimeout(this.vt); (this.unw || []).forEach(u => u()); }
+  watch(key, fn) {
+    const check = () => {
+      const el = document.querySelector('[data-auto="' + key + '"]');
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      if (r.top < innerHeight * 0.75 && r.bottom > innerHeight * 0.2) { window.removeEventListener('scroll', check); fn(); }
+    };
+    window.addEventListener('scroll', check, { passive: true });
+    (this.unw = this.unw || []).push(() => window.removeEventListener('scroll', check));
+    setTimeout(check, 600);
+  }
+  runVec = () => {
+    clearInterval(this.lt); clearTimeout(this.vt);
+    this.setState({ loopI: -1, vecDone: false });
+    setTimeout(() => {
+      this.vt = setTimeout(() => this.setState({ vecDone: true }), 300);
+      this.lt = setInterval(() => { const i = this.state.loopI + 1; this.setState({ loopI: i }); if (i >= 8) clearInterval(this.lt); }, 380);
+    }, 250);
+  };
+  gbPlay = () => {
+    clearInterval(this.gt); this.setState({ gbStep: 0 });
+    this.gt = setInterval(() => { const s = this.state.gbStep + 1; this.setState({ gbStep: s }); if (s >= 3) clearInterval(this.gt); }, 1500);
+  };
+  renderVals() {
+    const S = this.state;
+    const arr = [3, 1, 4, 1, 5, 9, 2, 6];
+    const loopCells = arr.map((v, i) => ({ v, out: v * 2, outOp: i < S.loopI ? 1 : 0, inFill: i === S.loopI ? 'var(--ink-200)' : 'var(--ink-50)', inStroke: i === S.loopI ? 'var(--ink-800)' : 'var(--ink-300)' }));
+    const vecCells = arr.map(v => ({ v, out: v * 2, outOp: S.vecDone ? 1 : 0, inFill: S.vecDone ? 'var(--iris-100)' : 'var(--ink-50)', inStroke: S.vecDone ? 'var(--iris-400)' : 'var(--ink-300)' }));
+    const b = [1, 2, 3, 4, 5, 6], a = [10, 20, 30];
+    const st = S.bcStep;
+    const bcDesc = ['Las formas no coinciden: b tiene dos filas y a solo una.', 'numpy alinea las dimensiones desde la derecha. Como a tiene 3 columnas, igual que b, la repite a lo largo de las filas.', 'Ahora la suma es elemento a elemento, fila por fila.'][st];
+    const cols = ['nombre', 'edad', 'ciudad', 'horas'];
+    const rows = [['Ana', 24, 'CDMX', 12], ['Luis', 35, 'GDL', 8], ['Sofía', 41, 'MTY', 15], ['Iván', 29, 'CDMX', 6], ['Mara', 33, 'GDL', 10], ['Tomás', 22, 'MTY', 9]];
+    const OPS = [
+      ['df["edad"]', 'Series', 'Corchetes con un nombre: una sola columna, conservando el índice.', (r, c) => c === 1, [1]],
+      ['df[["nombre", "horas"]]', 'DataFrame', 'Corchetes con una lista: varias columnas, el resultado sigue siendo tabla.', (r, c) => c === 0 || c === 3, [0, 3]],
+      ['df.loc[df["edad"] > 30]', 'DataFrame', 'Una condición booleana dentro de .loc filtra filas. Todas las columnas se conservan.', (r, c) => rows[r][1] > 30, []],
+      ['df.loc[df["edad"] > 30, "ciudad"]', 'Series', 'Filas por condición y columna por etiqueta, en un solo paso.', (r, c) => rows[r][1] > 30 && c === 2, [2]],
+      ['df.iloc[0:2]', 'DataFrame', 'Por posición: las filas 0 y 1. Como en Python, el final del rango no se incluye.', (r) => r < 2, []],
+      ['df.iloc[0, 2]', 'str', 'Una celda por posición: fila 0, columna 2.', (r, c) => r === 0 && c === 2, [2]]
+    ];
+    const o = OPS[S.op];
+    const cells = [];
+    rows.forEach((row, r) => {
+      const any = cols.some((_, c) => o[3](r, c));
+      cells.push({ v: r, font: 'var(--font-mono)', color: 'var(--ink-500)', bg: 'transparent', op: any ? 1 : 0.35 });
+      row.forEach((v, c) => { const on = o[3](r, c); cells.push({ v, font: typeof v === 'number' ? 'var(--font-mono)' : 'var(--font-sans)', color: 'var(--ink-900)', bg: on ? 'var(--iris-200)' : 'transparent', op: on ? 1 : 0.35 }); });
+    });
+    const G = [['A', 4], ['B', 7], ['A', 6], ['C', 3], ['B', 5], ['C', 5], ['A', 2], ['B', 9]];
+    const CAT = { A: ['var(--sky-100)', 'var(--sky-400)'], B: ['var(--coral-100)', 'var(--coral-400)'], C: ['var(--iris-100)', 'var(--iris-400)'] };
+    const order = ['A', 'B', 'C'], cnt = { A: 3, B: 3, C: 2 }, off = { A: 0, B: 3 * 36 + 18, C: 6 * 36 + 36 };
+    const seen = { A: 0, B: 0, C: 0 };
+    const gs = S.gbStep;
+    const gbRows = G.map(([cat, v], i) => { const k = seen[cat]++; return { cat, v, fill: CAT[cat][0], stroke: CAT[cat][1], y: gs === 0 ? i * 36 : off[cat] + k * 36, op: gs >= 3 ? 0.3 : 1, delay: gs === 1 ? i * 60 : 0 }; });
+    const means = { A: 4, B: 7, C: 4 };
+    const aggs = order.map((cat, k) => ({ cat, v: means[cat].toFixed(1), fill: CAT[cat][0], stroke: CAT[cat][1], x: 300, y: gs >= 3 ? 40 + k * 36 : off[cat] + (cnt[cat] * 36 - 36) / 2, op: gs >= 2 ? 1 : 0, delay: k * 140 }));
+    const GBT = [['Datos originales.', 'Ocho filas mezcladas de tres categorías.'], ['Dividir.', 'Separamos las filas según el valor de "categoria".'], ['Aplicar.', 'Calculamos la media de "valor" dentro de cada grupo.'], ['Combinar.', 'Los resultados forman una Series nueva, indexada por categoría.']][gs];
+    const L = [[1, 'Ana'], [2, 'Beto'], [3, 'Caro']], R = [[2, 'Álgebra'], [3, 'Biología'], [4, 'Cálculo']];
+    const how = S.how;
+    const ids = { inner: [2, 3], left: [1, 2, 3], right: [2, 3, 4], outer: [1, 2, 3, 4] }[how];
+    const nan = ['var(--ink-400)', 'italic'], ok = ['var(--ink-900)', 'normal'];
+    const out = ids.map(id => { const l = L.find(x => x[0] === id), r = R.find(x => x[0] === id); return { id, n: l ? l[1] : 'NaN', c: r ? r[1] : 'NaN', nc: (l ? ok : nan)[0], ns: (l ? ok : nan)[1], cc: (r ? ok : nan)[0], cs: (r ? ok : nan)[1] }; });
+    const JD = { inner: 'Solo las claves que aparecen en ambas tablas.', left: 'Todas las filas de df1; las que no tienen pareja en df2 quedan con NaN.', right: 'Todas las filas de df2; las que no tienen pareja en df1 quedan con NaN.', outer: 'Todas las claves de las dos tablas, con NaN donde falta la pareja.' };
+    return {
+      loopCells, vecCells, loopPct: Math.max(0, S.loopI) / 8 * 100, vecPct: S.vecDone ? 100 : 0, runVec: this.runVec,
+      bc: {
+        b, a, ghostOp: st >= 1 ? 1 : 0, ghostY: st >= 1 ? 0 : -44,
+        r: b.map((v, i) => ({ v: v + a[i % 3], op: st >= 2 ? 1 : 0, y: st >= 2 ? 0 : -8, delay: i * 90 })),
+        btn: st >= 2 ? 'Reiniciar' : 'Siguiente paso', desc: bcDesc
+      },
+      bcNext: () => this.setState(s => ({ bcStep: s.bcStep >= 2 ? 0 : s.bcStep + 1 })),
+      ops: OPS.map((x, i) => ({ code: x[0], pick: () => this.setState({ op: i }), bg: i === S.op ? 'var(--iris-100)' : 'var(--paper)', border: i === S.op ? 'var(--iris-400)' : 'var(--border-rule)' })),
+      op: { ret: o[1], desc: o[2] },
+      table: { cols: cols.map((name, c) => ({ name, bg: o[4].includes(c) ? 'var(--iris-100)' : 'transparent' })), cells },
+      gb: { rows: gbRows, aggs, title: GBT[0], desc: GBT[1] },
+      gbPlay: this.gbPlay, gbNext: () => { clearInterval(this.gt); this.setState(s => ({ gbStep: (s.gbStep + 1) % 4 })); },
+      joinOpts: ['inner', 'left', 'right', 'outer'].map(v => ({ value: v, label: v })), how, setHow: v => this.setState({ how: v }),
+      join: {
+        L: L.map(([id, v]) => ({ id, v, op: ids.includes(id) ? 1 : 0.3 })), R: R.map(([id, v]) => ({ id, v, op: ids.includes(id) ? 1 : 0.3 })),
+        out, code: `pd.merge(df1, df2, on="id", how="${how}")`, desc: JD[how]
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

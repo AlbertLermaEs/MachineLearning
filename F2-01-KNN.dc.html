@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>K vecinos más cercanos — Fase 2</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="Indice.dc.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <span style="color:var(--text-muted);font-variant-numeric:tabular-nums">Fase 2 · 01 de 02</span>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Fase 2 · Clasificadores simples" title="K vecinos más cercanos (KNN)" description="El clasificador más simple que funciona: para etiquetar un punto nuevo, miramos a sus vecinos. No aprende parámetros; el modelo es el propio conjunto de entrenamiento."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Actualizado el 10 sep 2026 · Fuente: CS4780 (Weinberger) · Cover &amp; Hart (1967) · ISLR Cap. 2</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">1. Intuición</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">KNN parte de una idea: <b>puntos parecidos deberían tener la misma etiqueta</b>. Para clasificar un punto nuevo <i style="font-family:var(--font-math);padding:0 2px">x</i>, calculamos su distancia a todos los puntos de entrenamiento, tomamos los <i style="font-family:var(--font-math);padding:0 2px">K</i> más cercanos y asignamos la clase mayoritaria entre ellos. En regresión, en lugar de votar, promediamos sus valores.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">Es un método <b>no paramétrico</b>: no supone una forma fija para la frontera de decisión. También es de <b>aprendizaje perezoso</b> (<i>lazy learning</i>): entrenar es solo guardar los datos, y todo el cómputo ocurre al predecir. Ya lo vimos de pasada en <a href="F1-02-Evaluacion.dc.html">Fundamentos de ML</a> como una forma de estimar la probabilidad condicional <i style="font-family:var(--font-math);padding:0 2px">Pr(Y = j | X = x₀)</i> del clasificador de Bayes sin conocer la distribución de los datos. Aquí lo formalizamos.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">2. Formalización</h2>
+  <p style="margin:0 0 8px;text-wrap:pretty">Dado un conjunto de entrenamiento <i style="font-family:var(--font-math);padding:0 2px">{(xᵢ, yᵢ)}</i> con <i style="font-family:var(--font-math);padding:0 2px">i = 1, …, n</i>, y un punto de consulta <i style="font-family:var(--font-math);padding:0 2px">x</i>, sea <i style="font-family:var(--font-math);padding:0 2px">N<sub>K</sub>(x)</i> el conjunto de sus <i style="font-family:var(--font-math);padding:0 2px">K</i> vecinos más cercanos según una distancia <i style="font-family:var(--font-math);padding:0 2px">d</i>. La predicción es:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="1" tex="\hat{y} = \text{moda}\,\{\, y_i : i \in N_K(x) \,\}"></x-import>
+  <p style="margin:0 0 20px;text-wrap:pretty">Con <i style="font-family:var(--font-math);padding:0 2px">K = 1</i> (vecino más cercano, NN), la predicción es simplemente la etiqueta del punto de entrenamiento más próximo.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,640px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="300px,44px" label="Número de vecinos K" min="{{ 1 }}" max="{{ 61 }}" step="{{ 2 }}" width="{{ 300 }}" tone="focus" value="{{ k }}" onChange="{{ setK }}" format="{{ fmtInt }}"></x-import>
+    <div style="width:100%;max-width:920px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;align-items:start">
+      <svg viewBox="0 0 600 384" width="100%" onClick="{{ setQ }}" style="display:block;cursor:crosshair;grid-column:span 2;min-width:0;border:1px solid var(--ink-200);border-radius:4px">
+        <sc-for list="{{ cells }}" as="c" hint-placeholder-count="0">
+          <rect x="{{ c.x }}" y="{{ c.y }}" width="12.4" height="12.4" style="fill:{{ c.f }};fill-opacity:0.42;transition:fill 280ms var(--ease-out)"></rect>
+        </sc-for>
+        <circle cx="{{ q.x }}" cy="{{ q.y }}" r="{{ q.r }}" style="fill:none;stroke:var(--ink-700);stroke-width:1.2;stroke-dasharray:4 4;transition:r 280ms var(--ease-out)"></circle>
+        <sc-for list="{{ q.lines }}" as="l" hint-placeholder-count="0">
+          <line x1="{{ q.x }}" y1="{{ q.y }}" x2="{{ l.x }}" y2="{{ l.y }}" style="stroke:var(--ink-700);stroke-width:1;stroke-opacity:0.55"></line>
+        </sc-for>
+        <sc-for list="{{ pts }}" as="p" hint-placeholder-count="0">
+          <circle cx="{{ p.x }}" cy="{{ p.y }}" r="4.5" style="fill:{{ p.f }};stroke:{{ p.s }};stroke-width:1.3"></circle>
+        </sc-for>
+        <circle cx="{{ q.x }}" cy="{{ q.y }}" r="8" style="fill:{{ q.f }};stroke:var(--ink-900);stroke-width:2.2"></circle>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div style="display:flex;gap:28px;flex-wrap:wrap">
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="100px,70px" label="Error train" value="{{ eTr }}" size="sm"></x-import>
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="100px,70px" label="Error test" value="{{ eTe }}" size="sm"></x-import>
+        </div>
+        <svg viewBox="0 0 300 150" width="100%" style="display:block;overflow:visible">
+          <line x1="30" y1="130" x2="295" y2="130" style="stroke:var(--ink-400)"></line>
+          <line x1="30" y1="10" x2="30" y2="130" style="stroke:var(--ink-400)"></line>
+          <text x="26" y="134" text-anchor="end" style="font-size:11px;fill:var(--ink-500)">0</text>
+          <text x="26" y="74" text-anchor="end" style="font-size:11px;fill:var(--ink-500)">.25</text>
+          <text x="26" y="14" text-anchor="end" style="font-size:11px;fill:var(--ink-500)">.50</text>
+          <text x="295" y="146" text-anchor="end" style="font-size:11px;fill:var(--ink-600)">K →</text>
+          <text x="34" y="146" style="font-size:11px;fill:var(--ink-600)">1</text>
+          <path d="{{ curveTr }}" style="fill:none;stroke:var(--ink-400);stroke-width:1.8"></path>
+          <path d="{{ curveTe }}" style="fill:none;stroke:var(--iris-600);stroke-width:2.2"></path>
+          <line x1="{{ kx }}" x2="{{ kx }}" y1="10" y2="130" style="stroke:var(--ink-800);stroke-width:1;stroke-dasharray:3 3"></line>
+          <text x="290" y="{{ labTr }}" text-anchor="end" style="font-size:11px;fill:var(--ink-500)">train</text>
+          <text x="290" y="{{ labTe }}" text-anchor="end" style="font-size:11px;fill:var(--iris-600)">test</text>
+        </svg>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:100px">{{ kDesc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> Cien puntos de entrenamiento de dos clases que se traslapan. El fondo es la clase que KNN predice en cada región. Haz clic en el mapa para mover el punto de consulta y ver sus <i>K</i> vecinos. A la derecha, el error en train y en 400 puntos de test para cada <i>K</i>.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">3. Elegir K: sesgo contra varianza</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">La figura 1 es una aplicación directa de la curva en U de <a href="F1-02-Evaluacion.dc.html">Fundamentos de ML</a>:</p>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>K pequeño</b> (p. ej. <i style="font-family:var(--font-math);padding:0 2px">K = 1</i>): frontera muy irregular, <b>varianza alta y sesgo bajo</b>. Cada punto de train es su propio vecino, así que el error de entrenamiento es 0, pero la frontera sigue al ruido.</li>
+    <li style="text-wrap:pretty"><b>K grande</b>: frontera suave, <b>sesgo alto y varianza baja</b>. En el extremo, <i style="font-family:var(--font-math);padding:0 2px">K = n</i> predice siempre la clase mayoritaria global, sin importar <i style="font-family:var(--font-math);padding:0 2px">x</i>.</li>
+    <li style="text-wrap:pretty"><b>Elegimos K con validación cruzada</b> (Fase 4, ISLR Cap. 5): probamos varios valores y tomamos el que minimiza el error de validación. En la figura usamos un test grande para ver la curva, pero en un proyecto real el test no se usa para elegir.</li>
+    <li style="text-wrap:pretty">En problemas binarios usamos <b>K impar</b> para evitar empates.</li>
+  </ul>
+  <p style="margin:0 0 20px;text-wrap:pretty">Una variante común es ponderar cada voto por la inversa de la distancia (<code>weights="distance"</code> en scikit-learn): los vecinos más cercanos pesan más que los que apenas entraron al círculo.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">4. Métricas de distancia</h2>
+  <p style="margin:0 0 8px;text-wrap:pretty">Elegir <i style="font-family:var(--font-math);padding:0 2px">d</i> importa tanto como elegir <i style="font-family:var(--font-math);padding:0 2px">K</i>, porque define qué significa "parecido".</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="2" tex="\text{Euclidiana } (L_2):\quad d(x, x') = \sqrt{\textstyle\sum_j (x_j - x'_j)^2}"></x-import>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="3" tex="\text{Manhattan } (L_1):\quad d(x, x') = \textstyle\sum_j |x_j - x'_j|"></x-import>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="4" tex="\text{Minkowski}:\quad d_p(x, x') = \left(\textstyle\sum_j |x_j - x'_j|^p\right)^{1/p}"></x-import>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>Euclidiana</b>: la más común. Supone que todas las dimensiones son comparables en escala.</li>
+    <li style="text-wrap:pretty"><b>Manhattan</b>: más robusta a valores extremos en dimensiones individuales.</li>
+    <li style="text-wrap:pretty"><b>Minkowski</b>: generaliza las dos anteriores con un parámetro <i style="font-family:var(--font-math);padding:0 2px">p</i> (<i style="font-family:var(--font-math);padding:0 2px">p = 1</i> es Manhattan, <i style="font-family:var(--font-math);padding:0 2px">p = 2</i> es Euclidiana).</li>
+    <li style="text-wrap:pretty"><b>Coseno</b>: útil cuando importa la dirección más que la magnitud, como en texto o embeddings.</li>
+  </ul>
+  <p style="margin:0 0 20px;text-wrap:pretty">Si las variables tienen escalas muy distintas, <b>estandarizamos antes de medir distancias</b> (z-score o min-max, como en <a href="F1-05-Preprocesamiento.dc.html">Preprocesamiento</a>). Si no, la variable de mayor escala domina la distancia total.</p>
+
+  <h3 style="font-size:20px;line-height:1.3;margin:40px 0 12px;color:var(--text-strong)">Distancia de Mahalanobis</h3>
+  <p style="margin:0 0 8px;text-wrap:pretty">Resuelve un problema que las métricas de Minkowski no resuelven: la <b>correlación</b> entre variables. Si dos variables están correlacionadas, como altura y peso, la distancia Euclidiana las trata como ejes independientes y exagera la distancia a lo largo de esa correlación.</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="5" tex="d_M(x, x') = \sqrt{(x - x')^T\, S^{-1}\, (x - x')}"></x-import>
+  <p style="margin:0 0 20px;text-wrap:pretty">Aquí <i style="font-family:var(--font-math);padding:0 2px">S</i> es la matriz de covarianza de los datos. Multiplicar por <i style="font-family:var(--font-math);padding:0 2px">S⁻¹</i> mide la distancia en unidades de desviación estándar y ajusta por la forma elíptica de la nube, no solo por su escala.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,500px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="340px,32px" options="{{ metOpts }}" value="{{ metMode }}" onChange="{{ setMet }}"></x-import>
+    <div style="width:100%;max-width:880px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;align-items:center">
+      <svg viewBox="0 0 600 400" width="100%" style="display:block;overflow:visible;grid-column:span 2;min-width:0">
+        <circle cx="300" cy="200" r="{{ met.rE }}" style="fill:var(--iris-200);fill-opacity:0.35;stroke:var(--iris-600);stroke-width:1.8;opacity:{{ met.oE }};transition:opacity 420ms var(--ease-out)"></circle>
+        <path d="{{ met.diamond }}" style="fill:var(--iris-200);fill-opacity:0.35;stroke:var(--iris-600);stroke-width:1.8;opacity:{{ met.oM }};transition:opacity 420ms var(--ease-out)"></path>
+        <ellipse cx="300" cy="200" rx="{{ met.ex }}" ry="{{ met.ey }}" transform="{{ met.rot }}" style="fill:var(--iris-200);fill-opacity:0.35;stroke:var(--iris-600);stroke-width:1.8;opacity:{{ met.oH }};transition:opacity 420ms var(--ease-out)"></ellipse>
+        <sc-for list="{{ met.pts }}" as="p" hint-placeholder-count="0">
+          <circle cx="{{ p.x }}" cy="{{ p.y }}" r="4" style="fill:{{ p.f }};stroke:{{ p.s }};stroke-width:1.2;transition:fill 320ms var(--ease-out) {{ p.delay }}ms,stroke 320ms var(--ease-out) {{ p.delay }}ms"></circle>
+        </sc-for>
+        <line x1="300" y1="200" x2="{{ met.ax }}" y2="{{ met.ay }}" style="stroke:var(--ink-800);stroke-width:1.5;stroke-dasharray:4 3"></line>
+        <line x1="300" y1="200" x2="{{ met.bx }}" y2="{{ met.by }}" style="stroke:var(--ink-800);stroke-width:1.5;stroke-dasharray:4 3"></line>
+        <circle cx="300" cy="200" r="6" style="fill:var(--ink-900)"></circle>
+        <circle cx="{{ met.ax }}" cy="{{ met.ay }}" r="7" style="fill:var(--paper);stroke:var(--ink-900);stroke-width:2"></circle>
+        <circle cx="{{ met.bx }}" cy="{{ met.by }}" r="7" style="fill:var(--paper);stroke:var(--ink-900);stroke-width:2"></circle>
+        <text x="{{ met.alx }}" y="{{ met.aly }}" style="font-size:15px;font-weight:700;fill:var(--ink-900)">A</text>
+        <text x="{{ met.blx }}" y="{{ met.bly }}" style="font-size:15px;font-weight:700;fill:var(--ink-900)">B</text>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div style="display:flex;gap:28px;flex-wrap:wrap">
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="100px,70px" label="d(centro, A)" value="{{ met.dA }}" size="sm"></x-import>
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="100px,70px" label="d(centro, B)" value="{{ met.dB }}" size="sm"></x-import>
+        </div>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:120px">{{ met.desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 2.</b> Noventa puntos con dos variables correlacionadas. La región sombreada contiene los puntos a distancia menor que un umbral desde el centro; las tres regiones tienen la misma área. A y B están a la misma distancia euclidiana del centro.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty">Si las variables están estandarizadas y no están correlacionadas (<i style="font-family:var(--font-math);padding:0 2px">S = I</i>), Mahalanobis se reduce exactamente a la Euclidiana: la generaliza.</li>
+    <li style="text-wrap:pretty">Su costo es estimar <i style="font-family:var(--font-math);padding:0 2px">S</i> e invertirla. Con pocos datos en relación con el número de dimensiones, <i style="font-family:var(--font-math);padding:0 2px">S</i> puede salir mal condicionada.</li>
+  </ul>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">VI = np.linalg.inv(np.cov(X_train.T))
+knn = KNeighborsClassifier(metric="mahalanobis",
+                           metric_params={"VI": VI},
+                           algorithm="brute")</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">5. El resultado de Cover y Hart (1967)</h2>
+  <p style="margin:0 0 8px;text-wrap:pretty">Este artículo explica por qué el vecino más cercano funciona tan bien siendo tan simple. Sea <i style="font-family:var(--font-math);padding:0 2px">R*</i> el error de Bayes, el mínimo error posible para el problema, y <i style="font-family:var(--font-math);padding:0 2px">R<sub>NN</sub></i> el error del clasificador 1-NN cuando <i style="font-family:var(--font-math);padding:0 2px">n → ∞</i>. Para <i style="font-family:var(--font-math);padding:0 2px">c</i> clases, Cover y Hart demuestran:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="6" tex="R^* \le R_{NN} \le R^*\left(2 - \frac{c}{c-1}\,R^*\right)"></x-import>
+  <p style="margin:0 0 8px;text-wrap:pretty">En el caso binario, <i style="font-family:var(--font-math);padding:0 2px">c = 2</i>, se simplifica a:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="7" tex="R_{NN} \le 2R^*(1 - R^*) \le 2R^*"></x-import>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,420px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="300px,44px" label="Error de Bayes R*" min="{{ 0 }}" max="{{ 0.5 }}" step="{{ 0.01 }}" width="{{ 300 }}" tone="focus" value="{{ rs }}" onChange="{{ setRs }}" format="{{ fmtPct }}"></x-import>
+    <div style="width:100%;max-width:880px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;align-items:center">
+      <svg viewBox="0 0 600 300" width="100%" style="display:block;overflow:visible;grid-column:span 2;min-width:0">
+        <path d="{{ ch.band }}" style="fill:var(--iris-200);fill-opacity:0.5"></path>
+        <line x1="50" y1="270" x2="570" y2="270" style="stroke:var(--ink-400)"></line>
+        <line x1="50" y1="20" x2="50" y2="270" style="stroke:var(--ink-400)"></line>
+        <path d="{{ ch.twice }}" style="fill:none;stroke:var(--ink-400);stroke-width:1.5;stroke-dasharray:5 4"></path>
+        <path d="{{ ch.upper }}" style="fill:none;stroke:var(--iris-600);stroke-width:2.2"></path>
+        <path d="{{ ch.lower }}" style="fill:none;stroke:var(--ink-800);stroke-width:2"></path>
+        <text x="50" y="288" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">0</text>
+        <text x="310" y="288" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">25 %</text>
+        <text x="570" y="288" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">50 %</text>
+        <text x="44" y="274" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">0</text>
+        <text x="44" y="149" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">50 %</text>
+        <text x="44" y="24" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">100 %</text>
+        <text x="480" y="62" style="font-family:var(--font-serif);font-style:italic;font-size:14px;fill:var(--ink-500)">2R*</text>
+        <text x="470" y="128" style="font-family:var(--font-serif);font-style:italic;font-size:14px;fill:var(--iris-600)">2R*(1 − R*)</text>
+        <text x="500" y="196" style="font-family:var(--font-serif);font-style:italic;font-size:14px;fill:var(--ink-800)">R*</text>
+        <line x1="{{ ch.x }}" x2="{{ ch.x }}" y1="20" y2="270" style="stroke:var(--ink-800);stroke-width:1;stroke-dasharray:3 3"></line>
+        <circle cx="{{ ch.x }}" cy="{{ ch.yl }}" r="5" style="fill:var(--ink-800)"></circle>
+        <circle cx="{{ ch.x }}" cy="{{ ch.yu }}" r="5" style="fill:var(--iris-600)"></circle>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div style="display:flex;gap:28px;flex-wrap:wrap">
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="100px,70px" label="Mínimo posible" value="{{ ch.lo }}" size="sm"></x-import>
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="100px,70px" label="Peor caso de 1-NN" value="{{ ch.hi }}" size="sm"></x-import>
+        </div>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:96px">{{ ch.desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 3.</b> La cota de Cover y Hart para dos clases. Con datos infinitos, el error de 1-NN cae siempre en la banda sombreada.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Con infinitos datos, <b>el error del vecino más cercano nunca es peor que el doble del error óptimo de Bayes</b>. El resultado no requiere ningún supuesto sobre la distribución de los datos, y es una de las razones por las que KNN sigue siendo un baseline competitivo casi sesenta años después.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">6. La maldición de la dimensionalidad</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">El punto débil de KNN. Al crecer el número de dimensiones <i style="font-family:var(--font-math);padding:0 2px">d</i>, el volumen del espacio crece exponencialmente y los datos quedan esparcidos. Todos los puntos terminan a una distancia parecida entre sí, y "vecino cercano" deja de significar algo.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,380px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="300px,44px" label="Dimensiones d" min="{{ 0 }}" max="{{ 10 }}" step="{{ 1 }}" width="{{ 300 }}" tone="focus" value="{{ dIdx }}" onChange="{{ setD }}" format="{{ fmtD }}"></x-import>
+    <div style="width:100%;max-width:640px;height:170px;display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--ink-800)">
+      <sc-for list="{{ dimBars }}" as="b" hint-placeholder-count="40">
+        <div style="flex:1;height:{{ b.h }}%;background:var(--iris-200);border:1px solid var(--iris-400);border-bottom:none;border-radius:2px 2px 0 0;transition:height 560ms var(--ease-out) {{ b.delay }}ms"></div>
+      </sc-for>
+    </div>
+    <div style="width:100%;max-width:640px;display:flex;justify-content:space-between;font-size:12px;color:var(--ink-600);font-family:var(--font-mono)"><span>0</span><span>distancia / distancia media = 1</span><span>2</span></div>
+    <div style="display:flex;gap:28px;flex-wrap:wrap;justify-content:center;align-items:center">
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="140px,70px" label="(máx − mín) / mín" value="{{ dimRatio }}" size="sm"></x-import>
+      <div style="max-width:420px;font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty">{{ dimDesc }}</div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 4.</b> Distancias de un punto a otros 399 puntos uniformes en el hipercubo <i>[0, 1]<sup>d</sup></i>, divididas entre su media. Al subir <i>d</i>, el histograma se concentra alrededor de 1: el vecino más cercano y el más lejano quedan casi a la misma distancia.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Por eso KNN rinde mal en datos de alta dimensión, salvo que antes reduzcamos dimensiones. La herramienta estándar para eso es PCA, que veremos en la Fase 3.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">7. Complejidad computacional</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>Entrenamiento</b>: <i style="font-family:var(--font-math);padding:0 2px">O(1)</i>. Solo guardamos los datos.</li>
+    <li style="text-wrap:pretty"><b>Predicción por fuerza bruta</b>: <i style="font-family:var(--font-math);padding:0 2px">O(n · d)</i> por consulta. Costoso con <i style="font-family:var(--font-math);padding:0 2px">n</i> grande.</li>
+    <li style="text-wrap:pretty"><b>KD-trees y Ball trees</b> aceleran la búsqueda a cerca de <i style="font-family:var(--font-math);padding:0 2px">O(log n)</i> en dimensión baja o moderada, pero pierden eficacia en alta dimensión, otra vez por la maldición de la dimensionalidad.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">8. Ventajas y desventajas</h2>
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 24px;margin:0 0 20px;border-top:2px solid var(--ink-800);border-bottom:2px solid var(--ink-800);font-size:16px;line-height:1.5">
+    <div style="padding:10px 0;font-weight:700;border-bottom:1px solid var(--ink-400);color:var(--text-strong)">Ventajas</div>
+    <div style="padding:10px 0;font-weight:700;border-bottom:1px solid var(--ink-400);color:var(--text-strong)">Desventajas</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Simple de entender e implementar</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Predicción lenta con <i style="font-family:var(--font-math)">n</i> grande, sin estructuras auxiliares</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">No supone forma para la frontera de decisión</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Sensible a la escala de las variables</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Se adapta a fronteras complejas</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Sufre la maldición de la dimensionalidad</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Sin fase de entrenamiento</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Sensible a clases desbalanceadas: la mayoría domina los vecindarios</div>
+    <div style="padding:10px 0">Baseline con respaldo teórico (Cover y Hart)</div>
+    <div style="padding:10px 0">Requiere guardar todo el dataset en memoria</div>
+  </div>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">9. Implementación</h2>
+  <p style="margin:0 0 12px;text-wrap:pretty">Desde cero, KNN cabe en pocas líneas: calcular distancias, ordenar, votar.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">import numpy as np
+from collections import Counter
+
+class KNN:
+    def __init__(self, k=5):
+        self.k = k
+
+    def fit(self, X, y):
+        self.X_train = np.asarray(X)
+        self.y_train = np.asarray(y)
+
+    def _predict_one(self, x):
+        distances = np.linalg.norm(self.X_train - x, axis=1)
+        k_indices = np.argsort(distances)[:self.k]
+        k_labels = self.y_train[k_indices]
+        return Counter(k_labels).most_common(1)[0][0]
+
+    def predict(self, X):
+        return np.array([self._predict_one(x) for x in np.asarray(X)])</pre>
+  <p style="margin:0 0 12px;text-wrap:pretty">En la práctica usamos scikit-learn. Metemos el escalador en un pipeline para que se ajuste dentro de cada fold de la validación cruzada y no filtre información (ver la <a href="F12-Guia-Sklearn.dc.html">guía de scikit-learn</a>):</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import GridSearchCV
+
+pipe = make_pipeline(StandardScaler(), KNeighborsClassifier())
+param_grid = {
+    "kneighborsclassifier__n_neighbors": range(1, 30, 2),
+    "kneighborsclassifier__metric": ["euclidean", "manhattan"],
+}
+grid = GridSearchCV(pipe, param_grid, cv=5)
+grid.fit(X_train, y_train)
+print(grid.best_params_)</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Conexiones con otras fases</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty">Usa el vocabulario de riesgo, riesgo empírico y la curva en U de <a href="F1-02-Evaluacion.dc.html">Fundamentos de ML</a>.</li>
+    <li style="text-wrap:pretty">La maldición de la dimensionalidad conecta con PCA en la Fase 3: reducir <i style="font-family:var(--font-math);padding:0 2px">d</i> antes de usar KNN.</li>
+    <li style="text-wrap:pretty">Es el ejemplo canónico de método no paramétrico, en contraste con <a href="F2-02-Perceptron.dc.html">el Perceptrón</a>, que sí aprende parámetros.</li>
+    <li style="text-wrap:pretty">Reaparece en la Fase 6: los árboles también particionan el espacio en regiones en lugar de aprender parámetros globales.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Fuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:16px">
+    <li><a href="https://www.cs.cornell.edu/courses/cs4780/2024sp/" target="_blank">CS4780 · K Vecinos Más Cercanos</a> (Weinberger)</li>
+    <li>Cover, T. y Hart, P. (1967). "Nearest neighbor pattern classification." <i>IEEE Transactions on Information Theory</i>.</li>
+    <li><a href="https://scikit-learn.org/stable/modules/neighbors.html" target="_blank">scikit-learn · 1.6 Nearest Neighbors</a></li>
+  </ul>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F1-05-Preprocesamiento.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Fase 1</div><div style="font-weight:600;color:var(--text-strong)">Preprocesamiento</div></a>
+  <a href="F2-02-Perceptron.dc.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Siguiente →</div><div style="font-weight:600;color:var(--text-strong)">El Perceptrón</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    const r = this.rng(11), g = () => this.gauss(r);
+    const C0 = [[0.2, 0.7], [0.45, 0.3], [0.75, 0.82]], C1 = [[0.6, 0.55], [0.85, 0.22], [0.28, 0.25]];
+    const gen = n => Array.from({ length: n }, (_, i) => {
+      const c = i % 2, m = (c ? C1 : C0)[Math.floor(r() * 3)];
+      const u = Math.min(0.98, Math.max(0.02, m[0] + g() * 0.11)), v = Math.min(0.98, Math.max(0.02, m[1] + g() * 0.11));
+      return { x: u * 600, y: (1 - v) * 384, c };
+    });
+    this.tr = gen(100); this.te = gen(400);
+    this.KM = 61;
+    const cum = pts => pts.map(p => {
+      const d = this.tr.map(t => [(t.x - p.x) ** 2 + (t.y - p.y) ** 2, t.c]).sort((a, b) => a[0] - b[0]);
+      const o = new Uint8Array(this.KM + 1); for (let k = 1; k <= this.KM; k++) o[k] = o[k - 1] + d[k - 1][1]; return o;
+    });
+    this.grid = []; for (let j = 0; j < 32; j++) for (let i = 0; i < 50; i++) this.grid.push({ x: i * 12 + 6, y: j * 12 + 6 });
+    this.gCum = cum(this.grid);
+    const err = (pts, cs) => { const e = []; for (let k = 1; k <= this.KM; k += 2) { let m = 0; pts.forEach((p, i) => { if ((cs[i][k] > k / 2 ? 1 : 0) !== p.c) m++; }); e.push(m / pts.length); } return e; };
+    this.eTr = err(this.tr, cum(this.tr)); this.eTe = err(this.te, cum(this.te));
+    const a = -32 * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+    this.cloud = Array.from({ length: 90 }, () => { const t = g() * 95, s = g() * 26; return { x: 300 + t * ca - s * sa, y: 200 + t * sa + s * ca, delay: Math.round(r() * 200) }; });
+    let mx = 0, my = 0; this.cloud.forEach(p => { mx += p.x; my += p.y; }); mx /= 90; my /= 90;
+    let sxx = 0, syy = 0, sxy = 0; this.cloud.forEach(p => { sxx += (p.x - mx) ** 2; syy += (p.y - my) ** 2; sxy += (p.x - mx) * (p.y - my); });
+    sxx /= 89; syy /= 89; sxy /= 89;
+    const det = sxx * syy - sxy * sxy; this.Si = [syy / det, -sxy / det, sxx / det]; this.det = det;
+    const tr2 = (sxx + syy) / 2, disc = Math.sqrt(((sxx - syy) / 2) ** 2 + sxy * sxy);
+    this.eig = [tr2 + disc, tr2 - disc]; this.eAng = 0.5 * Math.atan2(2 * sxy, sxx - syy) * 180 / Math.PI;
+    this.A = [300 + 110 * ca, 200 + 110 * sa]; this.B = [300 - 110 * sa, 200 + 110 * ca];
+    this.dims = [1, 2, 3, 5, 10, 20, 50, 100, 200, 500, 1000]; this.dimCache = {};
+    this.state = { k: 1, q: [300, 190], metMode: 'e', rs: 0.1, dIdx: 0 };
+  }
+  rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  dim(d) {
+    if (this.dimCache[d]) return this.dimCache[d];
+    const r = this.rng(3 + d), N = 400, P = Array.from({ length: N }, () => Float64Array.from({ length: d }, r));
+    const ds = []; for (let i = 1; i < N; i++) { let s = 0; for (let j = 0; j < d; j++) s += (P[i][j] - P[0][j]) ** 2; ds.push(Math.sqrt(s)); }
+    const m = ds.reduce((a, b) => a + b) / ds.length, mn = Math.min(...ds), mxv = Math.max(...ds);
+    const cnt = new Array(40).fill(0); ds.forEach(v => { const k = Math.floor(v / m / 2 * 40); if (k >= 0 && k < 40) cnt[k]++; });
+    return (this.dimCache[d] = { cnt, ratio: (mxv - mn) / mn });
+  }
+  renderVals() {
+    const S = this.state, K = S.k, ki = (K - 1) / 2;
+    const COL = c => c ? 'var(--coral-200)' : 'var(--sky-200)';
+    const cells = this.grid.map((c, i) => ({ x: c.x - 6, y: c.y - 6, f: COL(this.gCum[i][K] > K / 2 ? 1 : 0) }));
+    const pts = this.tr.map(p => ({ x: p.x.toFixed(1), y: p.y.toFixed(1), f: COL(p.c), s: p.c ? 'var(--coral-600)' : 'var(--sky-600)' }));
+    const [qx, qy] = S.q;
+    const nb = this.tr.map(t => [Math.hypot(t.x - qx, t.y - qy), t]).sort((a, b) => a[0] - b[0]).slice(0, K);
+    const votes = nb.reduce((a, n) => a + n[1].c, 0);
+    const ex = k => 30 + (k - 1) / 60 * 265, ey = e => 130 - e / 0.5 * 120;
+    const path = arr => arr.map((e, i) => (i ? 'L' : 'M') + ex(1 + i * 2).toFixed(1) + ',' + ey(e).toFixed(1)).join('');
+    const eTr = this.eTr[ki], eTe = this.eTe[ki];
+    const kDesc = K === 1 ? 'Con K = 1 cada punto de entrenamiento es su propio vecino: error de train 0. La frontera rodea puntos aislados, islas que no se repiten en los datos de test.'
+      : K <= 7 ? `Con K = ${K} la frontera todavía sigue algunos detalles locales, pero las islas de un solo punto desaparecen. El error de test suele bajar respecto a K = 1.`
+      : K <= 31 ? `Con K = ${K} la frontera es suave y sigue la estructura de los grupos. Train y test quedan cerca: estamos en la zona baja de la curva en U.`
+      : `Con K = ${K} cada voto mezcla puntos de regiones lejanas. La frontera pierde las regiones pequeñas y ambos errores suben: sesgo alto.`;
+
+    const mm = S.metMode, rE = 70, rM = 70 * Math.sqrt(Math.PI / 2), rH = 70 / Math.pow(this.det, 0.25);
+    const [a, b, c] = this.Si;
+    const dist = (p, m) => { const dx = p[0] - 300, dy = p[1] - 200; return m === 'e' ? Math.hypot(dx, dy) : m === 'm' ? Math.abs(dx) + Math.abs(dy) : Math.sqrt(a * dx * dx + 2 * b * dx * dy + c * dy * dy); };
+    const thr = { e: rE, m: rM, h: rH }[mm];
+    const mpts = this.cloud.map(p => { const inn = dist([p.x, p.y], mm) <= thr; return { x: p.x.toFixed(1), y: p.y.toFixed(1), f: inn ? 'var(--iris-400)' : 'var(--ink-100)', s: inn ? 'var(--iris-600)' : 'var(--ink-400)', delay: p.delay }; });
+    const fmtD = v => mm === 'h' ? v.toFixed(2) : (v / 100).toFixed(2);
+    const MD = {
+      e: 'Euclidiana: el umbral es un círculo. A y B están a la misma distancia, aunque A sigue la dirección de la nube y B se sale de ella. El círculo deja fuera puntos típicos del eje largo e incluye zonas vacías.',
+      m: 'Manhattan: el umbral es un rombo alineado con los ejes. Tampoco sabe nada de la correlación; A y B vuelven a quedar a la misma distancia.',
+      h: 'Mahalanobis: el umbral es una elipse con la forma de la nube. A, sobre el eje largo, queda cerca; B, en una dirección donde los datos casi no varían, queda varias desviaciones estándar lejos.'
+    };
+    const met = {
+      rE, oE: mm === 'e' ? 1 : 0, oM: mm === 'm' ? 1 : 0, oH: mm === 'h' ? 1 : 0,
+      diamond: `M${300 - rM},200 L300,${200 - rM} L${300 + rM},200 L300,${200 + rM} Z`,
+      ex: (rH * Math.sqrt(this.eig[0])).toFixed(1), ey: (rH * Math.sqrt(this.eig[1])).toFixed(1), rot: `rotate(${this.eAng.toFixed(2)} 300 200)`,
+      pts: mpts, ax: this.A[0], ay: this.A[1], bx: this.B[0], by: this.B[1],
+      alx: this.A[0] + 10, aly: this.A[1] - 8, blx: this.B[0] + 10, bly: this.B[1] + 4,
+      dA: fmtD(dist(this.A, mm)), dB: fmtD(dist(this.B, mm)), desc: MD[mm]
+    };
+
+    const rs = S.rs, cx = v => 50 + v / 0.5 * 520, cy = v => 270 - v * 250;
+    const xs = Array.from({ length: 51 }, (_, i) => i * 0.01);
+    const ln = f => xs.map((x, i) => (i ? 'L' : 'M') + cx(x).toFixed(1) + ',' + cy(f(x)).toFixed(1)).join('');
+    const up = x => 2 * x * (1 - x);
+    const band = ln(up) + xs.slice().reverse().map(x => 'L' + cx(x).toFixed(1) + ',' + cy(x).toFixed(1)).join('') + 'Z';
+    const pc = v => (v * 100).toFixed(0) + ' %';
+    const ch = {
+      band, lower: ln(x => x), upper: ln(up), twice: ln(x => 2 * x), x: cx(rs), yl: cy(rs), yu: cy(up(rs)), lo: pc(rs), hi: (up(rs) * 100).toFixed(rs < 0.05 ? 1 : 0) + ' %',
+      desc: rs === 0 ? 'Si las clases no se traslapan, R* = 0 y 1-NN también llega a error 0.' : `Si el mejor clasificador posible se equivoca en un ${pc(rs)} de los casos, con datos infinitos 1-NN se equivoca entre ${pc(rs)} y ${(up(rs) * 100).toFixed(0)} %, sin saber nada de la distribución.`
+    };
+
+    const d = this.dims[S.dIdx], D = this.dim(d), mxc = Math.max(...D.cnt);
+    return {
+      k: K, setK: v => this.setState({ k: Math.round(v) % 2 ? Math.round(v) : Math.round(v) + 1 }), fmtInt: v => String(Math.round(v)),
+      cells, pts,
+      setQ: e => { const bb = e.currentTarget.getBoundingClientRect(); this.setState({ q: [(e.clientX - bb.left) / bb.width * 600, (e.clientY - bb.top) / bb.height * 384] }); },
+      q: { x: qx.toFixed(1), y: qy.toFixed(1), r: (nb[nb.length - 1][0] + 6).toFixed(1), f: COL(votes > K / 2 ? 1 : 0), lines: nb.map(n => ({ x: n[1].x.toFixed(1), y: n[1].y.toFixed(1) })) },
+      eTr: pc(eTr), eTe: pc(eTe), curveTr: path(this.eTr), curveTe: path(this.eTe), kx: ex(K).toFixed(1),
+      labTr: (ey(this.eTr[30]) - 6).toFixed(1), labTe: (ey(this.eTe[30]) - 6).toFixed(1), kDesc,
+      metOpts: [{ value: 'e', label: 'Euclidiana' }, { value: 'm', label: 'Manhattan' }, { value: 'h', label: 'Mahalanobis' }], metMode: mm, setMet: v => this.setState({ metMode: v }), met,
+      rs, setRs: v => this.setState({ rs: Math.round(v * 100) / 100 }), fmtPct: v => Math.round(v * 100) + ' %', ch,
+      dIdx: S.dIdx, setD: v => this.setState({ dIdx: Math.round(v) }), fmtD: v => String(this.dims[Math.round(v)]),
+      dimBars: D.cnt.map((c2, i) => ({ h: (c2 / mxc * 100).toFixed(1), delay: i * 10 })), dimRatio: D.ratio.toFixed(2),
+      dimDesc: d <= 3 ? `En ${d} ${d === 1 ? 'dimensión' : 'dimensiones'} las distancias varían mucho: hay vecinos claramente cercanos y puntos claramente lejanos.` : d <= 50 ? `Con d = ${d} el histograma ya se angosta. La diferencia entre el más cercano y el más lejano se reduce.` : `Con d = ${d} casi todos los puntos están a la misma distancia. Los K "más cercanos" apenas están más cerca que el resto.`
+    };
+  }
+}
+</script>
+</body>
+</html>

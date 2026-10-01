@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Regresión lineal · Ejemplos por modelo</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="Indice.dc.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <a href="F12-Guia-Sklearn.dc.html" style="color:var(--text-muted);text-decoration:none">Fase 12 · Ejemplos por modelo</a>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Ejemplos por modelo · Fase 4" title="Regresión lineal" description="Predecimos el valor de las viviendas de California a partir de ocho variables por distrito. Primero ajustamos el modelo; después vemos qué pasa al darle más flexibilidad y cómo leer sus coeficientes."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Teoría: Fase 4 · Regresión (próximamente) · scikit-learn 1.9.1</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">1. El dataset</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty"><code>fetch_california_housing</code> tiene 20 640 distritos del censo de 1990. Cada fila describe un distrito con ocho variables numéricas: ingreso mediano (<code>MedInc</code>), edad mediana de las casas, cuartos y recámaras promedio, población, ocupantes por vivienda, latitud y longitud. El objetivo <i style="font-family:var(--font-math);padding:0 2px">y</i> es el valor mediano de las viviendas, en cientos de miles de dólares.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.datasets import fetch_california_housing
+
+datos = fetch_california_housing(as_frame=True)
+X, y = datos.data, datos.target
+X.shape        # (20640, 8)
+y.describe()   # media ≈ 2.07, máximo 5.00</pre>
+  <p style="margin:0 0 20px;text-wrap:pretty">La primera llamada descarga el archivo y lo guarda en caché. Ese máximo de 5.00 importa: el censo topó los valores altos, así que todo distrito de más de 500 mil dólares aparece como 5.00. Volveremos a esto en los errores frecuentes.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">2. Código paso a paso</h2>
+  <p style="margin:0 0 12px;text-wrap:pretty">Primero separamos un 20 % para test. El modelo nunca lo ve durante el ajuste.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42)</pre>
+  <p style="margin:0 0 12px;text-wrap:pretty">Después ajustamos. <code>LinearRegression</code> resuelve mínimos cuadrados: busca los pesos <i style="font-family:var(--font-math);padding:0 2px">w</i> y el intercepto <i style="font-family:var(--font-math);padding:0 2px">b</i> que minimizan la suma de los errores al cuadrado en train. No tiene hiperparámetros que ajustar.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.linear_model import LinearRegression
+
+reg = LinearRegression()
+reg.fit(X_train, y_train)
+reg.coef_        # un peso por variable
+reg.intercept_   # b</pre>
+  <p style="margin:0 0 12px;text-wrap:pretty">Finalmente, predecimos en test y medimos. <code>score</code> devuelve <i style="font-family:var(--font-math);padding:0 2px">R²</i>; el RMSE está en las mismas unidades que <i style="font-family:var(--font-math);padding:0 2px">y</i>.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.metrics import root_mean_squared_error
+
+y_pred = reg.predict(X_test)
+reg.score(X_test, y_test)                  # R² ≈ 0.576
+root_mean_squared_error(y_test, y_pred)    # ≈ 0.746</pre>
+  <p style="margin:0 0 20px;text-wrap:pretty">Un RMSE de 0.746 significa que nos equivocamos, en promedio cuadrático, por unos 75 mil dólares. El modelo explica un poco más de la mitad de la variación del precio.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">3. Más flexibilidad no siempre ayuda</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">La regresión lineal en sí no tiene perillas, pero podemos darle una: <code>PolynomialFeatures(degree)</code> agrega <i style="font-family:var(--font-math);padding:0 2px">x², x³, …</i> como variables nuevas, y el modelo sigue siendo lineal en sus pesos. Con una sola variable, <code>MedInc</code>, se ve qué hace el grado.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,520px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="300px,44px" label="Grado del polinomio" min="{{ 1 }}" max="{{ 15 }}" step="{{ 1 }}" width="{{ 300 }}" tone="focus" value="{{ deg }}" onChange="{{ setDeg }}" format="{{ fmtDeg }}"></x-import>
+    <div style="width:100%;max-width:900px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;align-items:center">
+      <svg viewBox="0 0 640 330" width="100%" style="display:block;overflow:visible;grid-column:span 2;min-width:0">
+        <defs><clipPath id="plotclip"><rect x="50" y="14" width="575" height="276"></rect></clipPath></defs>
+        <line x1="50" y1="290" x2="625" y2="290" style="stroke:var(--ink-400);stroke-width:1"></line>
+        <line x1="50" y1="14" x2="50" y2="290" style="stroke:var(--ink-400);stroke-width:1"></line>
+        <line x1="50" y1="44.5" x2="625" y2="44.5" style="stroke:var(--ink-300);stroke-width:1;stroke-dasharray:4 4"></line>
+        <text x="620" y="38" text-anchor="end" style="font-family:var(--font-serif);font-style:italic;font-size:13px;fill:var(--ink-600)">tope del censo: 5.00</text>
+        <text x="50" y="308" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">0</text>
+        <text x="202" y="308" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">4</text>
+        <text x="354" y="308" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">8</text>
+        <text x="506" y="308" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">12</text>
+        <text x="625" y="324" text-anchor="end" style="font-size:13px;fill:var(--ink-600)">MedInc (decenas de miles de USD)</text>
+        <text x="42" y="294" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">0</text>
+        <text x="42" y="196" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">2</text>
+        <text x="42" y="98" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">4</text>
+        <text x="58" y="20" style="font-size:13px;fill:var(--ink-600)">valor (cientos de miles)</text>
+        <sc-for list="{{ pts }}" as="p" hint-placeholder-count="0">
+          <circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="2.6" style="fill:{{ p.fill }};fill-opacity:0.5"></circle>
+        </sc-for>
+        <path d="{{ curve }}" clip-path="url(#plotclip)" style="fill:none;stroke:var(--iris-600);stroke-width:2.5"></path>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px 10px;align-items:center;font-size:14px">
+          <span style="color:var(--ink-700)">R² train</span>
+          <div style="height:12px;background:var(--ink-50);border-radius:3px;position:relative;overflow:hidden"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ r2trW }}%;background:var(--ink-300);transition:width 320ms var(--ease-out)"></div></div>
+          <span style="font-family:var(--font-mono);color:var(--ink-900)">{{ r2tr }}</span>
+          <span style="color:var(--ink-700)">R² test</span>
+          <div style="height:12px;background:var(--ink-50);border-radius:3px;position:relative;overflow:hidden"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ r2teW }}%;background:var(--iris-400);transition:width 320ms var(--ease-out)"></div></div>
+          <span style="font-family:var(--font-mono);color:var(--ink-900)">{{ r2te }}</span>
+        </div>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty">{{ degDesc }}</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--text-muted)">
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:var(--ink-500)"></span>train</span>
+          <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:var(--coral-400)"></span>test</span>
+        </div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> <code>make_pipeline(PolynomialFeatures(degree), LinearRegression())</code> sobre <code>MedInc</code>. Para que el ajuste corra en el navegador usamos 300 puntos simulados con la forma del dataset, incluido el tope en 5.00; el ajuste y los R² se calculan en vivo.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Con grados altos la curva se dobla para pasar cerca de puntos de train aislados, sobre todo en los extremos, donde hay pocos datos. El R² de train nunca baja al subir el grado; el de test sí puede bajar. Para elegir el grado en serio usaríamos validación cruzada, como en la sección 3 de la guía.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.model_selection import GridSearchCV
+
+pipe = make_pipeline(PolynomialFeatures(), LinearRegression())
+grid = GridSearchCV(pipe, {"polynomialfeatures__degree": range(1, 6)},
+                    cv=5, scoring="r2")
+grid.fit(X_train[["MedInc"]], y_train)
+grid.best_params_</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">4. Cómo interpretar la salida</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Cada coeficiente dice cuánto cambia la predicción si su variable sube una unidad y las demás se quedan fijas. El problema es que las unidades son distintas: un año de antigüedad, una persona más de población, un grado de latitud. Para comparar importancias, primero estandarizamos.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,440px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:20px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="360px,32px" options="{{ coefOpts }}" value="{{ coefMode }}" onChange="{{ setCoef }}"></x-import>
+    <div style="width:100%;max-width:760px;display:grid;grid-template-columns:110px minmax(0,1fr) 96px;gap:8px 14px;align-items:center">
+      <sc-for list="{{ bars }}" as="b" hint-placeholder-count="8">
+        <span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-800)">{{ b.name }}</span>
+        <div style="height:22px;position:relative">
+          <div style="position:absolute;left:50%;top:-4px;bottom:-4px;width:1px;background:var(--ink-400)"></div>
+          <div style="position:absolute;top:3px;bottom:3px;left:{{ b.left }}%;width:{{ b.w }}%;border-radius:3px;background:{{ b.fill }};border:1.5px solid {{ b.stroke }};box-sizing:border-box;transition:left 420ms var(--ease-out),width 420ms var(--ease-out)"></div>
+        </div>
+        <span style="font-family:var(--font-mono);font-size:13px;text-align:right;color:var(--ink-900)">{{ b.val }}</span>
+      </sc-for>
+    </div>
+    <div style="max-width:620px;text-align:center;font-size:16px;line-height:1.55;color:var(--text-muted);min-height:76px;text-wrap:pretty">{{ coefDesc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 2.</b> Coeficientes de <code>LinearRegression</code> con las ocho variables, <code>random_state=42</code>. Coral sube el precio, azul lo baja.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.preprocessing import StandardScaler
+
+reg_esc = make_pipeline(StandardScaler(), LinearRegression())
+reg_esc.fit(X_train, y_train)
+pd.Series(reg_esc[-1].coef_, index=X.columns).sort_values()</pre>
+  <p style="margin:0 0 20px;text-wrap:pretty">Estandarizar no cambia las predicciones ni el R²; solo cambia la escala de los pesos. Aun estandarizados, los coeficientes no son causas. Latitud y longitud pesan mucho juntas porque describen la costa, y si dos variables están correlacionadas, como cuartos y recámaras, el modelo puede repartir el efecto entre ellas con signos opuestos.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">5. Errores frecuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>Leer los coeficientes sin escalar como importancias.</b> <code>AveBedrms</code> parece la variable más fuerte solo porque una recámara promedio más es un cambio grande.</li>
+    <li style="text-wrap:pretty"><b>Ignorar el tope de 5.00.</b> El modelo predice valores mayores a 5 para distritos ricos, que nunca aparecerán en <code>y</code>. Un histograma de <code>y</code> antes de modelar lo muestra.</li>
+    <li style="text-wrap:pretty"><b>Quedarse con R² sin mirar residuos.</b> Graficar <code>y_test - y_pred</code> contra <code>y_pred</code> muestra si el error crece con el precio o si hay curvatura que la recta no capta.</li>
+    <li style="text-wrap:pretty"><b>Agregar grados o variables y evaluar en test cada vez.</b> Se elige con validación cruzada y test se usa una vez.</li>
+    <li style="text-wrap:pretty"><b>Esperar regularización.</b> <code>LinearRegression</code> no penaliza los pesos; con muchas variables correlacionadas conviene <code>Ridge</code> o <code>Lasso</code>.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Fuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:16px">
+    <li><a href="https://scikit-learn.org/stable/modules/linear_model.html#ordinary-least-squares" target="_blank">scikit-learn · 1.1.1 Ordinary Least Squares</a></li>
+    <li><a href="https://scikit-learn.org/stable/datasets/real_world.html#california-housing-dataset" target="_blank">scikit-learn · California Housing dataset</a></li>
+    <li><a href="https://scikit-learn.org/stable/modules/linear_model.html#polynomial-regression-extending-linear-models-with-basis-functions" target="_blank">scikit-learn · 1.1.16 Polynomial regression</a></li>
+  </ul>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F12-Guia-Sklearn.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Volver</div><div style="font-weight:600;color:var(--text-strong)">Guía de scikit-learn</div></a>
+  <a href="Indice.dc.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Índice →</div><div style="font-weight:600;color:var(--text-strong)">Volver al índice</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { deg: 1, coefMode: 'raw' };
+  data() {
+    if (this._d) return this._d;
+    let s = 7;
+    const rnd = () => { s = (s + 0x6D2B79F5) | 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const nrm = () => Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math.PI * rnd());
+    const tr = [], te = [];
+    for (let i = 0; i < 300; i++) {
+      const x = Math.min(14.5, Math.max(0.5, Math.exp(1.25 + 0.42 * nrm())));
+      let y = 0.45 + 0.42 * x + (0.45 + 0.05 * x) * nrm();
+      y = Math.min(5, Math.max(0.15, y));
+      (i % 4 === 0 ? te : tr).push([x, y]);
+    }
+    return (this._d = { tr, te });
+  }
+  fit(P, d) {
+    const u = x => (x - 7.5) / 7, n = d + 1;
+    const A = Array.from({ length: n }, () => new Array(n + 1).fill(0));
+    for (const [x, y] of P) { const p = []; let v = 1; for (let k = 0; k < n; k++) { p.push(v); v *= u(x); } for (let i = 0; i < n; i++) { for (let j = 0; j < n; j++) A[i][j] += p[i] * p[j]; A[i][n] += p[i] * y; } }
+    for (let i = 0; i < n; i++) A[i][i] += 1e-9;
+    for (let c = 0; c < n; c++) {
+      let m = c; for (let r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[m][c])) m = r;
+      [A[c], A[m]] = [A[m], A[c]];
+      for (let r = 0; r < n; r++) if (r !== c) { const f = A[r][c] / A[c][c]; for (let k = c; k <= n; k++) A[r][k] -= f * A[c][k]; }
+    }
+    const w = A.map((r, i) => r[n] / r[i]);
+    return x => { let v = 1, s = 0; for (let k = 0; k < n; k++) { s += w[k] * v; v *= u(x); } return s; };
+  }
+  r2(P, f) { const m = P.reduce((a, p) => a + p[1], 0) / P.length; let ss = 0, st = 0; for (const [x, y] of P) { ss += (y - f(x)) ** 2; st += (y - m) ** 2; } return 1 - ss / st; }
+  renderVals() {
+    const S = this.state, D = this.data();
+    const px = x => 50 + x / 15 * 570, py = y => 290 - y / 5.5 * 270;
+    if (!this._pts) this._pts = [...D.tr.map(p => ({ cx: px(p[0]).toFixed(1), cy: py(p[1]).toFixed(1), fill: 'var(--ink-500)' })), ...D.te.map(p => ({ cx: px(p[0]).toFixed(1), cy: py(p[1]).toFixed(1), fill: 'var(--coral-400)' }))];
+    const f = this.fit(D.tr, S.deg);
+    let curve = '';
+    for (let i = 0; i <= 160; i++) { const x = 0.5 + i * 14 / 160; const y = Math.max(-2, Math.min(8, f(x))); curve += (i ? 'L' : 'M') + px(x).toFixed(1) + ',' + py(y).toFixed(1); }
+    const rtr = this.r2(D.tr, f), rte = this.r2(D.te, f), gap = rtr - rte;
+    const degDesc = S.deg === 1 ? 'Grado 1 es la regresión lineal simple: una recta. No puede doblarse para seguir el tope en 5.00, pero train y test dan casi lo mismo.'
+      : gap > 0.04 || rte < this.r2(D.te, this.fit(D.tr, 1)) - 0.02 ? `Con grado ${S.deg} la curva sigue detalles de train que no se repiten en test. Train mejora y test empeora: es sobreajuste.`
+      : `Con grado ${S.deg} la curva capta algo de la saturación cerca de 5.00. Train y test se mueven juntos, así que esta flexibilidad extra todavía se generaliza.`;
+
+    const F = ['MedInc', 'HouseAge', 'AveRooms', 'AveBedrms', 'Population', 'AveOccup', 'Latitude', 'Longitude'];
+    const RAW = [0.4487, 0.0097, -0.1233, 0.7831, -0.000002, -0.0035, -0.4198, -0.4337];
+    const STD = [0.854, 0.123, -0.294, 0.339, -0.002, -0.041, -0.897, -0.870];
+    const V = S.coefMode === 'raw' ? RAW : STD;
+    const mx = Math.max(...V.map(Math.abs));
+    const bars = F.map((name, i) => { const v = V[i], w = Math.abs(v) / mx * 48; return { name, w: w.toFixed(2), left: (v >= 0 ? 50 : 50 - w).toFixed(2), fill: v >= 0 ? 'var(--coral-200)' : 'var(--sky-200)', stroke: v >= 0 ? 'var(--coral-400)' : 'var(--sky-400)', val: Math.abs(v) < 0.001 ? v.toExponential(1) : (v >= 0 ? '+' : '') + v.toFixed(3) }; });
+
+    return {
+      deg: S.deg, setDeg: v => this.setState({ deg: Math.round(v) }), fmtDeg: v => String(Math.round(v)),
+      pts: this._pts, curve,
+      r2tr: rtr.toFixed(3), r2te: rte.toFixed(3), r2trW: Math.max(0, rtr * 100).toFixed(1), r2teW: Math.max(0, rte * 100).toFixed(1), degDesc,
+      coefOpts: [{ value: 'raw', label: 'Sin escalar' }, { value: 'std', label: 'Estandarizados' }], coefMode: S.coefMode, setCoef: v => this.setState({ coefMode: v }),
+      bars,
+      coefDesc: S.coefMode === 'raw'
+        ? 'Sin escalar, AveBedrms parece dominar y Population parece irrelevante. Pero una recámara promedio más es un cambio enorme, y una persona más de población es minúsculo.'
+        : 'Estandarizados, cada barra es el efecto de subir una desviación estándar. Ahora el ingreso y la ubicación dominan; Population sigue siendo casi cero.'
+    };
+  }
+}
+</script>
+</body>
+</html>

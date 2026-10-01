@@ -33,10 +33,10 @@
 <section style="max-width:960px;margin:32px auto 0;padding:0 24px">
   <div style="font-size:14px;font-weight:700;color:var(--ink-600);margin-bottom:16px">Plan del curso</div>
   <div style="overflow-x:auto;overflow-y:hidden;padding:8px 0 12px">
-    <div style="position:relative;min-width:860px;box-sizing:border-box;padding:0 6px;display:grid;grid-template-columns:repeat(11,minmax(0,1fr))">
-      <div style="position:absolute;left:4.5%;right:4.5%;top:17px;height:2px;background:var(--ink-200)"></div>
-      <div style="position:absolute;left:4.5%;top:17px;height:2px;width:{{ trackW }}%;background:var(--ink-800);transition:width 900ms var(--ease-out)"></div>
-      <sc-for list="{{ track }}" as="t" hint-placeholder-count="11">
+    <div style="position:relative;min-width:920px;box-sizing:border-box;padding:0 6px;display:grid;grid-template-columns:repeat(12,minmax(0,1fr))">
+      <div style="position:absolute;left:4.17%;right:4.17%;top:17px;height:2px;background:var(--ink-200)"></div>
+      <div style="position:absolute;left:4.17%;top:17px;height:2px;width:{{ trackW }}%;background:var(--ink-800);transition:width 900ms var(--ease-out)"></div>
+      <sc-for list="{{ track }}" as="t" hint-placeholder-count="12">
         <a href="{{ t.href }}" onMouseEnter="{{ t.hover }}" onMouseLeave="{{ t.leave }}" style="position:relative;min-width:0;display:flex;flex-direction:column;align-items:center;gap:10px;text-decoration:none;color:inherit;cursor:{{ t.cursor }};opacity:{{ t.op }};transform:translateY({{ t.y }}px);transition:opacity 640ms var(--ease-out) {{ t.delay }}ms,transform 640ms var(--ease-out) {{ t.delay }}ms">
           <span style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;background:{{ t.fill }};border:1.5px solid {{ t.stroke }};color:{{ t.ink }};box-shadow:1px 2px 0 rgba(0,0,0,.10);transition:background 240ms var(--ease-out)">{{ t.n }}</span>
           <span style="font-size:12px;line-height:1.3;text-align:center;color:{{ t.label }};padding:0 1px;max-width:100%;text-wrap:balance;hyphens:manual">{{ t.short }}</span>
@@ -81,9 +81,58 @@
     <li style="text-wrap:pretty">¿Cómo cargamos un CSV en pandas, revisamos sus tipos de datos y hacemos al menos dos gráficas distintas para explorarlo?</li>
   </ol>
 
+  <div id="fase-2" style="display:flex;align-items:center;gap:12px;margin:64px 0 8px;flex-wrap:wrap">
+    <span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500)">Fase 2</span>
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Tag" hint-size="80px,22px" tone="neutral">2 artículos</x-import>
+  </div>
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:0 0 12px;color:var(--text-strong)">Clasificadores simples</h2>
+  <p style="margin:0 0 28px;text-wrap:pretty;color:var(--text-muted)">Qué significa aprender de datos, con los dos algoritmos más simples posibles: uno que memoriza y otro que aprende parámetros. Van antes de la maquinaria matemática pesada.</p>
+
+  <div style="display:flex;flex-direction:column;border-bottom:1px solid var(--border-rule)">
+    <sc-for list="{{ articles2 }}" as="a" hint-placeholder-count="2">
+      <a href="{{ a.href }}" onMouseEnter="{{ a.hover }}" onMouseLeave="{{ a.leave }}" style="display:grid;grid-template-columns:40px minmax(0,1fr) 20px;gap:12px;align-items:start;padding:18px 8px;border-top:1px solid var(--border-rule);text-decoration:none;color:inherit;background:{{ a.bg }};transition:background 240ms var(--ease-out)">
+        <span style="font-family:var(--font-mono);font-size:14px;color:var(--ink-500);padding-top:3px">{{ a.num }}</span>
+        <span style="display:flex;flex-direction:column;gap:4px;min-width:0">
+          <span style="font-size:19px;font-weight:700;line-height:1.3;color:var(--text-strong)">{{ a.title }}</span>
+          <span style="font-size:16px;line-height:1.5;color:var(--text-muted);text-wrap:pretty">{{ a.desc }}</span>
+          <span style="font-size:13px;color:var(--text-subtle)">{{ a.src }}</span>
+        </span>
+        <span style="font-size:18px;color:var(--ink-500);padding-top:2px;transform:translateX({{ a.shift }}px);transition:transform 240ms var(--ease-out)">→</span>
+      </a>
+    </sc-for>
+  </div>
+
+  <h3 style="font-size:20px;line-height:1.25;margin:48px 0 12px;color:var(--text-strong)">Preguntas de repaso</h3>
+  <p style="margin:0 0 12px;font-size:16px;color:var(--text-muted)">Al terminar la fase deberíamos poder responder sin ver los artículos:</p>
+  <ol style="margin:0 0 20px;padding-left:22px;display:flex;flex-direction:column;gap:8px">
+    <li style="text-wrap:pretty">¿Podemos explicar KNN sin mencionar código, solo con la idea de vecinos que se parecen?</li>
+    <li style="text-wrap:pretty">¿Por qué K chico da varianza alta y K grande da sesgo alto? ¿Cómo se conecta con la curva en U?</li>
+    <li style="text-wrap:pretty">¿Podemos escribir de memoria la regla de actualización del perceptrón y explicar por qué funciona?</li>
+    <li style="text-wrap:pretty">¿Qué significa que un problema sea linealmente separable? Con un ejemplo que no lo sea.</li>
+    <li style="text-wrap:pretty">¿Cuál es la diferencia de fondo entre KNN, que memoriza, y el perceptrón, que aprende parámetros?</li>
+  </ol>
+
+  <div id="fase-12" style="display:flex;align-items:center;gap:12px;margin:64px 0 8px;flex-wrap:wrap">
+    <span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500)">Fase 12</span>
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Tag" hint-size="80px,22px" tone="neutral">Guía transversal</x-import>
+  </div>
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:0 0 12px;color:var(--text-strong)">Herramientas</h2>
+  <p style="margin:0 0 28px;text-wrap:pretty;color:var(--text-muted)">Material de consulta que acompaña a todas las fases.</p>
+  <div style="display:flex;flex-direction:column;border-bottom:1px solid var(--border-rule)">
+    <a href="F12-Guia-Sklearn.dc.html" onMouseEnter="{{ g.hover }}" onMouseLeave="{{ g.leave }}" style="display:grid;grid-template-columns:40px minmax(0,1fr) 20px;gap:12px;align-items:start;padding:18px 8px;border-top:1px solid var(--border-rule);text-decoration:none;color:inherit;background:{{ g.bg }};transition:background 240ms var(--ease-out)">
+      <span style="font-family:var(--font-mono);font-size:14px;color:var(--ink-500);padding-top:3px">01</span>
+      <span style="display:flex;flex-direction:column;gap:4px;min-width:0">
+        <span style="font-size:19px;font-weight:700;line-height:1.3;color:var(--text-strong)">Guía de scikit-learn</span>
+        <span style="font-size:16px;line-height:1.5;color:var(--text-muted);text-wrap:pretty">La API común de los estimadores, pipelines, validación cruzada y qué parte de la biblioteca usa cada fase del curso.</span>
+        <span style="font-size:13px;color:var(--text-subtle)">scikit-learn User Guide</span>
+      </span>
+      <span style="font-size:18px;color:var(--ink-500);padding-top:2px;transform:translateX({{ g.shift }}px);transition:transform 240ms var(--ease-out)">→</span>
+    </a>
+  </div>
+
   <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:64px 0 16px;color:var(--text-strong)">Todas las fases</h2>
   <div style="display:flex;flex-direction:column;border-bottom:1px solid var(--border-rule)">
-    <sc-for list="{{ phases }}" as="p" hint-placeholder-count="11">
+    <sc-for list="{{ phases }}" as="p" hint-placeholder-count="12">
       <div onMouseEnter="{{ p.hover }}" onMouseLeave="{{ p.leave }}" style="display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 4px;border-top:1px solid var(--border-rule);background:{{ p.bg }};transition:background 240ms var(--ease-out)">
         <span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500)">{{ p.num }}</span>
         <span style="display:flex;flex-direction:column;min-width:0">
@@ -132,13 +181,15 @@ class Component extends DCLogic {
       ['Redes neuronales y Deep Learning', 'Deep Learning', ''],
       ['Transformers', 'Transformers', ''],
       ['NLP', 'NLP', 'Procesamiento de lenguaje natural (CS4740)'],
-      ['Consolidación', 'Cierre', '']
+      ['Consolidación', 'Cierre', ''],
+      ['Guía de scikit-learn', 'scikit-learn', 'API de estimadores, pipelines, validación cruzada, módulos por fase']
     ];
+    const isAv = i => i <= 1 || i === 11, hrefOf = i => i === 0 ? '#fase-1' : i === 1 ? '#fase-2' : i === 11 ? '#fase-12' : undefined;
     const hover = i => () => this.setState({ hot: i }), leave = () => this.setState({ hot: -1 });
     const track = P.map(([, short], i) => {
-      const av = i === 0, hot = S.hot === i;
+      const av = isAv(i), hot = S.hot === i;
       return {
-        n: i + 1, short, href: av ? '#fase-1' : undefined, cursor: av ? 'pointer' : 'default', hover: hover(i), leave,
+        n: i + 1, short, href: hrefOf(i), cursor: av ? 'pointer' : 'default', hover: hover(i), leave,
         fill: av ? 'var(--ink-800)' : (hot ? 'var(--ink-50)' : 'var(--paper)'), stroke: av ? 'var(--ink-800)' : 'var(--ink-400)',
         ink: av ? 'var(--paper)' : 'var(--ink-500)', label: av || hot ? 'var(--text-strong)' : 'var(--text-muted)',
         op: S.shown ? 1 : 0, y: S.shown ? 0 : 6, delay: i * 70
@@ -146,8 +197,8 @@ class Component extends DCLogic {
     });
     const phases = P.map(([name, , topics], i) => ({
       num: String(i + 1).padStart(2, '0'), name, topics, hover: hover(i), leave,
-      state: i === 0 ? 'disponible' : 'próximamente', stateColor: i === 0 ? 'var(--text-strong)' : 'var(--text-subtle)',
-      color: i === 0 ? 'var(--text-strong)' : 'var(--text-body)', bg: S.hot === i ? 'var(--ink-50)' : 'transparent'
+      state: isAv(i) ? 'disponible' : 'próximamente', stateColor: isAv(i) ? 'var(--text-strong)' : 'var(--text-subtle)',
+      color: isAv(i) ? 'var(--text-strong)' : 'var(--text-body)', bg: S.hot === i ? 'var(--ink-50)' : 'transparent'
     }));
     const A = [
       ['01', 'Introducción a Ciencia de Datos y ML', 'Qué es la ciencia de datos, el ciclo de un proyecto y qué significa formalmente que un programa aprenda.', 'Alan A1 · CS4780 L1 · ISLR Cap. 1', 'F1-01-Introduccion.dc.html'],
@@ -160,7 +211,16 @@ class Component extends DCLogic {
       num, title, desc, src, href, hover: () => this.setState({ hotA: i }), leave: () => this.setState({ hotA: -1 }),
       bg: S.hotA === i ? 'var(--ink-50)' : 'transparent', shift: S.hotA === i ? 4 : 0
     }));
-    return { track, trackW: 0, phases, articles };
+    const A2 = [
+      ['01', 'K vecinos más cercanos (KNN)', 'Clasificar por votación de los vecinos: elegir K, métricas de distancia, la cota de Cover y Hart y la maldición de la dimensionalidad.', 'CS4780 · Cover & Hart (1967)', 'F2-01-KNN.dc.html'],
+      ['02', 'El Perceptrón', 'El primer clasificador lineal que aprende sus pesos: la regla de actualización, el teorema de Novikoff y por qué falla con XOR.', 'CS4780 · Novikoff (1962) · Minsky & Papert (1969)', 'F2-02-Perceptron.dc.html']
+    ];
+    const articles2 = A2.map(([num, title, desc, src, href], i) => ({
+      num, title, desc, src, href, hover: () => this.setState({ hotA: 10 + i }), leave: () => this.setState({ hotA: -1 }),
+      bg: S.hotA === 10 + i ? 'var(--ink-50)' : 'transparent', shift: S.hotA === 10 + i ? 4 : 0
+    }));
+    const g = { hover: () => this.setState({ hotA: 99 }), leave: () => this.setState({ hotA: -1 }), bg: S.hotA === 99 ? 'var(--ink-50)' : 'transparent', shift: S.hotA === 99 ? 4 : 0 };
+    return { track, trackW: 0, phases, articles, articles2, g };
   }
 }
 </script>

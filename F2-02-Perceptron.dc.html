@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>El Perceptrón — Fase 2</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="Indice.dc.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <span style="color:var(--text-muted);font-variant-numeric:tabular-nums">Fase 2 · 02 de 02</span>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Fase 2 · Clasificadores simples" title="El Perceptrón" description="El primer algoritmo que ajusta sus propios parámetros a partir de ejemplos. Una regla de actualización de una línea, una garantía de convergencia y una limitación que frenó a las redes neuronales durante más de una década."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Actualizado el 10 sep 2026 · Fuente: CS4780 (Weinberger) · Novikoff (1962) · Minsky y Papert (1969)</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">1. Contexto</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Frank Rosenblatt propuso el perceptrón en 1958, inspirado de forma libre en una neurona biológica. Es el antecesor directo de las redes neuronales modernas: cada neurona de una red densa, que veremos en la Fase 8, es esencialmente un perceptrón con otra función de activación.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">A diferencia de <a href="F2-01-KNN.dc.html">KNN</a>, que no aprende ningún parámetro, el perceptrón construye un modelo explícito. Es nuestro primer ejemplo formal del paradigma <b>paramétrico</b> de <a href="F1-01-Introduccion.dc.html">la introducción</a>.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">2. El modelo</h2>
+  <p style="margin:0 0 8px;text-wrap:pretty">El perceptrón es un <b>clasificador lineal binario</b>. Con etiquetas <i style="font-family:var(--font-math);padding:0 2px">y ∈ {−1, +1}</i> y una entrada <i style="font-family:var(--font-math);padding:0 2px">x ∈ ℝᵈ</i>, predice:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="1" tex="\hat{y} = \operatorname{sign}(w^T x + b)"></x-import>
+  <p style="margin:0 0 20px;text-wrap:pretty"><i style="font-family:var(--font-math);padding:0 2px">w</i> es el vector de pesos y <i style="font-family:var(--font-math);padding:0 2px">b</i> el sesgo (<i>bias</i>, que no tiene relación con el sesgo estadístico de <a href="F1-02-Evaluacion.dc.html">sesgo-varianza</a>). Geométricamente, <i style="font-family:var(--font-math);padding:0 2px">wᵀx + b = 0</i> es un hiperplano que divide el espacio en dos; el signo dice de qué lado cae <i style="font-family:var(--font-math);padding:0 2px">x</i>, y <i style="font-family:var(--font-math);padding:0 2px">w</i> apunta hacia el lado positivo. Por convención absorbemos <i style="font-family:var(--font-math);padding:0 2px">b</i> en <i style="font-family:var(--font-math);padding:0 2px">w</i> agregando una coordenada constante <i style="font-family:var(--font-math);padding:0 2px">x₀ = 1</i>, y escribimos <i style="font-family:var(--font-math);padding:0 2px">ŷ = sign(wᵀx)</i>.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">En el vocabulario de la introducción, el espacio de hipótesis <i style="font-family:var(--font-math);padding:0 2px">ℋ</i> del perceptrón es el conjunto de todos los hiperplanos de <i style="font-family:var(--font-math);padding:0 2px">ℝᵈ</i>. Elegir este algoritmo es elegir ese <i style="font-family:var(--font-math);padding:0 2px">ℋ</i>, y por eso su frontera siempre es recta.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">3. El algoritmo de aprendizaje</h2>
+  <p style="margin:0 0 12px;text-wrap:pretty">El aprendizaje es <b>online</b>: procesa un ejemplo a la vez, y solo cambia los pesos cuando se equivoca.</p>
+  <pre style="margin:0 0 12px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">Inicializar w = 0
+Repetir hasta que no haya errores (o hasta max_iter):
+    Para cada (x_i, y_i) del conjunto de entrenamiento:
+        Si sign(w^T x_i) != y_i:
+            w = w + y_i * x_i</pre>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="2" tex="w \leftarrow w + y_i\, x_i"></x-import>
+  <p style="margin:0 0 20px;text-wrap:pretty">Si un punto positivo (<i style="font-family:var(--font-math);padding:0 2px">yᵢ = +1</i>) queda del lado negativo, sumar <i style="font-family:var(--font-math);padding:0 2px">xᵢ</i> a <i style="font-family:var(--font-math);padding:0 2px">w</i> aumenta <i style="font-family:var(--font-math);padding:0 2px">wᵀxᵢ</i> en <i style="font-family:var(--font-math);padding:0 2px">‖xᵢ‖²</i>, así que el hiperplano gira hacia clasificarlo bien. Con un falso positivo restamos <i style="font-family:var(--font-math);padding:0 2px">xᵢ</i> y pasa lo contrario. Una sola actualización no siempre arregla el punto, pero siempre lo acerca.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,560px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+      <button onClick="{{ prev }}" style="padding:7px 14px;border-radius:6px;border:1px solid var(--ink-300);background:var(--paper);font-family:var(--font-sans);font-size:14px;color:var(--ink-900);cursor:pointer" style-hover="background:var(--ink-50)">← Anterior</button>
+      <button onClick="{{ togglePlay }}" style="padding:7px 14px;border-radius:6px;border:1px solid var(--ink-800);background:var(--ink-800);font-family:var(--font-sans);font-size:14px;font-weight:600;color:var(--paper);cursor:pointer;min-width:110px">{{ playLabel }}</button>
+      <button onClick="{{ next }}" style="padding:7px 14px;border-radius:6px;border:1px solid var(--ink-300);background:var(--paper);font-family:var(--font-sans);font-size:14px;color:var(--ink-900);cursor:pointer" style-hover="background:var(--ink-50)">Siguiente →</button>
+      <button onClick="{{ reset }}" style="padding:7px 14px;border-radius:6px;border:1px solid var(--ink-300);background:var(--paper);font-family:var(--font-sans);font-size:14px;color:var(--ink-900);cursor:pointer" style-hover="background:var(--ink-50)">Reiniciar</button>
+    </div>
+    <div style="width:100%;max-width:860px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px;align-items:center">
+      <svg viewBox="0 0 400 400" width="100%" style="max-width:440px;display:block;margin:0 auto;overflow:visible;border:1px solid var(--ink-200);border-radius:4px">
+        <path d="{{ st.pos }}" style="fill:var(--coral-200);fill-opacity:0.4"></path>
+        <path d="{{ st.neg }}" style="fill:var(--sky-200);fill-opacity:0.4"></path>
+        <line x1="{{ st.l1x }}" y1="{{ st.l1y }}" x2="{{ st.l2x }}" y2="{{ st.l2y }}" style="stroke:var(--ink-900);stroke-width:2.2;opacity:{{ st.lOp }}"></line>
+        <line x1="200" y1="200" x2="{{ st.wx }}" y2="{{ st.wy }}" style="stroke:var(--iris-600);stroke-width:2.5;opacity:{{ st.lOp }}" marker-end="url(#wArr)"></line>
+        <defs><marker id="wArr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 Z" style="fill:var(--iris-600)"></path></marker></defs>
+        <circle cx="{{ st.hx }}" cy="{{ st.hy }}" r="12" style="fill:none;stroke:var(--iris-600);stroke-width:2.5;opacity:{{ st.hOp }}"></circle>
+        <sc-for list="{{ st.pts }}" as="p" hint-placeholder-count="0">
+          <circle cx="{{ p.x }}" cy="{{ p.y }}" r="5.5" style="fill:{{ p.f }};stroke:{{ p.s }};stroke-width:{{ p.sw }}"></circle>
+        </sc-for>
+        <text x="{{ st.wlx }}" y="{{ st.wly }}" style="font-family:var(--font-math);font-style:italic;font-size:16px;fill:var(--iris-600);opacity:{{ st.lOp }}">w</text>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div style="display:flex;gap:28px;flex-wrap:wrap">
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="100px,70px" label="Actualizaciones" value="{{ st.step }}" size="sm"></x-import>
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="100px,70px" label="Mal clasificados" value="{{ st.wrong }}" size="sm"></x-import>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:14px;color:var(--ink-800)">w = {{ st.w }}</div>
+        <div style="border-top:1px solid var(--border-rule);padding-top:12px;font-size:16px;line-height:1.55;color:var(--text-muted);min-height:100px;text-wrap:pretty">{{ st.desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> El perceptrón sobre 26 puntos linealmente separables, una actualización a la vez. El fondo coral es la región que predice +1; la flecha es la parte de <i>w</i> que da la orientación de la frontera. El círculo morado marca el siguiente punto mal clasificado, el que provoca la próxima actualización.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">La regla es un caso particular de descenso de gradiente estocástico sobre la pérdida <i>hinge</i> sin margen, <i style="font-family:var(--font-math);padding:0 2px">max(0, −yᵢ wᵀxᵢ)</i>. El descenso de gradiente lo formalizamos en la Fase 4, y la pérdida hinge reaparece con SVM en la Fase 5.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">4. Teorema de convergencia (Novikoff, 1962)</h2>
+  <p style="margin:0 0 8px;text-wrap:pretty"><b>Si los datos son linealmente separables, el perceptrón converge en un número finito de pasos.</b> Formalmente: si existe un hiperplano separador <i style="font-family:var(--font-math);padding:0 2px">w*</i> con <i style="font-family:var(--font-math);padding:0 2px">‖w*‖ = 1</i> y margen <i style="font-family:var(--font-math);padding:0 2px">γ</i> (la distancia mínima de cualquier punto al hiperplano), y todos los puntos cumplen <i style="font-family:var(--font-math);padding:0 2px">‖xᵢ‖ ≤ R</i>, entonces:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="3" tex="\text{número de actualizaciones} \le \left(\frac{R}{\gamma}\right)^2"></x-import>
+  <p style="margin:0 0 20px;text-wrap:pretty">Cuanto más separadas están las clases, más rápido converge. La cota no depende del número de puntos ni de la dimensión.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,500px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="300px,44px" label="Margen γ" min="{{ 0.02 }}" max="{{ 0.3 }}" step="{{ 0.01 }}" width="{{ 300 }}" tone="focus" value="{{ gam }}" onChange="{{ setGam }}" format="{{ fmt2 }}"></x-import>
+    <div style="width:100%;max-width:860px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px;align-items:center">
+      <svg viewBox="0 0 400 400" width="100%" style="max-width:400px;display:block;margin:0 auto;overflow:visible">
+        <circle cx="200" cy="200" r="180" style="fill:none;stroke:var(--ink-200);stroke-width:1;stroke-dasharray:3 4"></circle>
+        <path d="{{ nv.band }}" style="fill:var(--ink-100);fill-opacity:0.8;transition:d 320ms var(--ease-out)"></path>
+        <line x1="{{ nv.s1x }}" y1="{{ nv.s1y }}" x2="{{ nv.s2x }}" y2="{{ nv.s2y }}" style="stroke:var(--ink-500);stroke-width:1.2;stroke-dasharray:5 4"></line>
+        <sc-for list="{{ nv.pts }}" as="p" hint-placeholder-count="0">
+          <circle cx="{{ p.x }}" cy="{{ p.y }}" r="3.6" style="fill:{{ p.f }};stroke:{{ p.s }};stroke-width:1"></circle>
+        </sc-for>
+        <line x1="{{ nv.l1x }}" y1="{{ nv.l1y }}" x2="{{ nv.l2x }}" y2="{{ nv.l2y }}" style="stroke:var(--iris-600);stroke-width:2.2"></line>
+        <text x="200" y="396" text-anchor="middle" style="font-family:var(--font-serif);font-style:italic;font-size:13px;fill:var(--ink-500)">‖x‖ ≤ R</text>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+        <div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px 12px;align-items:center;font-size:14px">
+          <span style="color:var(--ink-700)">Actualizaciones reales</span>
+          <div style="height:14px;background:var(--ink-50);border-radius:3px;position:relative;overflow:hidden"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ nv.wReal }}%;background:var(--iris-400);transition:width 320ms var(--ease-out)"></div></div>
+          <span style="font-family:var(--font-mono);color:var(--ink-900);text-align:right">{{ nv.real }}</span>
+          <span style="color:var(--ink-700)">Cota (R/γ)²</span>
+          <div style="height:14px;background:var(--ink-50);border-radius:3px;position:relative;overflow:hidden"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ nv.wBound }}%;background:var(--ink-300);transition:width 320ms var(--ease-out)"></div></div>
+          <span style="font-family:var(--font-mono);color:var(--ink-900);text-align:right">{{ nv.bound }}</span>
+        </div>
+        <div style="font-size:13px;color:var(--text-subtle)">Barras en escala logarítmica.</div>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:96px">{{ nv.desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 2.</b> Puntos en el disco de radio 1, separados por un hiperplano que pasa por el origen (línea punteada). Quitamos los puntos dentro de la franja gris de ancho 2γ y corremos el perceptrón sin sesgo hasta que converge; la línea morada es la frontera que encuentra.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">La cantidad <i style="font-family:var(--font-math);padding:0 2px">R/γ</i> vale la pena recordarla: reaparece casi idéntica en la teoría de SVM (Fase 5). La diferencia es que SVM busca el hiperplano que <b>maximiza</b> el margen, mientras que el perceptrón se detiene en el primero que separa, como se ve en la figura: su frontera casi nunca coincide con la punteada.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">5. La limitación: datos no separables</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Si los datos <b>no</b> son linealmente separables, el algoritmo básico nunca converge: sigue oscilando. El ejemplo clásico es XOR. No hay recta que separe <i style="font-family:var(--font-math);padding:0 2px">(0, 0)</i> y <i style="font-family:var(--font-math);padding:0 2px">(1, 1)</i> de <i style="font-family:var(--font-math);padding:0 2px">(0, 1)</i> y <i style="font-family:var(--font-math);padding:0 2px">(1, 0)</i>.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,460px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:center">
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="200px,32px" options="{{ xOpts }}" value="{{ xMode }}" onChange="{{ setX }}"></x-import>
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="260px,44px" label="Época" min="{{ 1 }}" max="{{ 15 }}" step="{{ 1 }}" width="{{ 260 }}" tone="focus" value="{{ ep }}" onChange="{{ setEp }}" format="{{ fmtInt }}"></x-import>
+    </div>
+    <div style="width:100%;max-width:860px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:32px;align-items:center">
+      <svg viewBox="0 0 300 300" width="100%" style="max-width:320px;display:block;margin:0 auto;overflow:visible;border:1px solid var(--ink-200);border-radius:4px">
+        <path d="{{ xr.pos }}" style="fill:var(--coral-200);fill-opacity:0.4"></path>
+        <path d="{{ xr.neg }}" style="fill:var(--sky-200);fill-opacity:0.4"></path>
+        <line x1="{{ xr.l1x }}" y1="{{ xr.l1y }}" x2="{{ xr.l2x }}" y2="{{ xr.l2y }}" style="stroke:var(--ink-900);stroke-width:2.2;opacity:{{ xr.lOp }}"></line>
+        <sc-for list="{{ xr.pts }}" as="p" hint-placeholder-count="4">
+          <circle cx="{{ p.x }}" cy="{{ p.y }}" r="11" style="fill:{{ p.f }};stroke:{{ p.s }};stroke-width:{{ p.sw }}"></circle>
+          <text x="{{ p.x }}" y="{{ p.ty }}" text-anchor="middle" style="font-family:var(--font-mono);font-size:12px;fill:var(--ink-700)">{{ p.lab }}</text>
+        </sc-for>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--ink-600)">Errores por época</div>
+        <div style="height:110px;display:flex;align-items:flex-end;gap:4px;border-bottom:1px solid var(--ink-800)">
+          <sc-for list="{{ xr.bars }}" as="b" hint-placeholder-count="15">
+            <div style="flex:1;height:{{ b.h }}%;min-height:2px;background:{{ b.f }};border:1px solid {{ b.s }};border-bottom:none;border-radius:2px 2px 0 0;transition:height 320ms var(--ease-out),background 240ms var(--ease-out)"></div>
+          </sc-for>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;font-family:var(--font-mono);color:var(--ink-500)"><span>1</span><span>época</span><span>15</span></div>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:96px">{{ xr.desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 3.</b> Cuatro puntos y quince épocas de perceptrón con sesgo. AND es separable; XOR no. Cada barra cuenta las actualizaciones de una época, y la frontera es la que queda al final de la época elegida.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Minsky y Papert usaron este argumento en su libro <i>Perceptrons</i> (1969) para mostrar los límites del modelo de una sola capa. El libro contribuyó al primer "invierno de la IA", un enfriamiento de más de una década en la investigación de redes neuronales. Lo resolvieron el backpropagation y las redes multicapa (Fase 8), que introducen no linealidades entre capas.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">En la práctica, para datos no separables usamos variantes: el <b>perceptrón con margen</b>, el <b>pocket algorithm</b>, que se queda con los mejores pesos vistos en lugar de los últimos, o modelos con pérdida suave como la regresión logística y la SVM de margen suave, que veremos en la Fase 5.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">6. Ventajas y desventajas</h2>
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 24px;margin:0 0 20px;border-top:2px solid var(--ink-800);border-bottom:2px solid var(--ink-800);font-size:16px;line-height:1.5">
+    <div style="padding:10px 0;font-weight:700;border-bottom:1px solid var(--ink-400);color:var(--text-strong)">Ventajas</div>
+    <div style="padding:10px 0;font-weight:700;border-bottom:1px solid var(--ink-400);color:var(--text-strong)">Desventajas</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Muy simple: cada actualización cuesta <i style="font-family:var(--font-math)">O(d)</i></div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Solo converge si los datos son linealmente separables</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Garantía de convergencia demostrable (Novikoff)</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">El resultado depende del orden de los ejemplos</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Base conceptual de las redes neuronales</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">No da probabilidades, solo una decisión</div>
+    <div style="padding:10px 0">Aprendizaje online: no necesita todo el dataset en memoria</div>
+    <div style="padding:10px 0">La frontera no es óptima; SVM sí maximiza el margen</div>
+  </div>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">7. Implementación</h2>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">import numpy as np
+
+class Perceptron:
+    def __init__(self, lr=1.0, max_iter=1000):
+        self.lr = lr
+        self.max_iter = max_iter
+
+    def fit(self, X, y):
+        # y debe estar en {-1, +1}
+        X = np.hstack([np.ones((X.shape[0], 1)), X])  # columna de bias
+        self.w = np.zeros(X.shape[1])
+
+        for _ in range(self.max_iter):
+            errors = 0
+            for xi, yi in zip(X, y):
+                if np.sign(self.w @ xi) != yi:
+                    self.w += self.lr * yi * xi
+                    errors += 1
+            if errors == 0:
+                break  # convergió
+
+    def predict(self, X):
+        X = np.hstack([np.ones((X.shape[0], 1)), X])
+        return np.sign(X @ self.w)</pre>
+  <p style="margin:0 0 12px;text-wrap:pretty">En scikit-learn, <code>Perceptron</code> acepta etiquetas en cualquier formato y comparte implementación con <code>SGDClassifier</code>: equivale a <code>SGDClassifier(loss="perceptron", learning_rate="constant", eta0=1, penalty=None)</code>. Como usa descenso de gradiente, conviene escalar las variables.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.linear_model import Perceptron
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+
+clf = make_pipeline(StandardScaler(), Perceptron(max_iter=1000, tol=1e-3))
+clf.fit(X_train, y_train)
+print(clf.score(X_test, y_test))</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">KNN y Perceptrón, lado a lado</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">La diferencia de fondo entre los dos algoritmos de esta fase va a reaparecer en cada fase siguiente:</p>
+  <div style="display:grid;grid-template-columns:minmax(0,140px) minmax(0,1fr) minmax(0,1fr);gap:0 20px;margin:0 0 20px;border-top:2px solid var(--ink-800);border-bottom:2px solid var(--ink-800);font-size:16px;line-height:1.5">
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-400)"></div>
+    <div style="padding:10px 0;font-weight:700;border-bottom:1px solid var(--ink-400);color:var(--text-strong)">KNN</div>
+    <div style="padding:10px 0;font-weight:700;border-bottom:1px solid var(--ink-400);color:var(--text-strong)">Perceptrón</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100);color:var(--text-muted)">Tipo</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">No paramétrico: memoriza</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Paramétrico: aprende <i style="font-family:var(--font-math)">w</i></div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100);color:var(--text-muted)">Frontera</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Cualquier forma</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Siempre un hiperplano</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100);color:var(--text-muted)">Entrenar</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Gratis</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Iterar hasta no tener errores</div>
+    <div style="padding:10px 0;color:var(--text-muted)">Predecir</div>
+    <div style="padding:10px 0">Caro: <i style="font-family:var(--font-math)">O(n · d)</i></div>
+    <div style="padding:10px 0">Barato: <i style="font-family:var(--font-math)">O(d)</i></div>
+  </div>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Conexiones con otras fases</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty">La regla de actualización es un caso particular de descenso de gradiente estocástico, que formalizamos en la Fase 4.</li>
+    <li style="text-wrap:pretty">El margen <i style="font-family:var(--font-math);padding:0 2px">γ</i> del teorema de Novikoff es el mismo que SVM maximiza en la Fase 5.</li>
+    <li style="text-wrap:pretty">Es la unidad básica de una red neuronal. La Fase 8 apila perceptrones en capas con activaciones no lineales y resuelve la limitación de XOR.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Fuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:16px">
+    <li><a href="https://www.cs.cornell.edu/courses/cs4780/2024sp/" target="_blank">CS4780 · El Perceptrón</a> (Weinberger)</li>
+    <li><a href="https://es.wikipedia.org/wiki/Perceptr%C3%B3n" target="_blank">Wikipedia · Perceptrón</a></li>
+    <li>Novikoff, A. (1962). "On convergence proofs on perceptrons."</li>
+    <li>Minsky, M. y Papert, S. (1969). <i>Perceptrons</i>. MIT Press.</li>
+    <li><a href="https://scikit-learn.org/stable/modules/linear_model.html#perceptron" target="_blank">scikit-learn · Perceptron</a></li>
+  </ul>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F2-01-KNN.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Anterior</div><div style="font-weight:600;color:var(--text-strong)">K vecinos más cercanos</div></a>
+  <a href="Indice.dc.html#fase-2" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Fin de la fase →</div><div style="font-weight:600;color:var(--text-strong)">Volver al índice</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    const r = this.rng(21);
+    const pts = [];
+    while (pts.length < 26) { const x = r() * 1.8 - 0.9, y = r() * 1.8 - 0.9, s = 0.15 + 0.6 * x - 0.8 * y; if (Math.abs(s) > 0.14) pts.push({ x, y, c: s > 0 ? 1 : -1 }); }
+    this.p1 = pts;
+    this.W1 = [[0, 0, 0]]; this.U1 = [];
+    let w = [0, 0, 0];
+    for (let it = 0; it < 200 && this.U1.length < 400; it++) {
+      let e = 0;
+      pts.forEach((p, i) => { if (this.sgn(w[0] + w[1] * p.x + w[2] * p.y) !== p.c) { this.U1.push(i); w = [w[0] + p.c, w[1] + p.c * p.x, w[2] + p.c * p.y]; this.W1.push(w); e++; } });
+      if (!e) break;
+    }
+    const r2 = this.rng(8);
+    this.disk = []; while (this.disk.length < 320) { const x = r2() * 2 - 1, y = r2() * 2 - 1; if (x * x + y * y <= 1) this.disk.push([x, y]); }
+    const a = 35 * Math.PI / 180; this.ws = [Math.cos(a), Math.sin(a)];
+    this.nvCache = {};
+    this.state = { step: 0, playing: false, gam: 0.1, xMode: 'and', ep: 1 };
+  }
+  rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  sgn(v) { return v > 0 ? 1 : v < 0 ? -1 : 0; }
+  componentWillUnmount() { clearInterval(this.iv); }
+  play() {
+    clearInterval(this.iv);
+    if (this.state.step >= this.U1.length) this.setState({ step: 0 });
+    this.setState({ playing: true });
+    this.iv = setInterval(() => { if (this.state.step >= this.U1.length) { clearInterval(this.iv); this.setState({ playing: false }); } else this.setState(s => ({ step: s.step + 1 })); }, 650);
+  }
+  stop() { clearInterval(this.iv); this.setState({ playing: false }); }
+  clip(w, lo, hi, P) {
+    const sq = [[lo, lo], [hi, lo], [hi, hi], [lo, hi]];
+    const f = q => w[0] + w[1] * q[0] + w[2] * q[1];
+    const half = sign => { const out = []; for (let i = 0; i < 4; i++) { const A = sq[i], B = sq[(i + 1) % 4], fa = sign * f(A), fb = sign * f(B); if (fa >= 0) out.push(A); if ((fa >= 0) !== (fb >= 0)) { const t = fa / (fa - fb); out.push([A[0] + t * (B[0] - A[0]), A[1] + t * (B[1] - A[1])]); } } return out; };
+    const d = poly => poly.length ? poly.map((q, i) => (i ? 'L' : 'M') + P(q).join(',')).join('') + 'Z' : '';
+    const ints = []; for (let i = 0; i < 4; i++) { const A = sq[i], B = sq[(i + 1) % 4], fa = f(A), fb = f(B); if ((fa >= 0) !== (fb >= 0)) { const t = fa / (fa - fb); ints.push(P([A[0] + t * (B[0] - A[0]), A[1] + t * (B[1] - A[1])])); } }
+    const has = Math.abs(w[1]) + Math.abs(w[2]) > 1e-9 && ints.length >= 2;
+    return { pos: has || f([0, 0]) > 0 ? d(half(1)) : '', neg: has || f([0, 0]) < 0 ? d(half(-1)) : '', l: has ? ints : [[0, 0], [0, 0]], has };
+  }
+  novikoff(g) {
+    const k = g.toFixed(2); if (this.nvCache[k]) return this.nvCache[k];
+    const P = this.disk.filter(q => Math.abs(q[0] * this.ws[0] + q[1] * this.ws[1]) >= g).map(q => ({ x: q[0], y: q[1], c: q[0] * this.ws[0] + q[1] * this.ws[1] > 0 ? 1 : -1 }));
+    const R = Math.max(...P.map(q => Math.hypot(q.x, q.y)));
+    let w = [0, 0], u = 0;
+    for (let it = 0; it < 5000; it++) { let e = 0; P.forEach(q => { if (this.sgn(w[0] * q.x + w[1] * q.y) !== q.c) { w = [w[0] + q.c * q.x, w[1] + q.c * q.y]; u++; e++; } }); if (!e) break; }
+    return (this.nvCache[k] = { P, R, w, u, bound: (R / g) ** 2 });
+  }
+  renderVals() {
+    const S = this.state, step = Math.min(S.step, this.U1.length), w = this.W1[step];
+    const P1 = q => [(200 + q[0] * 190).toFixed(1), (200 - q[1] * 190).toFixed(1)];
+    const c1 = this.clip(w, -1.05, 1.05, P1);
+    const nextI = this.U1[step];
+    const wrong = this.p1.filter(p => this.sgn(w[0] + w[1] * p.x + w[2] * p.y) !== p.c).length;
+    const wn = Math.hypot(w[1], w[2]) || 1, wl = 0.32;
+    const hp = nextI !== undefined ? this.p1[nextI] : null;
+    const fmtw = v => (v >= 0 ? ' ' : '') + v.toFixed(2);
+    const desc = step === 0 ? 'Empezamos con w = 0. Todos los puntos dan wᵀx = 0, que no es ni +1 ni −1, así que el primero ya cuenta como error.'
+      : hp ? `Después de ${step} ${step === 1 ? 'actualización' : 'actualizaciones'}, el punto marcado (clase ${hp.c > 0 ? '+1' : '−1'}) sigue del lado equivocado. La siguiente actualización ${hp.c > 0 ? 'le suma' : 'le resta'} xᵢ a w y gira la frontera hacia él.`
+      : `Después de ${step} actualizaciones ningún punto está mal clasificado: el algoritmo convergió. La frontera separa los datos, pero no es la única posible.`;
+    const st = {
+      pos: c1.pos, neg: c1.neg, l1x: c1.l[0][0], l1y: c1.l[0][1], l2x: c1.l[1][0], l2y: c1.l[1][1], lOp: c1.has ? 1 : 0,
+      wx: (200 + w[1] / wn * wl * 190).toFixed(1), wy: (200 - w[2] / wn * wl * 190).toFixed(1), wlx: (200 + w[1] / wn * (wl + 0.07) * 190).toFixed(1), wly: (204 - w[2] / wn * (wl + 0.07) * 190).toFixed(1),
+      hx: hp ? P1([hp.x, hp.y])[0] : -50, hy: hp ? P1([hp.x, hp.y])[1] : -50, hOp: hp ? 1 : 0,
+      pts: this.p1.map(p => { const bad = this.sgn(w[0] + w[1] * p.x + w[2] * p.y) !== p.c; const [x, y] = P1([p.x, p.y]); return { x, y, f: p.c > 0 ? 'var(--coral-400)' : 'var(--sky-400)', s: bad ? 'var(--ink-900)' : (p.c > 0 ? 'var(--coral-600)' : 'var(--sky-600)'), sw: bad ? 2.2 : 1.2 }; }),
+      step: String(step), wrong: String(wrong), w: `(${fmtw(w[0])}, ${fmtw(w[1])}, ${fmtw(w[2])})`, desc
+    };
+
+    const g = S.gam, N = this.novikoff(g), P2 = q => [(200 + q[0] * 180).toFixed(1), (200 - q[1] * 180).toFixed(1)];
+    const [a, b] = this.ws, nx = -b, ny = a, L = 1.1;
+    const bandPts = [[nx * L + a * g, ny * L + b * g], [-nx * L + a * g, -ny * L + b * g], [-nx * L - a * g, -ny * L - b * g], [nx * L - a * g, ny * L - b * g]];
+    const wl2 = Math.hypot(N.w[0], N.w[1]) || 1, ux = -N.w[1] / wl2, uy = N.w[0] / wl2;
+    const lg = v => Math.max(2, Math.log10(Math.max(1, v)) / 4 * 100);
+    const nv = {
+      band: bandPts.map((q, i) => (i ? 'L' : 'M') + P2(q).join(',')).join('') + 'Z',
+      s1x: P2([nx * L, ny * L])[0], s1y: P2([nx * L, ny * L])[1], s2x: P2([-nx * L, -ny * L])[0], s2y: P2([-nx * L, -ny * L])[1],
+      l1x: P2([ux * L, uy * L])[0], l1y: P2([ux * L, uy * L])[1], l2x: P2([-ux * L, -uy * L])[0], l2y: P2([-ux * L, -uy * L])[1],
+      pts: N.P.map(q => { const [x, y] = P2([q.x, q.y]); return { x, y, f: q.c > 0 ? 'var(--coral-400)' : 'var(--sky-400)', s: q.c > 0 ? 'var(--coral-600)' : 'var(--sky-600)' }; }),
+      real: String(N.u), bound: Math.round(N.bound).toLocaleString('es-MX'), wReal: lg(N.u).toFixed(1), wBound: lg(N.bound).toFixed(1),
+      desc: `Con γ = ${g.toFixed(2)} quedan ${N.P.length} puntos y R = ${N.R.toFixed(2)}. El perceptrón necesitó ${N.u} actualizaciones; la cota garantiza no más de ${Math.round(N.bound).toLocaleString('es-MX')}. ${g < 0.06 ? 'Con un margen tan angosto, la cota se dispara.' : 'La cota es un peor caso: en datos concretos suele quedar muy por arriba.'}`
+    };
+
+    const X = S.xMode === 'and' ? [[0, 0, -1], [0, 1, -1], [1, 0, -1], [1, 1, 1]] : [[0, 0, -1], [0, 1, 1], [1, 0, 1], [1, 1, -1]];
+    let wx = [0, 0, 0]; const hist = [], errs = [];
+    for (let e = 0; e < 15; e++) { let m = 0; X.forEach(([x, y, c]) => { if (this.sgn(wx[0] + wx[1] * x + wx[2] * y) !== c) { wx = [wx[0] + c, wx[1] + c * x, wx[2] + c * y]; m++; } }); hist.push(wx); errs.push(m); }
+    const we = hist[S.ep - 1], P3 = q => [(75 + q[0] * 150).toFixed(1), (225 - q[1] * 150).toFixed(1)];
+    const c3 = this.clip(we, -0.5, 1.5, P3);
+    const conv = errs.findIndex(v => v === 0);
+    const xr = {
+      pos: c3.pos, neg: c3.neg, l1x: c3.l[0][0], l1y: c3.l[0][1], l2x: c3.l[1][0], l2y: c3.l[1][1], lOp: c3.has ? 1 : 0,
+      pts: X.map(([x, y, c]) => { const bad = this.sgn(we[0] + we[1] * x + we[2] * y) !== c; const [px, py] = P3([x, y]); return { x: px, y: py, ty: (+py + (y ? -18 : 28)).toFixed(1), lab: `(${x}, ${y})`, f: c > 0 ? 'var(--coral-400)' : 'var(--sky-400)', s: bad ? 'var(--ink-900)' : (c > 0 ? 'var(--coral-600)' : 'var(--sky-600)'), sw: bad ? 3 : 1.4 }; }),
+      bars: errs.map((m, i) => ({ h: (m / 4 * 100).toFixed(0), f: i === S.ep - 1 ? 'var(--iris-400)' : 'var(--ink-200)', s: i === S.ep - 1 ? 'var(--iris-600)' : 'var(--ink-400)' })),
+      desc: S.xMode === 'and' ? `AND es separable: solo (1, 1) es positivo. Desde la época ${conv + 1} ya no hay errores y los pesos dejan de cambiar.` : `XOR no es separable. Cada época tiene errores y la frontera sigue moviéndose: en la época ${S.ep}, ${X.filter(([x, y, c]) => this.sgn(we[0] + we[1] * x + we[2] * y) !== c).length} de los 4 puntos quedan mal. Sin un tope de iteraciones, el algoritmo no termina.`
+    };
+
+    return {
+      prev: () => { this.stop(); this.setState(s => ({ step: Math.max(0, s.step - 1) })); },
+      next: () => { this.stop(); this.setState(s => ({ step: Math.min(this.U1.length, s.step + 1) })); },
+      reset: () => { this.stop(); this.setState({ step: 0 }); },
+      togglePlay: () => S.playing ? this.stop() : this.play(), playLabel: S.playing ? 'Pausa' : (step >= this.U1.length ? 'Repetir' : 'Reproducir'),
+      st,
+      gam: g, setGam: v => this.setState({ gam: Math.round(v * 100) / 100 }), fmt2: v => (+v).toFixed(2), nv,
+      xOpts: [{ value: 'and', label: 'AND' }, { value: 'xor', label: 'XOR' }], xMode: S.xMode, setX: v => this.setState({ xMode: v }),
+      ep: S.ep, setEp: v => this.setState({ ep: Math.round(v) }), fmtInt: v => String(Math.round(v)), xr
+    };
+  }
+}
+</script>
+</body>
+</html>

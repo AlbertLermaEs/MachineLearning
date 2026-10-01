@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Guía de scikit-learn — Fase 12</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="Indice.dc.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <span style="color:var(--text-muted)">Fase 12 · Guía transversal</span>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Fase 12 · Herramientas" title="Guía de scikit-learn" description="Una sola API para casi todo el curso. Primero vemos qué tienen en común todos los estimadores; después, cómo encadenarlos sin filtrar información; finalmente, un ejemplo aplicado de cada modelo del curso."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Actualizado el 30 sep 2026 · Fuente: scikit-learn User Guide, versión 1.9.1</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">1. Una API para todos los modelos</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">En scikit-learn todo lo que aprende de los datos es un <b>estimador</b>: un objeto que se crea con sus hiperparámetros y se ajusta con <code>fit</code>. Lo que se aprende queda guardado en atributos que terminan en guion bajo (<code>coef_</code>, <code>mean_</code>, <code>classes_</code>). Un KNN, una regresión logística y un StandardScaler se usan de la misma forma; cambia solo qué métodos ofrecen después de ajustarse.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,420px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:20px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="360px,32px" options="{{ estOpts }}" value="{{ estMode }}" onChange="{{ setEst }}"></x-import>
+    <div style="width:100%;max-width:880px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--ink-600)">Métodos disponibles</div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+          <sc-for list="{{ est.methods }}" as="m" hint-placeholder-count="8">
+            <div style="padding:8px 10px;border-radius:6px;font-family:var(--font-mono);font-size:13px;background:{{ m.bg }};border:1.5px solid {{ m.stroke }};color:{{ m.color }};box-shadow:{{ m.shadow }};transition:background 320ms var(--ease-out) {{ m.delay }}ms,border-color 320ms var(--ease-out) {{ m.delay }}ms,color 320ms var(--ease-out) {{ m.delay }}ms">{{ m.name }}</div>
+          </sc-for>
+        </div>
+        <div style="font-size:13px;font-weight:700;color:var(--ink-600);margin-top:4px">Lo que aprende en fit</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <sc-for list="{{ est.attrs }}" as="a" hint-placeholder-count="3">
+            <span style="padding:3px 10px;border-radius:999px;background:var(--ink-100);border:1px solid var(--ink-300);font-family:var(--font-mono);font-size:13px;color:var(--ink-800)">{{ a }}</span>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+        <pre style="margin:0;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:13.5px;line-height:1.65;color:var(--ink-900);overflow-x:auto;min-height:150px">{{ est.code }}</pre>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:74px"><b style="color:var(--text-strong)">{{ est.title }}</b> {{ est.desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> Los tres tipos de estimador que más usaremos. Todos comparten <code>fit</code>; los predictores agregan <code>predict</code> y <code>score</code>, los transformadores agregan <code>transform</code>.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Dos convenciones más. <code>X</code> es siempre una matriz de forma <i style="font-family:var(--font-math);padding:0 2px">(n, d)</i>, muestras por variables, aunque tenga una sola columna; <code>y</code> es un vector de longitud <i style="font-family:var(--font-math);padding:0 2px">n</i>. Y todo lo que tiene azar (particiones, inicializaciones, bootstrap) acepta <code>random_state</code>; fijarlo hace que los resultados se puedan repetir.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">2. Pipelines: el preprocesamiento dentro del modelo</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">En el artículo de preprocesamiento vimos la regla contra el data leakage: ajustar todo solo con train. Hacerlo a mano paso por paso es frágil. Un <b>Pipeline</b> encadena transformadores y un modelo final en un solo estimador; un <b>ColumnTransformer</b> aplica pasos distintos a columnas distintas. Al llamar <code>fit</code>, cada paso se ajusta con los datos que recibe, en orden.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,560px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:20px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="420px,32px" options="{{ pipeOpts }}" value="{{ pipeMode }}" onChange="{{ setPipe }}"></x-import>
+    <svg viewBox="0 0 860 220" width="100%" style="max-width:860px;display:block;overflow:visible">
+      <defs><marker id="pa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,1 L9,5 L0,9" style="fill:none;stroke:var(--ink-600);stroke-width:1.5"></path></marker></defs>
+      <rect x="150" y="14" width="500" height="192" rx="10" style="fill:{{ pipe.regFill }};stroke:var(--ink-400);stroke-width:1.5;stroke-dasharray:5 4;transition:fill 320ms var(--ease-out)"></rect>
+      <text x="166" y="36" style="font-size:13px;font-family:var(--font-mono);fill:var(--ink-600)">ColumnTransformer</text>
+      <path d="M110,110 C130,110 140,72 176,72" style="fill:none;stroke:var(--ink-600);stroke-width:1.5" marker-end="url(#pa)"></path>
+      <path d="M110,110 C130,110 140,160 176,160" style="fill:none;stroke:var(--ink-600);stroke-width:1.5" marker-end="url(#pa)"></path>
+      <path d="M352,72 L404,72" style="fill:none;stroke:var(--ink-600);stroke-width:1.5" marker-end="url(#pa)"></path>
+      <path d="M352,160 L404,160" style="fill:none;stroke:var(--ink-600);stroke-width:1.5" marker-end="url(#pa)"></path>
+      <path d="M580,72 C620,72 610,110 676,110" style="fill:none;stroke:var(--ink-600);stroke-width:1.5" marker-end="url(#pa)"></path>
+      <path d="M580,160 C620,160 610,110 676,110" style="fill:none;stroke:var(--ink-600);stroke-width:1.5" marker-end="url(#pa)"></path>
+      <g style="transform:translate(60px,110px)"><rect x="-50" y="-22" width="100" height="44" rx="6" style="fill:var(--paper);stroke:var(--ink-600);stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10))"></rect><text y="5" text-anchor="middle" style="font-size:14px;font-weight:600;fill:var(--ink-900)">X_train</text></g>
+      <g style="transform:translate(264px,72px)"><rect x="-86" y="-22" width="172" height="44" rx="6" style="fill:{{ pipe.b.ni.fill }};stroke:{{ pipe.b.ni.stroke }};stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10));transition:fill 320ms var(--ease-out),stroke 320ms var(--ease-out)"></rect><text y="5" text-anchor="middle" style="font-size:13px;font-family:var(--font-mono);fill:var(--ink-900)">SimpleImputer</text></g>
+      <g style="transform:translate(492px,72px)"><rect x="-86" y="-22" width="172" height="44" rx="6" style="fill:{{ pipe.b.ns.fill }};stroke:{{ pipe.b.ns.stroke }};stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10));transition:fill 320ms var(--ease-out),stroke 320ms var(--ease-out)"></rect><text y="5" text-anchor="middle" style="font-size:13px;font-family:var(--font-mono);fill:var(--ink-900)">StandardScaler</text></g>
+      <g style="transform:translate(264px,160px)"><rect x="-86" y="-22" width="172" height="44" rx="6" style="fill:{{ pipe.b.ci.fill }};stroke:{{ pipe.b.ci.stroke }};stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10));transition:fill 320ms var(--ease-out),stroke 320ms var(--ease-out)"></rect><text y="5" text-anchor="middle" style="font-size:13px;font-family:var(--font-mono);fill:var(--ink-900)">SimpleImputer</text></g>
+      <g style="transform:translate(492px,160px)"><rect x="-86" y="-22" width="172" height="44" rx="6" style="fill:{{ pipe.b.co.fill }};stroke:{{ pipe.b.co.stroke }};stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10));transition:fill 320ms var(--ease-out),stroke 320ms var(--ease-out)"></rect><text y="5" text-anchor="middle" style="font-size:13px;font-family:var(--font-mono);fill:var(--ink-900)">OneHotEncoder</text></g>
+      <g style="transform:translate(770px,110px)"><rect x="-86" y="-22" width="172" height="44" rx="6" style="fill:{{ pipe.b.m.fill }};stroke:{{ pipe.b.m.stroke }};stroke-width:1.5;filter:drop-shadow(1px 2px 0 rgba(0,0,0,.10));transition:fill 320ms var(--ease-out),stroke 320ms var(--ease-out)"></rect><text y="5" text-anchor="middle" style="font-size:13px;font-family:var(--font-mono);fill:var(--ink-900)">LogisticRegression</text></g>
+      <text x="166" y="112" style="font-family:var(--font-serif);font-style:italic;font-size:13px;fill:var(--ink-600)">edad, ingreso</text>
+      <text x="166" y="200" style="font-family:var(--font-serif);font-style:italic;font-size:13px;fill:var(--ink-600)">ciudad, plan</text>
+    </svg>
+    <div style="width:100%;max-width:860px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px;align-items:start">
+      <div style="padding:12px 0;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:13px;line-height:1.6;overflow-x:auto">
+        <sc-for list="{{ pipe.lines }}" as="l" hint-placeholder-count="18">
+          <div style="padding:0 18px;white-space:pre;background:{{ l.bg }};color:{{ l.color }};transition:background 320ms var(--ease-out),color 320ms var(--ease-out)">{{ l.t }}</div>
+        </sc-for>
+      </div>
+      <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-strong)">{{ pipe.title }}</b> {{ pipe.desc }}</div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 2.</b> Un pipeline para un dataset con dos columnas numéricas y dos categóricas. Cada parte del diagrama corresponde a un bloque del código.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Para pipelines cortos, <code>make_pipeline(StandardScaler(), KNeighborsClassifier())</code> hace lo mismo y nombra los pasos automáticamente. Los nombres importan después: para referirnos al hiperparámetro <code>C</code> del paso <code>"clf"</code> escribimos <code>clf__C</code>, con doble guion bajo.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">3. Validación cruzada y búsqueda de hiperparámetros</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Una sola partición train/validación da una estimación ruidosa. Con <b>validación cruzada</b> en <i style="font-family:var(--font-math);padding:0 2px">k</i> bloques, entrenamos <i style="font-family:var(--font-math);padding:0 2px">k</i> veces, cada vez validando en un bloque distinto, y promediamos. Como el pipeline es un estimador, el preprocesamiento se vuelve a ajustar en cada vuelta solo con los bloques de entrenamiento.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,400px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:20px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="400px,32px" options="{{ foldOpts }}" value="{{ foldSel }}" onChange="{{ setFold }}"></x-import>
+    <div style="width:100%;max-width:760px;display:grid;grid-template-columns:64px minmax(0,1fr) 92px 64px;gap:10px 12px;align-items:center">
+      <sc-for list="{{ folds }}" as="f" hint-placeholder-count="5">
+        <span style="font-size:13px;color:{{ f.labelColor }};font-weight:{{ f.weight }};transition:color 320ms var(--ease-out)">{{ f.name }}</span>
+        <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;opacity:{{ f.op }};transition:opacity 320ms var(--ease-out)">
+          <sc-for list="{{ f.cells }}" as="c" hint-placeholder-count="5">
+            <div style="height:30px;border-radius:6px;background:{{ c.bg }};border:1.5px solid {{ c.stroke }};box-shadow:1px 2px 0 rgba(0,0,0,.10)"></div>
+          </sc-for>
+        </div>
+        <div style="height:30px;border-radius:6px;background:var(--coral-100);border:1.5px dashed var(--coral-400);opacity:{{ f.op }};transition:opacity 320ms var(--ease-out)"></div>
+        <span style="font-family:var(--font-mono);font-size:14px;text-align:right;color:{{ f.labelColor }};transition:color 320ms var(--ease-out)">{{ f.score }}</span>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;font-size:13px;color:var(--text-muted)">
+      <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:3px;background:var(--ink-50);border:1.5px solid var(--ink-600)"></span>entrenamiento</span>
+      <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:3px;background:var(--iris-200);border:1.5px solid var(--iris-600)"></span>validación</span>
+      <span style="display:flex;align-items:center;gap:6px"><span style="width:14px;height:14px;border-radius:3px;background:var(--coral-100);border:1.5px dashed var(--coral-400)"></span>test, no se toca</span>
+    </div>
+    <div style="max-width:600px;text-align:center;font-size:16px;line-height:1.55;color:var(--text-muted);min-height:50px;text-wrap:pretty">{{ foldDesc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 3.</b> <code>cross_val_score(modelo, X_train, y_train, cv=5)</code>. El conjunto de test se separó antes y solo se usa una vez, al final.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty"><code>GridSearchCV</code> repite esa validación cruzada para cada combinación de hiperparámetros, se queda con la mejor y reentrena con todo <code>X_train</code>:</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.model_selection import GridSearchCV
+
+grid = GridSearchCV(modelo, {"clf__C": [0.01, 0.1, 1, 10]}, cv=5)
+grid.fit(X_train, y_train)
+grid.best_params_          # {'clf__C': 1}
+grid.score(X_test, y_test) # una sola vez, al final</pre>
+  <p style="margin:0 0 20px;text-wrap:pretty">Para clasificación, <code>cv=5</code> ya usa <code>StratifiedKFold</code>, que conserva la proporción de clases en cada bloque. En series de tiempo usamos <code>TimeSeriesSplit</code>, porque mezclar el futuro en el entrenamiento también es leakage.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">4. Ejemplos por modelo</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Cada modelo que vimos en teoría tiene aquí una página con un ejemplo completo: un dataset real de <code>sklearn.datasets</code>, el código paso a paso, una figura para mover sus hiperparámetros, cómo leer la salida y los errores más frecuentes.</p>
+</article>
+
+<div style="max-width:960px;margin:0 auto 24px;padding:0 24px">
+  <div style="display:flex;flex-direction:column">
+      <div style="font-size:13px;font-weight:700;color:var(--ink-600);padding:20px 0 8px;border-bottom:2px solid var(--ink-800)">Fase 2 · Clasificadores simples</div>
+      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">KNN</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">KNeighborsClassifier</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_iris</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
+      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">Perceptrón</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">Perceptron</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_breast_cancer</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
+      <div style="font-size:13px;font-weight:700;color:var(--ink-600);padding:20px 0 8px;border-bottom:2px solid var(--ink-800)">Fase 3 · No supervisado</div>
+      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">K-means</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">KMeans</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_iris sin etiquetas</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
+      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">DBSCAN y clustering jerárquico</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">DBSCAN, AgglomerativeClustering</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">make_moons</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
+      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">Gaussian Mixture Models</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">GaussianMixture</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_iris sin etiquetas</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
+      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">PCA</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">PCA</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_digits</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
+      <div style="font-size:13px;font-weight:700;color:var(--ink-600);padding:20px 0 8px;border-bottom:2px solid var(--ink-800)">Fase 4 · Regresión</div>
+      <a href="F12-Ej-Regresion-Lineal.dc.html" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-200);text-decoration:none;background:var(--paper)" style-hover="background:var(--ink-50)"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">Regresión lineal</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">LinearRegression</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">fetch_california_housing</span><span style="font-size:14px;font-weight:600;text-align:right;color:var(--iris-600)">Ver ejemplo →</span></a>
+      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">Ridge y Lasso</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">Ridge, Lasso</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_diabetes</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
+      <div style="font-size:13px;font-weight:700;color:var(--ink-600);padding:20px 0 8px;border-bottom:2px solid var(--ink-800)">Fase 5 · Clasificación</div>
+      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">Regresión logística</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">LogisticRegression</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_breast_cancer</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
+      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">SVM con kernels</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">SVC</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">make_circles</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
+      <div style="font-size:13px;font-weight:700;color:var(--ink-600);padding:20px 0 8px;border-bottom:2px solid var(--ink-800)">Fase 6 · Árboles y ensambles</div>
+      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">Árbol de decisión</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">DecisionTreeClassifier</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_wine</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
+      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">Random Forest y Gradient Boosting</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">RandomForestClassifier, HistGradientBoostingClassifier</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">fetch_covtype</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
+      <div style="font-size:13px;font-weight:700;color:var(--ink-600);padding:20px 0 8px;border-bottom:2px solid var(--ink-800)">Fase 8 · Redes neuronales</div>
+      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">Red neuronal (MLP)</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">MLPClassifier</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_digits</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
+  </div>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">5. Errores frecuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>Ajustar un transformador con todos los datos</b> antes de separar. La solución es meterlo en el pipeline.</li>
+    <li style="text-wrap:pretty"><b>Olvidar escalar</b> en modelos que usan distancias o gradiente: KNN, SVM, regresión regularizada, MLP. El síntoma típico es un <code>ConvergenceWarning</code> o un KNN que solo mira una variable.</li>
+    <li style="text-wrap:pretty"><b>Evaluar en test varias veces</b> mientras ajustamos hiperparámetros. El test deja de ser una muestra nueva; para elegir usamos validación cruzada.</li>
+    <li style="text-wrap:pretty"><b>Reportar solo accuracy</b> con clases desbalanceadas. <code>classification_report</code> muestra precisión, recall y F1 por clase.</li>
+    <li style="text-wrap:pretty"><b>Pasar un vector como <code>X</code></b>. Con una sola variable, <code>X</code> sigue siendo una matriz: <code>df[["edad"]]</code>, no <code>df["edad"]</code>.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Fuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:16px">
+    <li><a href="https://scikit-learn.org/stable/user_guide.html" target="_blank">scikit-learn 1.9.1 · User Guide</a></li>
+    <li><a href="https://scikit-learn.org/stable/getting_started.html" target="_blank">scikit-learn · Getting started</a></li>
+    <li><a href="https://scikit-learn.org/stable/modules/compose.html" target="_blank">scikit-learn · Pipelines and composite estimators</a></li>
+    <li><a href="https://scikit-learn.org/stable/modules/cross_validation.html" target="_blank">scikit-learn · Cross-validation</a></li>
+  </ul>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F1-05-Preprocesamiento.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Relacionado</div><div style="font-weight:600;color:var(--text-strong)">Preprocesamiento</div></a>
+  <a href="Indice.dc.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Índice →</div><div style="font-weight:600;color:var(--text-strong)">Volver al índice</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { estMode: 'clf', pipeMode: 'num', fold: 0 };
+  renderVals() {
+    const S = this.state;
+    const ALL = ['fit', 'predict', 'predict_proba', 'decision_function', 'score', 'transform', 'fit_transform', 'inverse_transform'];
+    const E = {
+      clf: { has: ['fit', 'predict', 'predict_proba', 'decision_function', 'score'], attrs: ['classes_', 'coef_', 'intercept_', 'n_features_in_'],
+        code: 'from sklearn.linear_model import LogisticRegression\n\nclf = LogisticRegression(C=1.0)\nclf.fit(X_train, y_train)\nclf.predict(X_test)        # etiquetas\nclf.predict_proba(X_test)  # probabilidades\nclf.score(X_test, y_test)  # accuracy',
+        title: 'Clasificador.', desc: 'predict devuelve una clase; predict_proba, una probabilidad por clase. score calcula accuracy por defecto.' },
+      reg: { has: ['fit', 'predict', 'score'], attrs: ['coef_', 'intercept_', 'n_features_in_'],
+        code: 'from sklearn.linear_model import Ridge\n\nreg = Ridge(alpha=1.0)\nreg.fit(X_train, y_train)\nreg.predict(X_test)        # valores continuos\nreg.score(X_test, y_test)  # R²',
+        title: 'Regresor.', desc: 'predict devuelve un número. score calcula R², no el error: 1 es perfecto, 0 equivale a predecir la media.' },
+      tr: { has: ['fit', 'transform', 'fit_transform', 'inverse_transform'], attrs: ['mean_', 'scale_', 'n_features_in_'],
+        code: 'from sklearn.preprocessing import StandardScaler\n\nsc = StandardScaler()\nsc.fit(X_train)            # aprende μ y σ\nZ_train = sc.transform(X_train)\nZ_test = sc.transform(X_test)\nsc.inverse_transform(Z_test)',
+        title: 'Transformador.', desc: 'No predice: devuelve una versión nueva de X. fit_transform equivale a fit y luego transform sobre los mismos datos; en test usamos solo transform.' }
+    }[S.estMode];
+    const methods = ALL.map((name, i) => { const on = E.has.includes(name); return { name, delay: i * 40, bg: on ? 'var(--iris-200)' : 'var(--paper)', stroke: on ? 'var(--iris-600)' : 'var(--ink-200)', color: on ? 'var(--ink-900)' : 'var(--ink-400)', shadow: on ? '1px 2px 0 rgba(0,0,0,.10)' : 'none' }; });
+
+    const L = [
+      'num = Pipeline([', '    ("imputar", SimpleImputer(strategy="median")),', '    ("escalar", StandardScaler()),', '])',
+      'cat = Pipeline([', '    ("imputar", SimpleImputer(strategy="most_frequent")),', '    ("onehot", OneHotEncoder(handle_unknown="ignore")),', '])',
+      'prep = ColumnTransformer([', '    ("num", num, ["edad", "ingreso"]),', '    ("cat", cat, ["ciudad", "plan"]),', '])',
+      'modelo = Pipeline([', '    ("prep", prep),', '    ("clf", LogisticRegression(max_iter=1000)),', '])',
+      'modelo.fit(X_train, y_train)', 'modelo.score(X_test, y_test)'
+    ];
+    const pm = S.pipeMode;
+    const HL = { num: [0, 1, 2, 3, 9], cat: [4, 5, 6, 7, 10], prep: [8, 9, 10, 11], model: [12, 13, 14, 15, 16, 17] }[pm];
+    const boxOn = { num: ['ni', 'ns'], cat: ['ci', 'co'], prep: ['ni', 'ns', 'ci', 'co'], model: ['m'] }[pm];
+    const B = [['ni', 264, 72, 'SimpleImputer'], ['ns', 492, 72, 'StandardScaler'], ['ci', 264, 160, 'SimpleImputer'], ['co', 492, 160, 'OneHotEncoder'], ['m', 770, 110, 'LogisticRegression']];
+    const boxes = B.map(([k, x, y, label]) => { const on = boxOn.includes(k); return { x, y, label, fill: on ? 'var(--iris-200)' : 'var(--paper)', stroke: on ? 'var(--iris-600)' : 'var(--ink-600)' }; });
+    const PD = {
+      num: ['Columnas numéricas.', 'Primero imputamos con la mediana; después estandarizamos. El orden importa: StandardScaler no acepta valores faltantes.'],
+      cat: ['Columnas categóricas.', 'Imputamos con la categoría más frecuente y codificamos con one-hot. handle_unknown="ignore" evita un error si aparece una categoría nueva en test.'],
+      prep: ['Unir.', 'ColumnTransformer manda cada grupo de columnas a su pipeline y concatena los resultados en una sola matriz.'],
+      model: ['Modelo completo.', 'El pipeline final se comporta como un solo clasificador. fit ajusta cada paso solo con X_train; score aplica las mismas transformaciones a X_test antes de predecir.']
+    }[pm];
+    const lines = L.map((t, i) => ({ t: t || ' ', bg: HL.includes(i) ? 'var(--iris-200)' : 'transparent', color: HL.includes(i) ? 'var(--ink-900)' : 'var(--ink-500)' }));
+
+    const SC = ['0.84', '0.81', '0.86', '0.83', '0.85'];
+    const folds = SC.map((score, r) => { const on = r === S.fold; return {
+      name: 'Vuelta ' + (r + 1), score, op: on ? 1 : 0.32, labelColor: on ? 'var(--text-strong)' : 'var(--text-subtle)', weight: on ? 700 : 400,
+      cells: [0, 1, 2, 3, 4].map(c => c === r ? { bg: 'var(--iris-200)', stroke: 'var(--iris-600)' } : { bg: 'var(--ink-50)', stroke: 'var(--ink-600)' })
+    }; });
+
+    return {
+      estOpts: [{ value: 'clf', label: 'Clasificador' }, { value: 'reg', label: 'Regresor' }, { value: 'tr', label: 'Transformador' }], estMode: S.estMode, setEst: v => this.setState({ estMode: v }),
+      est: { methods, attrs: E.attrs, code: E.code, title: E.title, desc: E.desc },
+      pipeOpts: [{ value: 'num', label: 'Numéricas' }, { value: 'cat', label: 'Categóricas' }, { value: 'prep', label: 'Unir' }, { value: 'model', label: 'Modelo' }], pipeMode: pm, setPipe: v => this.setState({ pipeMode: v }),
+      pipe: { b: Object.fromEntries(B.map((x, i) => [x[0], boxes[i]])), lines, title: PD[0], desc: PD[1], regFill: pm === 'prep' ? 'var(--surface-group)' : 'var(--surface-well)' },
+      foldOpts: [0, 1, 2, 3, 4].map(i => ({ value: String(i), label: 'Vuelta ' + (i + 1) })), foldSel: String(S.fold), setFold: v => this.setState({ fold: +v }), folds,
+      foldDesc: `En la vuelta ${S.fold + 1}, el pipeline se ajusta con los otros cuatro bloques y obtiene ${SC[S.fold]} en el bloque ${S.fold + 1}. Promedio de las cinco vueltas: 0.838 ± 0.017.`
+    };
+  }
+}
+</script>
+</body>
+</html>

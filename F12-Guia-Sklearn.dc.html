@@ -28,7 +28,7 @@
 
 <div style="padding:72px 24px 24px">
   <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Fase 12 · Herramientas" title="Guía de scikit-learn" description="Una sola API para casi todo el curso. Primero vemos qué tienen en común todos los estimadores; después, cómo encadenarlos sin filtrar información; finalmente, un ejemplo aplicado de cada modelo del curso."></x-import>
-  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Actualizado el 30 sep 2026 · Fuente: scikit-learn User Guide, versión 1.9.1</p>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Actualizado el 1 oct 2026 · Fuente: scikit-learn User Guide, versión 1.9.1</p>
 </div>
 
 <article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
@@ -38,7 +38,7 @@
 
 <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,420px" width="page">
   <div style="width:100%;display:flex;flex-direction:column;gap:20px;align-items:center">
-    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="360px,32px" options="{{ estOpts }}" value="{{ estMode }}" onChange="{{ setEst }}"></x-import>
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="480px,32px" options="{{ estOpts }}" value="{{ estMode }}" onChange="{{ setEst }}"></x-import>
     <div style="width:100%;max-width:880px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px;align-items:start">
       <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
         <div style="font-size:13px;font-weight:700;color:var(--ink-600)">Métodos disponibles</div>
@@ -59,7 +59,7 @@
         <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:74px"><b style="color:var(--text-strong)">{{ est.title }}</b> {{ est.desc }}</div>
       </div>
     </div>
-    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> Los tres tipos de estimador que más usaremos. Todos comparten <code>fit</code>; los predictores agregan <code>predict</code> y <code>score</code>, los transformadores agregan <code>transform</code>.</figcaption>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> Los cuatro tipos de estimador que más usaremos. Todos comparten <code>fit</code>; los predictores agregan <code>predict</code> y <code>score</code>, los transformadores <code>transform</code> y los modelos de clustering <code>fit_predict</code>.</figcaption>
   </div>
 </x-import>
 
@@ -92,11 +92,13 @@
       <text x="166" y="112" style="font-family:var(--font-serif);font-style:italic;font-size:13px;fill:var(--ink-600)">edad, ingreso</text>
       <text x="166" y="200" style="font-family:var(--font-serif);font-style:italic;font-size:13px;fill:var(--ink-600)">ciudad, plan</text>
     </svg>
-    <div style="width:100%;max-width:860px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px;align-items:start">
-      <div style="padding:12px 0;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:13px;line-height:1.6;overflow-x:auto">
+    <div style="width:100%;max-width:960px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:28px;align-items:start">
+      <div style="padding:12px 0;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:13px;line-height:1.6;overflow-x:auto;grid-column:1 / -1">
+        <div style="display:flex;flex-direction:column;width:max-content;min-width:100%">
         <sc-for list="{{ pipe.lines }}" as="l" hint-placeholder-count="18">
-          <div style="padding:0 18px;white-space:pre;background:{{ l.bg }};color:{{ l.color }};transition:background 320ms var(--ease-out),color 320ms var(--ease-out)">{{ l.t }}</div>
+          <div style="display:flex;gap:16px;padding:0 18px 0 15px;white-space:pre;border-left:3px solid {{ l.bar }};background:{{ l.bg }};color:{{ l.color }};transition:background 320ms var(--ease-out),color 320ms var(--ease-out)"><span>{{ l.t }}</span><span style="font-family:var(--font-serif);font-style:italic;font-size:13px;color:var(--iris-600)">{{ l.note }}</span></div>
         </sc-for>
+        </div>
       </div>
       <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-strong)">{{ pipe.title }}</b> {{ pipe.desc }}</div>
     </div>
@@ -145,6 +147,7 @@ grid.fit(X_train, y_train)
 grid.best_params_          # {'clf__C': 1}
 grid.score(X_test, y_test) # una sola vez, al final</pre>
   <p style="margin:0 0 20px;text-wrap:pretty">Para clasificación, <code>cv=5</code> ya usa <code>StratifiedKFold</code>, que conserva la proporción de clases en cada bloque. En series de tiempo usamos <code>TimeSeriesSplit</code>, porque mezclar el futuro en el entrenamiento también es leakage.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">Sin etiquetas no hay nada contra qué validar, así que los modelos de la Fase 3 se eligen con otras herramientas: <code>silhouette_score</code> para el número de clusters, <code>bic</code> para mezclas gaussianas, la varianza explicada para PCA y la gráfica de k-distancias para DBSCAN. Si existen etiquetas que no usamos para ajustar, <code>adjusted_rand_score</code> mide qué tanto las recuperó el clustering. La excepción es PCA como paso previo a un modelo supervisado: ahí <code>n_components</code> es un hiperparámetro más y va en <code>GridSearchCV</code>.</p>
 
   <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">4. Ejemplos por modelo</h2>
   <p style="margin:0 0 20px;text-wrap:pretty">Cada modelo que vimos en teoría tiene aquí una página con un ejemplo completo: un dataset real de <code>sklearn.datasets</code>, el código paso a paso, una figura para mover sus hiperparámetros, cómo leer la salida y los errores más frecuentes.</p>
@@ -153,13 +156,15 @@ grid.score(X_test, y_test) # una sola vez, al final</pre>
 <div style="max-width:960px;margin:0 auto 24px;padding:0 24px">
   <div style="display:flex;flex-direction:column">
       <div style="font-size:13px;font-weight:700;color:var(--ink-600);padding:20px 0 8px;border-bottom:2px solid var(--ink-800)">Fase 2 · Clasificadores simples</div>
-      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">KNN</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">KNeighborsClassifier</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_iris</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
-      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">Perceptrón</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">Perceptron</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_breast_cancer</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
+      <a href="F12-Ej-KNN.dc.html" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-200);text-decoration:none;background:var(--paper)" style-hover="background:var(--ink-50)"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">KNN</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">KNeighborsClassifier</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_iris</span><span style="font-size:14px;font-weight:600;text-align:right;color:var(--iris-600)">Ver ejemplo →</span></a>
+      <a href="F12-Ej-Perceptron.dc.html" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-200);text-decoration:none;background:var(--paper)" style-hover="background:var(--ink-50)"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">Perceptrón</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">Perceptron</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_breast_cancer</span><span style="font-size:14px;font-weight:600;text-align:right;color:var(--iris-600)">Ver ejemplo →</span></a>
       <div style="font-size:13px;font-weight:700;color:var(--ink-600);padding:20px 0 8px;border-bottom:2px solid var(--ink-800)">Fase 3 · No supervisado</div>
-      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">K-means</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">KMeans</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_iris sin etiquetas</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
-      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">DBSCAN y clustering jerárquico</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">DBSCAN, AgglomerativeClustering</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">make_moons</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
-      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">Gaussian Mixture Models</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">GaussianMixture</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_iris sin etiquetas</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
-      <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">PCA</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">PCA</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_digits</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
+      <a href="F12-Ej-KMeans.dc.html" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-200);text-decoration:none;background:var(--paper)" style-hover="background:var(--ink-50)"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">K-means</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">KMeans</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_iris sin etiquetas</span><span style="font-size:14px;font-weight:600;text-align:right;color:var(--iris-600)">Ver ejemplo →</span></a>
+      <a href="F12-Ej-PCA.dc.html" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-200);text-decoration:none;background:var(--paper)" style-hover="background:var(--ink-50)"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">PCA</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">PCA</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_wine</span><span style="font-size:14px;font-weight:600;text-align:right;color:var(--iris-600)">Ver ejemplo →</span></a>
+      <a href="F12-Ej-GMM.dc.html" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-200);text-decoration:none;background:var(--paper)" style-hover="background:var(--ink-50)"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">Mezclas gaussianas</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">GaussianMixture</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_iris sin etiquetas</span><span style="font-size:14px;font-weight:600;text-align:right;color:var(--iris-600)">Ver ejemplo →</span></a>
+      <a href="F12-Ej-Jerarquico.dc.html" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-200);text-decoration:none;background:var(--paper)" style-hover="background:var(--ink-50)"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">Clustering jerárquico</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">AgglomerativeClustering</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">make_moons</span><span style="font-size:14px;font-weight:600;text-align:right;color:var(--iris-600)">Ver ejemplo →</span></a>
+      <a href="F12-Ej-DBSCAN.dc.html" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-200);text-decoration:none;background:var(--paper)" style-hover="background:var(--ink-50)"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">DBSCAN</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">DBSCAN</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">make_moons + atípicos</span><span style="font-size:14px;font-weight:600;text-align:right;color:var(--iris-600)">Ver ejemplo →</span></a>
+      <a href="F12-Ej-tSNE.dc.html" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-200);text-decoration:none;background:var(--paper)" style-hover="background:var(--ink-50)"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">t-SNE</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">TSNE</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_digits</span><span style="font-size:14px;font-weight:600;text-align:right;color:var(--iris-600)">Ver ejemplo →</span></a>
       <div style="font-size:13px;font-weight:700;color:var(--ink-600);padding:20px 0 8px;border-bottom:2px solid var(--ink-800)">Fase 4 · Regresión</div>
       <a href="F12-Ej-Regresion-Lineal.dc.html" style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-200);text-decoration:none;background:var(--paper)" style-hover="background:var(--ink-50)"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">Regresión lineal</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">LinearRegression</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">fetch_california_housing</span><span style="font-size:14px;font-weight:600;text-align:right;color:var(--iris-600)">Ver ejemplo →</span></a>
       <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1fr) 110px;gap:12px;align-items:baseline;padding:12px 8px;border-bottom:1px solid var(--ink-100);opacity:0.55"><span style="font-size:17px;font-weight:600;color:var(--text-strong)">Ridge y Lasso</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-600);min-width:0;overflow-wrap:anywhere">Ridge, Lasso</span><span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500);min-width:0;overflow-wrap:anywhere">load_diabetes</span><span style="font-size:13px;text-align:right;color:var(--text-subtle)">próximamente</span></div>
@@ -181,6 +186,8 @@ grid.score(X_test, y_test) # una sola vez, al final</pre>
     <li style="text-wrap:pretty"><b>Olvidar escalar</b> en modelos que usan distancias o gradiente: KNN, SVM, regresión regularizada, MLP. El síntoma típico es un <code>ConvergenceWarning</code> o un KNN que solo mira una variable.</li>
     <li style="text-wrap:pretty"><b>Evaluar en test varias veces</b> mientras ajustamos hiperparámetros. El test deja de ser una muestra nueva; para elegir usamos validación cruzada.</li>
     <li style="text-wrap:pretty"><b>Reportar solo accuracy</b> con clases desbalanceadas. <code>classification_report</code> muestra precisión, recall y F1 por clase.</li>
+    <li style="text-wrap:pretty"><b>Comparar <code>labels_</code> con <code>y</code> usando accuracy.</b> Los números de cluster son arbitrarios; usamos <code>adjusted_rand_score</code> o una tabla cruzada.</li>
+    <li style="text-wrap:pretty"><b>Usar t-SNE como preprocesamiento.</b> No tiene <code>transform</code> y cambia con cada corrida. Para reducir dimensiones antes de un modelo usamos PCA.</li>
     <li style="text-wrap:pretty"><b>Pasar un vector como <code>X</code></b>. Con una sola variable, <code>X</code> sigue siendo una matriz: <code>df[["edad"]]</code>, no <code>df["edad"]</code>.</li>
   </ul>
 
@@ -190,6 +197,7 @@ grid.score(X_test, y_test) # una sola vez, al final</pre>
     <li><a href="https://scikit-learn.org/stable/getting_started.html" target="_blank">scikit-learn · Getting started</a></li>
     <li><a href="https://scikit-learn.org/stable/modules/compose.html" target="_blank">scikit-learn · Pipelines and composite estimators</a></li>
     <li><a href="https://scikit-learn.org/stable/modules/cross_validation.html" target="_blank">scikit-learn · Cross-validation</a></li>
+    <li><a href="https://scikit-learn.org/stable/modules/clustering.html" target="_blank">scikit-learn · Clustering</a></li>
   </ul>
 </article>
 
@@ -204,7 +212,7 @@ class Component extends DCLogic {
   state = { estMode: 'clf', pipeMode: 'num', fold: 0 };
   renderVals() {
     const S = this.state;
-    const ALL = ['fit', 'predict', 'predict_proba', 'decision_function', 'score', 'transform', 'fit_transform', 'inverse_transform'];
+    const ALL = ['fit', 'predict', 'predict_proba', 'decision_function', 'score', 'fit_predict', 'transform', 'fit_transform', 'inverse_transform'];
     const E = {
       clf: { has: ['fit', 'predict', 'predict_proba', 'decision_function', 'score'], attrs: ['classes_', 'coef_', 'intercept_', 'n_features_in_'],
         code: 'from sklearn.linear_model import LogisticRegression\n\nclf = LogisticRegression(C=1.0)\nclf.fit(X_train, y_train)\nclf.predict(X_test)        # etiquetas\nclf.predict_proba(X_test)  # probabilidades\nclf.score(X_test, y_test)  # accuracy',
@@ -214,7 +222,10 @@ class Component extends DCLogic {
         title: 'Regresor.', desc: 'predict devuelve un número. score calcula R², no el error: 1 es perfecto, 0 equivale a predecir la media.' },
       tr: { has: ['fit', 'transform', 'fit_transform', 'inverse_transform'], attrs: ['mean_', 'scale_', 'n_features_in_'],
         code: 'from sklearn.preprocessing import StandardScaler\n\nsc = StandardScaler()\nsc.fit(X_train)            # aprende μ y σ\nZ_train = sc.transform(X_train)\nZ_test = sc.transform(X_test)\nsc.inverse_transform(Z_test)',
-        title: 'Transformador.', desc: 'No predice: devuelve una versión nueva de X. fit_transform equivale a fit y luego transform sobre los mismos datos; en test usamos solo transform.' }
+        title: 'Transformador.', desc: 'No predice: devuelve una versión nueva de X. fit_transform equivale a fit y luego transform sobre los mismos datos; en test usamos solo transform.' },
+      clu: { has: ['fit', 'predict', 'fit_predict', 'score'], attrs: ['labels_', 'cluster_centers_', 'inertia_'],
+        code: 'from sklearn.cluster import KMeans\n\nkm = KMeans(n_clusters=3, n_init=10)\nkm.fit(X)                  # sin y\nkm.labels_                 # un grupo por fila\nkm.predict(X_nuevo)        # centroide más cercano\nkm.fit_predict(X)          # fit + labels_',
+        title: 'Clustering.', desc: 'fit recibe solo X. Las etiquetas quedan en labels_. KMeans y GaussianMixture tienen predict; DBSCAN y AgglomerativeClustering solo fit_predict, y TSNE solo fit_transform.' }
     }[S.estMode];
     const methods = ALL.map((name, i) => { const on = E.has.includes(name); return { name, delay: i * 40, bg: on ? 'var(--iris-200)' : 'var(--paper)', stroke: on ? 'var(--iris-600)' : 'var(--ink-200)', color: on ? 'var(--ink-900)' : 'var(--ink-400)', shadow: on ? '1px 2px 0 rgba(0,0,0,.10)' : 'none' }; });
 
@@ -236,7 +247,11 @@ class Component extends DCLogic {
       prep: ['Unir.', 'ColumnTransformer manda cada grupo de columnas a su pipeline y concatena los resultados en una sola matriz.'],
       model: ['Modelo completo.', 'El pipeline final se comporta como un solo clasificador. fit ajusta cada paso solo con X_train; score aplica las mismas transformaciones a X_test antes de predecir.']
     }[pm];
-    const lines = L.map((t, i) => ({ t: t || ' ', bg: HL.includes(i) ? 'var(--iris-200)' : 'transparent', color: HL.includes(i) ? 'var(--ink-900)' : 'var(--ink-500)' }));
+    const REF = { num: 9, cat: 10 }[pm];
+    const lines = L.map((t, i) => {
+      const ref = i === REF, on = HL.includes(i) && !ref;
+      return { t: t || ' ', bg: on ? 'var(--iris-200)' : ref ? 'var(--iris-100)' : 'transparent', color: on || ref ? 'var(--ink-900)' : 'var(--ink-500)', bar: ref ? 'var(--iris-600)' : 'transparent', note: ref ? `← aquí se aplica ${pm} a sus columnas` : '' };
+    });
 
     const SC = ['0.84', '0.81', '0.86', '0.83', '0.85'];
     const folds = SC.map((score, r) => { const on = r === S.fold; return {
@@ -245,7 +260,7 @@ class Component extends DCLogic {
     }; });
 
     return {
-      estOpts: [{ value: 'clf', label: 'Clasificador' }, { value: 'reg', label: 'Regresor' }, { value: 'tr', label: 'Transformador' }], estMode: S.estMode, setEst: v => this.setState({ estMode: v }),
+      estOpts: [{ value: 'clf', label: 'Clasificador' }, { value: 'reg', label: 'Regresor' }, { value: 'tr', label: 'Transformador' }, { value: 'clu', label: 'Clustering' }], estMode: S.estMode, setEst: v => this.setState({ estMode: v }),
       est: { methods, attrs: E.attrs, code: E.code, title: E.title, desc: E.desc },
       pipeOpts: [{ value: 'num', label: 'Numéricas' }, { value: 'cat', label: 'Categóricas' }, { value: 'prep', label: 'Unir' }, { value: 'model', label: 'Modelo' }], pipeMode: pm, setPipe: v => this.setState({ pipeMode: v }),
       pipe: { b: Object.fromEntries(B.map((x, i) => [x[0], boxes[i]])), lines, title: PD[0], desc: PD[1], regFill: pm === 'prep' ? 'var(--surface-group)' : 'var(--surface-well)' },

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Clustering jerárquico — Fase 3</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="index.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <span style="color:var(--text-muted);font-variant-numeric:tabular-nums">Fase 3 · 04 de 06</span>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Fase 3 · No supervisado" title="Clustering jerárquico" description="En lugar de fijar k de antemano, construimos todas las agrupaciones posibles, de n grupos a uno solo, y decidimos después dónde cortar."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Actualizado el 1 oct 2026 · Fuente: ISLR Cap. 12.4.2 · ESL 14.3.12</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">1. La diferencia con K-means</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty"><a href="F3-01-KMeans.dc.html">K-means</a> y <a href="F3-03-GMM-EM.dc.html">GMM</a> necesitan <i style="font-family:var(--font-math);padding:0 2px">k</i> antes de empezar. El clustering jerárquico aglomerativo no. Construye una <b>jerarquía completa</b> de agrupaciones, desde cada punto como su propio grupo hasta todos los puntos en uno solo, y elegimos el nivel después de ver el resultado.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">2. El algoritmo aglomerativo</h2>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">1. Empezar con n clusters, uno por observación
+2. Repetir hasta que quede uno solo:
+   a. Encontrar los dos clusters más parecidos
+      según un criterio de enlace (linkage)
+   b. Fusionarlos
+   c. Registrar la altura (distancia) de la fusión</pre>
+  <p style="margin:0 0 20px;text-wrap:pretty">El resultado se dibuja como un <b>dendrograma</b>: un árbol en el que la altura de cada unión indica qué tan distintos eran los dos grupos que se juntaron. Cortar el árbol con una línea horizontal da un número concreto de grupos. Cortar más abajo da más grupos y más específicos; más arriba, menos y más generales.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">ISLR advierte sobre una lectura común equivocada: dos hojas que aparecen juntas en el eje horizontal no son necesariamente parecidas. Lo que mide la similitud es la <b>altura</b> a la que se unen sus ramas.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">3. Criterios de enlace</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Sabemos medir la distancia entre dos puntos, pero un cluster puede tener muchos. Hace falta definir qué significa la distancia entre dos <i>grupos</i>:</p>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>Single</b>: la distancia mínima entre un punto de cada grupo.</li>
+    <li style="text-wrap:pretty"><b>Complete</b>: la distancia máxima entre un punto de cada grupo.</li>
+    <li style="text-wrap:pretty"><b>Average</b>: el promedio de todas las distancias entre pares.</li>
+    <li style="text-wrap:pretty"><b>Ward</b>: el aumento de la WCSS si los fusionamos, el mismo objetivo de K-means.</li>
+  </ul>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,440px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="380px,32px" options="{{ lkOpts }}" value="{{ lk1 }}" onChange="{{ setLk1 }}"></x-import>
+    <div style="width:100%;max-width:880px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;align-items:center">
+      <svg viewBox="0 0 600 280" width="100%" style="display:block;grid-column:span 2;min-width:0;overflow:visible">
+        <sc-for list="{{ lkLines }}" as="l" hint-placeholder-count="0">
+          <line x1="{{ l.x1 }}" y1="{{ l.y1 }}" x2="{{ l.x2 }}" y2="{{ l.y2 }}" style="stroke:{{ l.s }};stroke-width:{{ l.w }};stroke-opacity:{{ l.o }};stroke-dasharray:{{ l.d }}"></line>
+        </sc-for>
+        <sc-for list="{{ lkPts }}" as="p" hint-placeholder-count="0">
+          <circle cx="{{ p.x }}" cy="{{ p.y }}" r="6" style="fill:{{ p.f }};stroke:{{ p.s }};stroke-width:1.4"></circle>
+        </sc-for>
+        <sc-for list="{{ lkCen }}" as="c" hint-placeholder-count="0">
+          <g transform="translate({{ c.x }} {{ c.y }})" style="opacity:{{ c.o }}">
+            <circle cx="0" cy="0" r="9" style="fill:var(--paper);stroke:var(--ink-900);stroke-width:2.2"></circle>
+            <path d="M-4,0 L4,0 M0,-4 L0,4" style="stroke:var(--ink-900);stroke-width:1.8"></path>
+          </g>
+        </sc-for>
+        <text x="90" y="40" style="font-size:15px;font-weight:700;fill:var(--ink-900)">A</text>
+        <text x="500" y="40" style="font-size:15px;font-weight:700;fill:var(--ink-900)">B</text>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="120px,70px" label="d(A, B)" value="{{ lkD }}" size="sm"></x-import>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:120px">{{ lkDesc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> Dos grupos y los cuatro criterios de enlace. Las líneas marcan los pares de puntos que cada criterio usa para medir la distancia entre A y B.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">La elección cambia bastante la forma de los grupos. <b>Complete</b> tiende a producir grupos compactos y de tamaño parecido. <b>Single</b> puede producir grupos alargados por el <b>efecto cadena</b>: dos grupos quedan conectados por una fila de puntos intermedios aunque estén lejos en general. <b>Average</b> queda entre los dos. <b>Ward</b> suele dar resultados parecidos a K-means, sin fijar <i style="font-family:var(--font-math);padding:0 2px">k</i> antes. ISLR recomienda average y complete sobre single porque dan dendrogramas más balanceados.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,640px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <div style="display:flex;gap:16px 28px;flex-wrap:wrap;justify-content:center;align-items:center">
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="380px,32px" options="{{ lkOpts }}" value="{{ lk }}" onChange="{{ setLk }}"></x-import>
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="260px,44px" label="Altura de corte" min="{{ 0 }}" max="{{ 1 }}" step="{{ 0.005 }}" width="{{ 260 }}" tone="focus" value="{{ cut }}" onChange="{{ setCut }}" format="{{ fmtCut }}"></x-import>
+    </div>
+    <div style="width:100%;max-width:960px;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px;align-items:start">
+      <svg viewBox="0 0 600 320" width="100%" style="display:block;min-width:0;border:1px solid var(--ink-200);border-radius:4px">
+        <sc-for list="{{ hPts }}" as="p" hint-placeholder-count="0">
+          <circle cx="{{ p.x }}" cy="{{ p.y }}" r="5.5" style="fill:{{ p.f }};stroke:var(--ink-800);stroke-opacity:0.45;stroke-width:1.1;transition:fill 280ms var(--ease-out)"></circle>
+        </sc-for>
+      </svg>
+      <svg viewBox="0 0 600 320" width="100%" style="display:block;min-width:0;overflow:visible">
+        <sc-for list="{{ dLinks }}" as="l" hint-placeholder-count="0">
+          <path d="{{ l.d }}" style="fill:none;stroke:{{ l.s }};stroke-width:{{ l.w }};transition:stroke 280ms var(--ease-out)"></path>
+        </sc-for>
+        <line x1="10" x2="590" y1="{{ cutY }}" y2="{{ cutY }}" style="stroke:var(--iris-600);stroke-width:1.6;stroke-dasharray:6 4"></line>
+        <line x1="10" x2="590" y1="300" y2="300" style="stroke:var(--ink-300)"></line>
+        <text x="590" y="{{ cutLy }}" text-anchor="end" style="font-size:12px;font-weight:600;fill:var(--iris-600)">{{ nClu }} grupos</text>
+      </svg>
+    </div>
+    <div style="max-width:680px;font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:72px">{{ hDesc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 2.</b> Treinta y siete puntos: tres grupos, una fila de puntos que conecta los dos de la izquierda y un punto aislado arriba a la derecha. A la derecha, el dendrograma con el criterio elegido. La línea punteada es el corte; las ramas por debajo toman el color de su grupo.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">4. Dónde cortar</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Una regla práctica es cortar donde el dendrograma tiene un salto grande de altura: entre dos fusiones muy separadas verticalmente hay grupos que se mantienen distintos en un rango amplio de distancias. También podemos fijar <i style="font-family:var(--font-math);padding:0 2px">k</i> directamente o usar el silhouette de <a href="F3-01-KMeans.dc.html">K-means</a> sobre los cortes candidatos.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">El nombre "jerárquico" es un supuesto, no solo una forma de dibujar. Los grupos con <i style="font-family:var(--font-math);padding:0 2px">k</i> clusters se obtienen siempre fusionando grupos de la solución con <i style="font-family:var(--font-math);padding:0 2px">k + 1</i>. ISLR da un contraejemplo: si los datos se dividen mejor en dos por sexo y en tres por nacionalidad, los tres grupos no están anidados en los dos, y forzar una jerarquía da peores resultados que K-means.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">5. Ventajas y desventajas frente a K-means</h2>
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 24px;margin:0 0 20px;border-top:2px solid var(--ink-800);border-bottom:2px solid var(--ink-800);font-size:16px;line-height:1.5">
+    <div style="padding:10px 0;font-weight:700;border-bottom:1px solid var(--ink-400);color:var(--text-strong)">Ventajas</div>
+    <div style="padding:10px 0;font-weight:700;border-bottom:1px solid var(--ink-400);color:var(--text-strong)">Desventajas</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">No requiere fijar <i style="font-family:var(--font-math)">k</i>: lo decidimos viendo el dendrograma</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Más caro: al menos <i style="font-family:var(--font-math)">O(n²)</i> en memoria y <i style="font-family:var(--font-math)">O(n² log n)</i> en tiempo, frente a un costo lineal en <i style="font-family:var(--font-math)">n</i> por iteración de K-means</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Determinístico: no depende de una inicialización aleatoria</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Las fusiones son irreversibles: un error temprano no se corrige después</div>
+    <div style="padding:10px 0">El dendrograma es una herramienta de exploración en sí mismo</div>
+    <div style="padding:10px 0">Sensible al criterio de enlace y a outliers, sobre todo con single</div>
+  </div>
+  <p style="margin:0 0 20px;text-wrap:pretty">Como en todos los métodos basados en distancias, estandarizamos antes. ISLR señala además que la elección de la disimilitud importa tanto como el linkage: con datos de compras, por ejemplo, una distancia basada en correlación agrupa clientes con preferencias parecidas aunque compren cantidades muy distintas.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">6. Implementación</h2>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
+from sklearn.cluster import AgglomerativeClustering
+
+Z = linkage(X_scaled, method="ward")    # matriz de enlace
+dendrogram(Z)                            # dibujar el dendrograma
+
+# cortar para obtener k clusters
+labels = fcluster(Z, t=3, criterion="maxclust")
+
+# o directamente con scikit-learn, fijando k
+model = AgglomerativeClustering(n_clusters=3, linkage="ward")
+labels = model.fit_predict(X_scaled)</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Ejercicios</h2>
+  <ol style="margin:0 0 20px;padding-left:22px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty">Sobre el dataset del reto de la fase, construye el dendrograma con <code>ward</code> y compara el corte a tres grupos con K-means.</li>
+    <li style="text-wrap:pretty">Prueba los cuatro linkages sobre los mismos datos e identifica si alguno sufre el efecto cadena.</li>
+    <li style="text-wrap:pretty">En un dataset del que no sepas cuántos grupos esperar, usa el dendrograma para decidir un corte y justifícalo.</li>
+  </ol>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Conexiones con otras fases</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty">Ward minimiza la misma WCSS que <a href="F3-01-KMeans.dc.html">K-means</a> con otra estrategia: fusiones codiciosas de abajo hacia arriba en lugar de iterar.</li>
+    <li style="text-wrap:pretty">Es una alternativa cuando el codo y el silhouette no dan una respuesta clara sobre <i style="font-family:var(--font-math);padding:0 2px">k</i>.</li>
+    <li style="text-wrap:pretty">Single linkage está muy relacionado con <a href="F3-05-DBSCAN.dc.html">DBSCAN</a>: los dos unen puntos a través de cadenas de vecinos cercanos.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Fuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:16px">
+    <li>James, Witten, Hastie y Tibshirani. <i>An Introduction to Statistical Learning</i>, Cap. 12.4.2.</li>
+    <li>Hastie, Tibshirani y Friedman. <i>The Elements of Statistical Learning</i>, 14.3.12.</li>
+    <li>Ward, J. H. (1963). "Hierarchical grouping to optimize an objective function." <i>JASA</i>.</li>
+    <li><a href="https://scikit-learn.org/stable/modules/clustering.html#hierarchical-clustering" target="_blank">scikit-learn · 2.3.6 Hierarchical clustering</a></li>
+  </ul>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F3-03-GMM-EM.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Anterior</div><div style="font-weight:600;color:var(--text-strong)">Mezclas gaussianas y EM</div></a>
+  <a href="F3-05-DBSCAN.dc.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Siguiente →</div><div style="font-weight:600;color:var(--text-strong)">DBSCAN</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    const r = this.rng(9), g = () => this.gauss(r);
+    this.A = [[90, 120], [130, 90], [120, 160], [160, 130], [80, 190], [150, 200]];
+    this.B = [[430, 110], [470, 80], [500, 130], [460, 170], [520, 200], [440, 220]];
+    const P = [];
+    for (let i = 0; i < 10; i++) P.push([130 + g() * 26, 200 + g() * 26]);
+    for (let i = 0; i < 10; i++) P.push([330 + g() * 26, 110 + g() * 24]);
+    for (let i = 0; i < 10; i++) P.push([440 + g() * 28, 250 + g() * 22]);
+    for (let i = 1; i <= 6; i++) { const t = i / 7; P.push([150 + t * 165 + g() * 4, 185 - t * 72 + g() * 4]); }
+    P.push([570, 30]);
+    this.P = P;
+    this.T = {}; ['s', 'c', 'a', 'w'].forEach(l => { this.T[l] = this.agglo(l); });
+    this.state = { lk1: 's', lk: 's', cut: this.cut3('s') };
+  }
+  rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  dist(a, b) { return Math.hypot(a[0] - b[0], a[1] - b[1]); }
+  link(A, B, l, P) {
+    if (l === 'w') { const m = S => [S.reduce((s, i) => s + P[i][0], 0) / S.length, S.reduce((s, i) => s + P[i][1], 0) / S.length]; return Math.sqrt(2 * A.length * B.length / (A.length + B.length)) * this.dist(m(A), m(B)); }
+    let mn = Infinity, mx = 0, sm = 0;
+    A.forEach(i => B.forEach(j => { const d = this.dist(P[i], P[j]); mn = Math.min(mn, d); mx = Math.max(mx, d); sm += d; }));
+    return l === 's' ? mn : l === 'c' ? mx : sm / (A.length * B.length);
+  }
+  agglo(l) {
+    const P = this.P, n = P.length;
+    let C = P.map((_, i) => ({ id: i, m: [i], h: 0 })), nodes = P.map((_, i) => ({ id: i, leaf: true, h: 0, m: [i] })), merges = [];
+    while (C.length > 1) {
+      let bi = 0, bj = 1, bd = Infinity;
+      for (let i = 0; i < C.length; i++) for (let j = i + 1; j < C.length; j++) { const d = this.link(C[i].m, C[j].m, l, P); if (d < bd) { bd = d; bi = i; bj = j; } }
+      const a = C[bi], b = C[bj], h = Math.max(bd, a.h, b.h), node = { id: nodes.length, a: a.id, b: b.id, h, m: a.m.concat(b.m) };
+      nodes.push(node); merges.push(node);
+      C = C.filter((_, k) => k !== bi && k !== bj); C.push({ id: node.id, m: node.m, h });
+    }
+    const order = [], walk = id => { const nd = nodes[id]; if (nd.leaf) order.push(id); else { walk(nd.a); walk(nd.b); } };
+    walk(nodes.length - 1);
+    const xs = {}; order.forEach((id, i) => { xs[id] = 20 + i * (560 / (n - 1)); });
+    nodes.forEach(nd => { if (!nd.leaf) xs[nd.id] = (xs[nd.a] + xs[nd.b]) / 2; });
+    return { nodes, merges, xs, H: merges[merges.length - 1].h };
+  }
+  cut3(l) { const T = this.T[l], m = T.merges, n = m.length; return ((m[n - 3].h + m[n - 2].h) / 2) / T.H; }
+  renderVals() {
+    const S = this.state, CAT = ['var(--cat-1)', 'var(--cat-6)', 'var(--cat-8)', 'var(--cat-3)', 'var(--cat-12)', 'var(--cat-10)', 'var(--cat-2)', 'var(--cat-11)'];
+    const A = this.A, B = this.B, l1 = S.lk1, AB = [...A, ...B];
+    const ia = A.map((_, i) => i), ib = B.map((_, i) => i + A.length), d1 = this.link(ia, ib, l1, AB);
+    let pair = null, lkLines = [];
+    if (l1 === 's' || l1 === 'c') {
+      let best = l1 === 's' ? Infinity : 0;
+      A.forEach(a => B.forEach(b => { const d = this.dist(a, b); if (l1 === 's' ? d < best : d > best) { best = d; pair = [a, b]; } }));
+      lkLines = [{ x1: pair[0][0], y1: pair[0][1], x2: pair[1][0], y2: pair[1][1], s: 'var(--iris-600)', w: 2.4, o: 1, d: 'none' }];
+    } else if (l1 === 'a') {
+      A.forEach(a => B.forEach(b => lkLines.push({ x1: a[0], y1: a[1], x2: b[0], y2: b[1], s: 'var(--iris-600)', w: 1, o: 0.28, d: 'none' })));
+    }
+    const mA = [A.reduce((s, q) => s + q[0], 0) / 6, A.reduce((s, q) => s + q[1], 0) / 6], mB = [B.reduce((s, q) => s + q[0], 0) / 6, B.reduce((s, q) => s + q[1], 0) / 6];
+    if (l1 === 'w') {
+      lkLines = [{ x1: mA[0], y1: mA[1], x2: mB[0], y2: mB[1], s: 'var(--iris-600)', w: 2.4, o: 1, d: '6 4' }];
+      A.forEach(a => lkLines.push({ x1: a[0], y1: a[1], x2: mA[0], y2: mA[1], s: 'var(--ink-500)', w: 1, o: 0.6, d: 'none' }));
+      B.forEach(b => lkLines.push({ x1: b[0], y1: b[1], x2: mB[0], y2: mB[1], s: 'var(--ink-500)', w: 1, o: 0.6, d: 'none' }));
+    }
+    const lkPts = AB.map((q, i) => { const on = pair && (q === pair[0] || q === pair[1]); return { x: q[0], y: q[1], f: i < 6 ? 'var(--coral-200)' : 'var(--sky-200)', s: on ? 'var(--ink-900)' : i < 6 ? 'var(--coral-400)' : 'var(--sky-400)' }; });
+    const LD = {
+      s: 'Single: la distancia entre los dos grupos es la del par más cercano. Basta con que un punto de cada grupo esté cerca para que los grupos se consideren cercanos.',
+      c: 'Complete: la distancia es la del par más lejano. Dos grupos solo se consideran cercanos si todos sus puntos lo están.',
+      a: 'Average: el promedio de las 36 distancias entre pares. Ningún punto individual decide el resultado.',
+      w: 'Ward: compara los centroides, ponderados por el tamaño de los grupos. Mide cuánto crecería la suma de cuadrados dentro del grupo si fusionamos A y B.'
+    };
+
+    const T = this.T[S.lk], h = S.cut * T.H, P = this.P, n = P.length;
+    const parent = P.map((_, i) => i), find = x => parent[x] === x ? x : (parent[x] = find(parent[x]));
+    const nodeRoot = {};
+    T.nodes.forEach(nd => { if (!nd.leaf && nd.h <= h) nd.m.forEach(i => { parent[find(i)] = find(nd.m[0]); }); });
+    const roots = [...new Set(P.map((_, i) => find(i)))];
+    const sizes = {}; P.forEach((_, i) => { const rt = find(i); sizes[rt] = (sizes[rt] || 0) + 1; });
+    const big = roots.filter(rt => sizes[rt] > 1).sort((a, b) => sizes[b] - sizes[a]);
+    const col = rt => { const k = big.indexOf(rt); return k >= 0 && k < CAT.length ? CAT[k] : 'var(--ink-100)'; };
+    const hPts = P.map((q, i) => ({ x: q[0].toFixed(1), y: q[1].toFixed(1), f: col(find(i)) }));
+    const yy = v => 300 - v / T.H * 280;
+    const dLinks = T.merges.map(nd => {
+      const ya = T.nodes[nd.a].h, yb = T.nodes[nd.b].h, xa = T.xs[nd.a], xb = T.xs[nd.b], y = yy(nd.h);
+      const below = nd.h <= h;
+      return { d: `M${xa.toFixed(1)},${yy(ya).toFixed(1)} L${xa.toFixed(1)},${y.toFixed(1)} L${xb.toFixed(1)},${y.toFixed(1)} L${xb.toFixed(1)},${yy(yb).toFixed(1)}`, s: below ? col(find(nd.m[0])) : 'var(--ink-700)', w: below ? 2.2 : 1.4 };
+    });
+    const nClu = roots.length, single = roots.length - big.length;
+    const outlierAlone = sizes[find(n - 1)] === 1;
+    const chainIdx = [30, 31, 32, 33, 34, 35], rA = find(0), rB = find(10);
+    let hDesc = `${nClu} ${nClu === 1 ? 'grupo' : 'grupos'} con este corte` + (single ? `, ${single} de ellos de un solo punto (en gris)` : '') + '. ';
+    hDesc += S.lk === 's' ? (rA === rB && nClu > 1 ? 'Con single, la fila de puntos une los dos grupos de la izquierda a una altura baja: es el efecto cadena. ' : 'Con single, las alturas son pequeñas porque cada fusión solo mira al par más cercano. ') + (outlierAlone && nClu > 1 ? 'El punto aislado es lo último en unirse.' : '')
+      : S.lk === 'c' ? 'Con complete, la fila de puntos no basta para unir los grupos de la izquierda pronto: cada fusión mira al par más lejano y los grupos se mantienen compactos.'
+      : S.lk === 'a' ? 'Average queda entre los dos extremos. La fila de puntos acaba repartida entre los grupos vecinos.'
+      : 'Ward produce un dendrograma con saltos grandes arriba: fusionar grupos ya grandes aumenta mucho la WCSS. Los grupos se parecen a los de K-means.';
+    return {
+      lkOpts: [{ value: 's', label: 'Single' }, { value: 'c', label: 'Complete' }, { value: 'a', label: 'Average' }, { value: 'w', label: 'Ward' }],
+      lk1: l1, setLk1: v => this.setState({ lk1: v }), lkLines, lkPts, lkCen: [{ x: mA[0], y: mA[1], o: l1 === 'w' ? 1 : 0 }, { x: mB[0], y: mB[1], o: l1 === 'w' ? 1 : 0 }],
+      lkD: (d1 / 100).toFixed(2), lkDesc: LD[l1],
+      lk: S.lk, setLk: v => this.setState({ lk: v, cut: this.cut3(v) }), cut: S.cut, setCut: v => this.setState({ cut: v }), fmtCut: v => (v * T.H / 100).toFixed(2),
+      hPts, dLinks, cutY: yy(h).toFixed(1), cutLy: (yy(h) - 6).toFixed(1), nClu, hDesc
+    };
+  }
+}
+</script>
+</body>
+</html>

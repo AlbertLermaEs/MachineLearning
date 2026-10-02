@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>DBSCAN — Fase 3</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="index.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <span style="color:var(--text-muted);font-variant-numeric:tabular-nums">Fase 3 · 05 de 06</span>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Fase 3 · No supervisado" title="DBSCAN" description="Un cluster como región densa separada por zonas vacías. Sin suponer formas, sin fijar k, y con los puntos aislados marcados como ruido."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Actualizado el 1 oct 2026 · Fuente: Ester et al. (1996) · Schubert et al. (2017) · scikit-learn 2.3.7</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">1. Otra definición de cluster</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">En <a href="F3-01-KMeans.dc.html">K-means</a> anotamos que el algoritmo supone grupos aproximadamente esféricos y de tamaño parecido, y que falla con medialunas o grupos anidados. <a href="F3-03-GMM-EM.dc.html">GMM</a> relaja el supuesto a elipses. <b>DBSCAN</b> (<i>density-based spatial clustering of applications with noise</i>) cambia la pregunta: un cluster es una <b>región densa</b> de puntos, separada de las demás por regiones de baja densidad. No hay ningún supuesto sobre la forma.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">2. Dos hiperparámetros y tres tipos de punto</h2>
+  <p style="margin:0 0 8px;text-wrap:pretty">DBSCAN necesita un radio <i style="font-family:var(--font-math);padding:0 2px">ε</i> (<code>eps</code>) y un mínimo de puntos (<code>min_samples</code>). La <b>ε-vecindad</b> de un punto son todos los puntos a distancia menor o igual que <i style="font-family:var(--font-math);padding:0 2px">ε</i>, incluido él mismo:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="1" tex="N_\varepsilon(x) = \{\, x' : d(x, x') \le \varepsilon \,\}"></x-import>
+  <p style="margin:0 0 12px;text-wrap:pretty">Con eso clasificamos cada punto:</p>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>Núcleo</b> (<i>core</i>): su vecindad tiene al menos <code>min_samples</code> puntos. Está dentro de una región densa.</li>
+    <li style="text-wrap:pretty"><b>Frontera</b> (<i>border</i>): no es núcleo, pero está en la vecindad de algún núcleo. Está en el borde de una región densa.</li>
+    <li style="text-wrap:pretty"><b>Ruido</b>: ni núcleo ni frontera. No pertenece a ningún cluster.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">3. El algoritmo</h2>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">Para cada punto no visitado:
+    Si es núcleo:
+        Crear un cluster nuevo
+        Agregar todos los puntos alcanzables por densidad:
+        sus vecinos, los vecinos de los vecinos núcleo, etc.
+    Si no es núcleo ni lo alcanza ningún núcleo:
+        Marcarlo como ruido</pre>
+  <p style="margin:0 0 20px;text-wrap:pretty">Dos núcleos que están en la vecindad uno del otro quedan en el mismo cluster, y la relación se propaga en cadena. Por eso un cluster puede tener cualquier forma: lo que importa es que se pueda recorrer de un extremo a otro saltando entre puntos densos.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,660px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <div style="display:flex;gap:16px 28px;flex-wrap:wrap;justify-content:center;align-items:center">
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="300px,32px" options="{{ dsOpts }}" value="{{ ds }}" onChange="{{ setDs }}"></x-import>
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="220px,44px" label="Radio eps" min="{{ 0.05 }}" max="{{ 0.8 }}" step="{{ 0.01 }}" width="{{ 220 }}" tone="focus" value="{{ eps }}" onChange="{{ setEps }}" format="{{ fmt2 }}"></x-import>
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="220px,44px" label="min_samples" min="{{ 2 }}" max="{{ 15 }}" step="{{ 1 }}" width="{{ 220 }}" tone="focus" value="{{ ms }}" onChange="{{ setMs }}" format="{{ fmtInt }}"></x-import>
+    </div>
+    <div style="width:100%;max-width:920px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;align-items:start">
+      <svg viewBox="0 0 600 384" width="100%" style="display:block;grid-column:span 2;min-width:0;border:1px solid var(--ink-200);border-radius:4px;overflow:hidden">
+        <sc-for list="{{ halos }}" as="h" hint-placeholder-count="0">
+          <circle cx="{{ h.x }}" cy="{{ h.y }}" r="{{ h.r }}" style="fill:{{ h.f }};fill-opacity:0.07"></circle>
+        </sc-for>
+        <sc-for list="{{ pts }}" as="p" hint-placeholder-count="0">
+          <circle cx="{{ p.x }}" cy="{{ p.y }}" r="{{ p.r }}" style="fill:{{ p.f }};stroke:{{ p.s }};stroke-width:{{ p.sw }};transition:fill 240ms var(--ease-out)"></circle>
+        </sc-for>
+        <sc-for list="{{ noise }}" as="p" hint-placeholder-count="0">
+          <path d="{{ p.d }}" style="stroke:var(--ink-700);stroke-width:1.6"></path>
+        </sc-for>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div style="display:flex;gap:28px;flex-wrap:wrap">
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="90px,70px" label="Clusters" value="{{ nC }}" size="sm"></x-import>
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="90px,70px" label="Núcleo" value="{{ nCore }}" size="sm"></x-import>
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="90px,70px" label="Ruido" value="{{ nNoise }}" size="sm"></x-import>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--text-body)">
+          <div style="display:flex;gap:10px;align-items:center"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5" style="fill:var(--cat-6);stroke:var(--ink-800);stroke-opacity:0.4"></circle></svg>Núcleo</div>
+          <div style="display:flex;gap:10px;align-items:center"><svg width="16" height="16" viewBox="0 0 16 16"><circle cx="8" cy="8" r="4" style="fill:var(--paper);stroke:var(--cat-6);stroke-width:2"></circle></svg>Frontera</div>
+          <div style="display:flex;gap:10px;align-items:center"><svg width="16" height="16" viewBox="0 0 16 16"><path d="M4,4 L12,12 M12,4 L4,12" style="stroke:var(--ink-700);stroke-width:1.6"></path></svg>Ruido</div>
+        </div>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:120px">{{ desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> DBSCAN sobre dos conjuntos de datos con puntos de ruido uniformes. El halo de cada núcleo es su ε-vecindad; donde los halos se tocan, los núcleos quedan en el mismo cluster. Las coordenadas van de 0 a 6 en horizontal y de 0 a 3.84 en vertical.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">4. Qué gana frente a K-means y GMM</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>No hay que fijar k.</b> El número de clusters sale de los datos y de la densidad que pedimos.</li>
+    <li style="text-wrap:pretty"><b>Formas arbitrarias.</b> Separa medialunas, anillos concéntricos y cualquier grupo que se pueda recorrer saltando entre puntos densos.</li>
+    <li style="text-wrap:pretty"><b>Identifica outliers.</b> K-means asigna todos los puntos a algún centroide, por lejos que estén. DBSCAN deja fuera a los que no están en ninguna región densa.</li>
+  </ul>
+  <p style="margin:0 0 20px;text-wrap:pretty">Con el índice espacial adecuado, cada consulta de vecindad cuesta cerca de <i style="font-family:var(--font-math);padding:0 2px">O(log n)</i> en dimensión baja. Schubert et al. (2017) aclaran que en el peor caso el algoritmo sigue siendo <i style="font-family:var(--font-math);padding:0 2px">O(n²)</i>, sobre todo con un <i style="font-family:var(--font-math);padding:0 2px">ε</i> grande.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">5. Cómo elegir eps</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">No hay fórmula, pero sí una heurística de los autores originales. Para cada punto calculamos la distancia a su vecino número <code>min_samples</code>, ordenamos esas distancias y las graficamos. Los puntos dentro de regiones densas tienen distancias pequeñas y parecidas; los de ruido, distancias grandes. El <b>codo</b> de la curva separa los dos regímenes y es un buen candidato para <i style="font-family:var(--font-math);padding:0 2px">ε</i>. Para <code>min_samples</code>, una regla común es empezar con el doble del número de dimensiones.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,360px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="300px,44px" label="Radio eps" min="{{ 0.05 }}" max="{{ 0.8 }}" step="{{ 0.01 }}" width="{{ 300 }}" tone="focus" value="{{ eps }}" onChange="{{ setEps }}" format="{{ fmt2 }}"></x-import>
+    <svg viewBox="0 0 640 240" width="100%" style="display:block;max-width:760px;overflow:visible">
+      <line x1="50" y1="210" x2="620" y2="210" style="stroke:var(--ink-400)"></line>
+      <line x1="50" y1="10" x2="50" y2="210" style="stroke:var(--ink-400)"></line>
+      <text x="44" y="214" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">0</text>
+      <text x="44" y="{{ kdTopY }}" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">{{ kdTop }}</text>
+      <text x="620" y="228" text-anchor="end" style="font-size:12px;fill:var(--ink-600)">puntos ordenados por distancia →</text>
+      <text x="56" y="16" style="font-size:12px;fill:var(--ink-600)">distancia al vecino {{ ms }}</text>
+      <path d="{{ kdArea }}" style="fill:var(--ink-100)"></path>
+      <path d="{{ kd }}" style="fill:none;stroke:var(--ink-800);stroke-width:2"></path>
+      <line x1="50" x2="620" y1="{{ epsY }}" y2="{{ epsY }}" style="stroke:var(--iris-600);stroke-width:1.6;stroke-dasharray:6 4"></line>
+      <text x="616" y="{{ epsLy }}" text-anchor="end" style="font-size:12px;font-weight:600;fill:var(--iris-600)">eps = {{ epsTxt }}</text>
+    </svg>
+    <div style="max-width:680px;font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:48px">{{ kdDesc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 2.</b> Gráfica de k-distancias para los datos y el <code>min_samples</code> de la figura 1. Los puntos cuya distancia queda por encima de la línea no son núcleo. Este control y el de la figura 1 mueven el mismo <i>ε</i>.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">6. Limitaciones</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>Sensible a eps y min_samples.</b> Valores un poco distintos pueden unir dos clusters o romper uno en varios.</li>
+    <li style="text-wrap:pretty"><b>Densidades distintas.</b> Un solo <i style="font-family:var(--font-math);padding:0 2px">ε</i> puede ser adecuado para un grupo denso y demasiado chico para uno disperso. Se ve en la figura 1 con el segundo conjunto de datos. <b>HDBSCAN</b> (en scikit-learn desde la versión 1.3) y <b>OPTICS</b> resuelven esto explorando todos los radios a la vez.</li>
+    <li style="text-wrap:pretty"><b>Alta dimensión.</b> Hereda la <a href="F2-01-KNN.dc.html">maldición de la dimensionalidad</a> de KNN: cuando todas las distancias se parecen, la noción de densidad se degrada. Conviene reducir dimensiones antes, por ejemplo con <a href="F3-02-PCA.dc.html">PCA</a>.</li>
+    <li style="text-wrap:pretty"><b>Escala.</b> Como todo método basado en distancias, necesita variables estandarizadas.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">7. Implementación</h2>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.cluster import DBSCAN
+from sklearn.neighbors import NearestNeighbors
+import numpy as np
+
+# heurística para eps: distancia al k-ésimo vecino, ordenada
+nn = NearestNeighbors(n_neighbors=5).fit(X_scaled)
+distances, _ = nn.kneighbors(X_scaled)
+k_dist = np.sort(distances[:, -1])        # graficar y buscar el codo
+
+db = DBSCAN(eps=0.5, min_samples=5).fit(X_scaled)
+labels = db.labels_                        # -1 indica ruido
+print("Clusters:", len(set(labels)) - (1 if -1 in labels else 0))
+print("Ruido:", (labels == -1).sum())</pre>
+  <p style="margin:0 0 20px;text-wrap:pretty">DBSCAN no tiene método <code>predict</code>: no hay centroides ni modelo que aplicar a puntos nuevos. Si necesitamos asignar observaciones nuevas, una opción es entrenar un <a href="F2-01-KNN.dc.html">KNN</a> sobre los puntos núcleo con sus etiquetas.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Ejercicios</h2>
+  <ol style="margin:0 0 20px;padding-left:22px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty">Sobre <code>make_moons</code>, compara K-means, GMM y DBSCAN. Solo DBSCAN debería separar las dos medialunas.</li>
+    <li style="text-wrap:pretty">Usa la gráfica de k-distancias para elegir <code>eps</code> y verifica el resultado.</li>
+    <li style="text-wrap:pretty">Agrega outliers artificiales a datos con grupos bien definidos y compara cómo los trata K-means frente a DBSCAN.</li>
+  </ol>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Conexiones con otras fases</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty">Resuelve las limitaciones de forma y de outliers de <a href="F3-01-KMeans.dc.html">K-means</a>.</li>
+    <li style="text-wrap:pretty">Comparte la lógica de vecindad de <a href="F2-01-KNN.dc.html">KNN</a>, y con ella la sensibilidad a la escala y a la dimensión.</li>
+    <li style="text-wrap:pretty">Se parece a <a href="F3-04-Jerarquico.dc.html">single linkage</a>, pero el requisito de <code>min_samples</code> evita que una fila de puntos aislados una dos grupos.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Fuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:16px">
+    <li>Ester, M., Kriegel, H.-P., Sander, J. y Xu, X. (1996). "A density-based algorithm for discovering clusters in large spatial databases with noise." <i>KDD</i>.</li>
+    <li>Schubert, E., Sander, J., Ester, M., Kriegel, H.-P. y Xu, X. (2017). "DBSCAN revisited, revisited." <i>ACM TODS</i>.</li>
+    <li>Campello, R., Moulavi, D. y Sander, J. (2013). "Density-based clustering based on hierarchical density estimates." <i>PAKDD</i>.</li>
+    <li><a href="https://scikit-learn.org/stable/modules/clustering.html#dbscan" target="_blank">scikit-learn · 2.3.7 DBSCAN</a></li>
+  </ul>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F3-04-Jerarquico.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Anterior</div><div style="font-weight:600;color:var(--text-strong)">Clustering jerárquico</div></a>
+  <a href="F3-06-tSNE-UMAP.dc.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Siguiente →</div><div style="font-weight:600;color:var(--text-strong)">t-SNE y UMAP</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    const r = this.rng(13), g = () => this.gauss(r), W = 600, H = 384;
+    const clip = q => [Math.min(W - 6, Math.max(6, q[0])), Math.min(H - 6, Math.max(6, q[1]))];
+    const noise = n => Array.from({ length: n }, () => [10 + r() * 580, 10 + r() * 364]);
+    const moons = Array.from({ length: 220 }, (_, i) => {
+      const t = Math.PI * r(), a = i % 2, x = a ? 1 - Math.cos(t) : Math.cos(t), y = a ? 0.5 - Math.sin(t) : Math.sin(t);
+      return clip([(x + 1.15) / 3.3 * 520 + 40 + g() * 7, H - ((y + 0.65) / 1.8 * 300 + 42) + g() * 7]);
+    });
+    const dens = [...Array.from({ length: 130 }, () => clip([170 + g() * 24, 190 + g() * 24])), ...Array.from({ length: 70 }, () => clip([425 + g() * 62, 190 + g() * 62]))];
+    this.D = { m: [...moons, ...noise(18)], d: [...dens, ...noise(14)] };
+    this.Dm = {}; Object.keys(this.D).forEach(k => { const X = this.D[k]; this.Dm[k] = X.map(p => X.map(q => Math.hypot(p[0] - q[0], p[1] - q[1]))); });
+    this.state = { ds: 'm', eps: 0.32, ms: 5 };
+  }
+  rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  renderVals() {
+    const S = this.state, X = this.D[S.ds], M = this.Dm[S.ds], n = X.length, e = S.eps * 100, ms = S.ms;
+    const CAT = ['var(--cat-6)', 'var(--cat-1)', 'var(--cat-8)', 'var(--cat-3)', 'var(--cat-12)', 'var(--cat-10)', 'var(--cat-2)', 'var(--cat-11)', 'var(--cat-5)', 'var(--cat-9)'];
+    const nb = M.map(row => row.reduce((a, d, j) => (d <= e && a.push(j), a), []));
+    const core = nb.map(l => l.length >= ms), lab = new Array(n).fill(-1);
+    let c = 0;
+    for (let i = 0; i < n; i++) {
+      if (!core[i] || lab[i] !== -1) continue;
+      lab[i] = c; const q = [i];
+      while (q.length) { const u = q.pop(); if (!core[u]) continue; nb[u].forEach(v => { if (lab[v] === -1) { lab[v] = c; q.push(v); } }); }
+      c++;
+    }
+    const sizes = new Array(c).fill(0); lab.forEach(l => { if (l >= 0) sizes[l]++; });
+    const rank = sizes.map((s, i) => [s, i]).sort((a, b) => b[0] - a[0]).map(x => x[1]), colOf = {}; rank.forEach((ci, k) => { colOf[ci] = k < CAT.length ? CAT[k] : 'var(--ink-300)'; });
+    const pts = [], noise = [], halos = [];
+    X.forEach((p, i) => {
+      const x = p[0].toFixed(1), y = p[1].toFixed(1);
+      if (lab[i] === -1) noise.push({ d: `M${p[0] - 3.5},${p[1] - 3.5} L${p[0] + 3.5},${p[1] + 3.5} M${p[0] + 3.5},${p[1] - 3.5} L${p[0] - 3.5},${p[1] + 3.5}` });
+      else if (core[i]) { pts.push({ x, y, r: 4.2, f: colOf[lab[i]], s: 'rgba(0,0,0,0.35)', sw: 1 }); halos.push({ x, y, r: e.toFixed(1), f: colOf[lab[i]] }); }
+      else pts.push({ x, y, r: 3.4, f: 'var(--paper)', s: colOf[lab[i]], sw: 2 });
+    });
+    const nCore = core.filter(Boolean).length, nNoise = lab.filter(l => l === -1).length, big = sizes.filter(s => s >= 10).length;
+    let desc;
+    if (c === 0) desc = `Con este radio ningún punto tiene ${ms} vecinos: no hay núcleos y todo queda como ruido. Hay que aumentar eps o bajar min_samples.`;
+    else if (c === 1) desc = `Un solo cluster: el radio es tan grande que las vecindades conectan grupos que deberían estar separados.` + (nNoise ? ` Aun así quedan ${nNoise} puntos como ruido.` : '');
+    else if (nNoise > n * 0.3) desc = `El radio es demasiado chico para esta densidad: ${nNoise} de ${n} puntos quedan como ruido y los grupos se rompen en ${c} pedazos.`;
+    else if (S.ds === 'm') desc = big === 2 && c <= 4 ? `DBSCAN encuentra las dos medialunas sin saber cuántas hay ni qué forma tienen. Los ${nNoise} puntos marcados con una cruz están lejos de cualquier región densa: casi todos son el ruido uniforme que agregamos.` : `${c} clusters y ${nNoise} puntos de ruido. Ajusta eps hasta que las dos medialunas aparezcan como dos grupos.`;
+    else desc = big >= 2 ? `Con este radio aparecen los dos grupos, pero el disperso pierde muchos puntos como ruido o como frontera. Si subimos eps para recuperarlos, el ruido de alrededor empieza a unirse al grupo denso.` : `Un radio que funciona para el grupo denso no alcanza para el disperso, y uno que alcanza para el disperso termina uniéndolo con el ruido. Es la limitación de usar un solo eps.`;
+
+    const kd = M.map(row => { const s = row.slice().sort((a, b) => a - b); return s[Math.min(ms - 1, n - 1)]; }).sort((a, b) => a - b);
+    const top = Math.max(90, Math.ceil(kd[n - 1] / 10) * 10), kx = i => 50 + i / (n - 1) * 570, ky = v => 210 - Math.min(v, top) / top * 200;
+    const kdPath = kd.map((v, i) => (i ? 'L' : 'M') + kx(i).toFixed(1) + ',' + ky(v).toFixed(1)).join('');
+    const above = kd.filter(v => v > e).length;
+    return {
+      dsOpts: [{ value: 'm', label: 'Medialunas' }, { value: 'd', label: 'Densidades distintas' }], ds: S.ds, setDs: v => this.setState({ ds: v, eps: v === 'm' ? 0.32 : 0.3 }),
+      eps: S.eps, setEps: v => this.setState({ eps: Math.round(v * 100) / 100 }), ms, setMs: v => this.setState({ ms: Math.round(v) }),
+      fmt2: v => v.toFixed(2), fmtInt: v => String(Math.round(v)),
+      halos, pts, noise, nC: String(c), nCore: String(nCore), nNoise: String(nNoise), desc,
+      kd: kdPath, kdArea: kdPath + `L${kx(n - 1)},210 L50,210 Z`, kdTop: (top / 100).toFixed(1), kdTopY: 14,
+      epsY: ky(e).toFixed(1), epsLy: (ky(e) - 6).toFixed(1), epsTxt: S.eps.toFixed(2),
+      kdDesc: `${above} de ${n} puntos tienen su vecino número ${ms} más lejos que eps y no son núcleo. ` + (S.ds === 'm' ? 'El codo de la curva está donde termina el tramo plano de los puntos dentro de las medialunas.' : 'Con dos densidades, la curva tiene dos tramos planos, uno por grupo, y ningún eps único separa bien a los dos del ruido.')
+    };
+  }
+}
+</script>
+</body>
+</html>

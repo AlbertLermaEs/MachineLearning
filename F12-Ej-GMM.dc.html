@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Mezclas gaussianas · Ejemplos por modelo</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="index.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <a href="F12-Guia-Sklearn.dc.html" style="color:var(--text-muted);text-decoration:none">Fase 12 · Ejemplos por modelo</a>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Ejemplos por modelo · Fase 3" title="Mezclas gaussianas" description="Agrupamos las flores de iris con un modelo probabilístico. Primero ajustamos GaussianMixture; después elegimos la forma de las covarianzas y el número de componentes con BIC."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Teoría: <a href="F3-03-GMM-EM.dc.html">Fase 3 · Mezclas gaussianas y EM</a> · scikit-learn 1.9.1</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">1. El dataset</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Seguimos con <code>load_iris</code> sin etiquetas, para comparar directamente con el ejemplo de K-means. La diferencia que buscamos está en versicolor y virginica: se traslapan, y un modelo probabilístico puede decir que un punto está en la frontera en vez de asignarlo a la fuerza.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.datasets import load_iris
+from sklearn.preprocessing import StandardScaler
+
+X, y = load_iris(return_X_y=True, as_frame=True)
+X_esc = StandardScaler().fit_transform(X)</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">2. Código paso a paso</h2>
+  <p style="margin:0 0 12px;text-wrap:pretty">Primero ajustamos. <code>GaussianMixture</code> corre EM desde una inicialización con K-means (<code>init_params="kmeans"</code>) hasta que la log-verosimilitud deja de mejorar más de <code>tol</code>.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.mixture import GaussianMixture
+
+gm = GaussianMixture(n_components=3, covariance_type="full",
+                     n_init=5, random_state=42)
+gm.fit(X_esc)
+gm.converged_, gm.n_iter_
+gm.weights_       # π de cada componente, suman 1
+gm.means_         # (3, 4)
+gm.covariances_   # (3, 4, 4) con "full"</pre>
+  <p style="margin:0 0 12px;text-wrap:pretty">Después asignamos. <code>predict</code> da el componente más probable; <code>predict_proba</code>, las responsabilidades completas del paso E.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">etiquetas = gm.predict(X_esc)
+resp = gm.predict_proba(X_esc)    # (150, 3), filas que suman 1
+(resp.max(axis=1) &lt; 0.9).sum()   # puntos con asignación dudosa</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">3. Tipo de covarianza y número de componentes</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Hay dos decisiones: <code>n_components</code> y <code>covariance_type</code>, que fija cuánta libertad tiene la forma de cada componente. Más libertad ajusta mejor pero cuesta parámetros. BIC penaliza esos parámetros, así que sirve para comparar las dos decisiones a la vez.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,620px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <div style="display:flex;gap:16px 28px;flex-wrap:wrap;justify-content:center;align-items:center"><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="360px,32px" options="{{ typeOpts }}" value="{{ type }}" onChange="{{ setType }}"></x-import><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="300px,44px" label="n_components" min="{{ 1 }}" max="{{ 6 }}" step="{{ 1 }}" width="{{ 300 }}" tone="focus" value="{{ k }}" onChange="{{ setK }}" format="{{ fmtK }}"></x-import></div>
+    <div style="width:100%;max-width:920px;display:flex;flex-wrap:wrap;gap:28px;align-items:center;justify-content:center">
+      <svg viewBox="0 0 640 340" width="100%"  style="display:block;overflow:visible;flex:2 1 460px;min-width:0;max-width:640px">
+        <sc-for list="{{ pts }}" as="p" hint-placeholder-count="0"><circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="3.6" style="fill:{{ p.f }};fill-opacity:{{ p.o }};transition:fill-opacity 320ms var(--ease-out)"></circle></sc-for>
+        <sc-for list="{{ ells }}" as="e" hint-placeholder-count="0"><path d="{{ e.d }}" clip-path="url(#pc)" style="fill:none;stroke:{{ e.s }};stroke-width:2"></path><circle cx="{{ e.cx }}" cy="{{ e.cy }}" r="3" style="fill:var(--ink-900)"></circle></sc-for>
+        <defs><clipPath id="pc"><rect x="50" y="14" width="570" height="286"></rect></clipPath></defs>
+        <line x1="50" y1="300" x2="620" y2="300" style="stroke:var(--ink-400);stroke-width:1"></line>
+        <line x1="50" y1="14" x2="50" y2="300" style="stroke:var(--ink-400);stroke-width:1"></line>
+        <text x="90.7" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">1</text><text x="172.1" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">2</text><text x="253.6" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">3</text><text x="335.0" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">4</text><text x="416.4" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">5</text><text x="497.9" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">6</text><text x="579.3" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">7</text>
+        <text x="42" y="304.0" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">0</text><text x="42" y="222.3" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">1</text><text x="42" y="140.6" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">2</text><text x="42" y="58.9" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">3</text>
+        <text x="620" y="334" text-anchor="end" style="font-size:13px;fill:var(--ink-600)">largo del pétalo (cm)</text>
+        <text x="56" y="10" style="font-size:13px;fill:var(--ink-600)">ancho del pétalo (cm)</text>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0;flex:1 1 240px">
+        <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;align-items:baseline;font-size:14px">
+          <span style="color:var(--ink-700)">bic(X)</span><span style="font-family:var(--font-mono);color:var(--ink-900);overflow-wrap:anywhere">{{ bic }}</span>
+          <span style="color:var(--ink-700)">score(X)</span><span style="font-family:var(--font-mono);color:var(--ink-900);overflow-wrap:anywhere">{{ ll }}</span>
+          <span style="color:var(--ink-700)">weights_</span><span style="font-family:var(--font-mono);color:var(--ink-900);overflow-wrap:anywhere">{{ weights }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:13px;font-weight:700;color:var(--ink-600)">BIC por k, menor es mejor</span>
+        <svg viewBox="0 0 280 96" width="100%" style="display:block;max-width:280px;overflow:visible">
+          <path d="{{ bicLine }}" style="fill:none;stroke:var(--ink-400);stroke-width:1.5"></path>
+          <sc-for list="{{ bicDots }}" as="d" hint-placeholder-count="0"><circle cx="{{ d.cx }}" cy="{{ d.cy }}" r="4.5" style="fill:{{ d.f }};stroke:{{ d.s }};stroke-width:1.5"></circle><text x="{{ d.cx }}" y="92" text-anchor="middle" style="font-size:11px;fill:var(--ink-500)">{{ d.k }}</text></sc-for>
+        </svg></div>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:96px">{{ desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> <code>GaussianMixture</code> sobre largo y ancho del pétalo, inicializado con K-means. Las elipses marcan dos desviaciones estándar de cada componente; la opacidad de cada punto es qué tan seguro está <code>predict_proba</code> de su asignación. Usamos 150 flores simuladas con la media y la desviación de cada especie; EM y BIC se calculan en vivo.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">En scikit-learn, <code>bic</code> se minimiza. Probar todas las combinaciones es barato:</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">import pandas as pd
+
+filas = []
+for tipo in ["full", "tied", "diag", "spherical"]:
+    for k in range(1, 7):
+        g = GaussianMixture(k, covariance_type=tipo, n_init=5,
+                            random_state=42).fit(X_esc)
+        filas.append((tipo, k, g.bic(X_esc)))
+pd.DataFrame(filas, columns=["tipo", "k", "bic"]).sort_values("bic").head()</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">4. Cómo interpretar la salida</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty"><code>score</code> devuelve la log-verosimilitud promedio por muestra y <code>score_samples</code> la de cada punto. Un punto con log-verosimilitud muy baja está lejos de todas las componentes, así que también sirve para detectar valores atípicos. Como es un modelo generativo, <code>sample</code> produce datos nuevos con la misma distribución.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">dens = gm.score_samples(X_esc)
+X_esc[dens.argsort()[:5]]     # los cinco puntos menos probables
+X_nuevo, comp = gm.sample(10)</pre>
+  <p style="margin:0 0 20px;text-wrap:pretty">Al comparar con K-means, la diferencia práctica está en <code>predict_proba</code>: los puntos entre versicolor y virginica quedan con responsabilidades repartidas, y esa incertidumbre se puede usar.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">5. Errores frecuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>Maximizar BIC.</b> En scikit-learn menor es mejor, igual que AIC.</li>
+    <li style="text-wrap:pretty"><b>Covarianzas singulares.</b> Con pocos puntos por componente o variables casi constantes, EM falla. <code>reg_covar</code> suma una constante a la diagonal; subirla un poco lo resuelve.</li>
+    <li style="text-wrap:pretty"><b>Una sola inicialización.</b> EM también converge a óptimos locales. <code>n_init</code> mayor que 1 los reduce.</li>
+    <li style="text-wrap:pretty"><b>No escalar con "diag" o "spherical".</b> Estas formas dependen de los ejes; si una variable tiene mucho más rango, los círculos se vuelven inútiles.</li>
+    <li style="text-wrap:pretty"><b>Tratar las responsabilidades como certeza.</b> Son probabilidades bajo el supuesto de que los datos son gaussianos. Si los grupos tienen otra forma, el modelo puede estar muy seguro y equivocado.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Fuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:16px">
+    <li><a href="https://scikit-learn.org/stable/modules/mixture.html" target="_blank">scikit-learn · 2.1 Gaussian mixture models</a></li>
+    <li><a href="https://scikit-learn.org/stable/modules/generated/sklearn.mixture.GaussianMixture.html" target="_blank">scikit-learn · GaussianMixture</a></li>
+    <li><a href="https://scikit-learn.org/stable/auto_examples/mixture/plot_gmm_selection.html" target="_blank">scikit-learn · Gaussian Mixture Model Selection</a></li>
+  </ul>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F12-Ej-PCA.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Anterior</div><div style="font-weight:600;color:var(--text-strong)">PCA</div></a>
+  <a href="F12-Ej-Jerarquico.dc.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Siguiente →</div><div style="font-weight:600;color:var(--text-strong)">Clustering jerárquico</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { type: 'full', k: 3 };
+  rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  data() {
+    if (this._d) return this._d;
+    const r = this.rng(3), g = () => this.gauss(r), S = [[1.46, .17, .25, .10, .33], [4.26, .47, 1.33, .20, .79], [5.55, .55, 2.03, .27, .32]], X = [];
+    S.forEach(([ml, sl, mw, sw, rho]) => { for (let i = 0; i < 50; i++) { const a = g(), b = g(); X.push([Math.max(1, ml + sl * a), Math.max(0.1, mw + sw * (rho * a + Math.sqrt(1 - rho * rho) * b))]); } });
+    return (this._d = X);
+  }
+  kmeans(X, k) {
+    const r = this.rng(7 + k), n = X.length, d2 = (a, b) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2, C = [X[Math.floor(r() * n)].slice()];
+    while (C.length < k) { const w = X.map(p => Math.min(...C.map(c => d2(p, c)))), s = w.reduce((a, b) => a + b, 0); let u = r() * s, i = 0; while (u > w[i] && i < n - 1) { u -= w[i]; i++; } C.push(X[i].slice()); }
+    let lab = [];
+    for (let it = 0; it < 50; it++) { lab = X.map(p => { let b = 0; for (let j = 1; j < k; j++) if (d2(p, C[j]) < d2(p, C[b])) b = j; return b; }); for (let j = 0; j < k; j++) { const m = X.filter((_, i) => lab[i] === j); if (m.length) C[j] = [m.reduce((s, p) => s + p[0], 0) / m.length, m.reduce((s, p) => s + p[1], 0) / m.length]; } }
+    return lab;
+  }
+  em(type, k) {
+    const X = this.data(), n = X.length, lab = this.kmeans(X, k), reg = 1e-6;
+    let R = X.map((_, i) => Array.from({ length: k }, (_, j) => lab[i] === j ? 1 : 0)), pi, mu, cov, ll = -Infinity, it = 0;
+    for (; it < 300; it++) {
+      const Nk = Array.from({ length: k }, (_, j) => R.reduce((s, r) => s + r[j], 0) + 1e-10);
+      pi = Nk.map(v => v / n);
+      mu = Nk.map((N, j) => [0, 1].map(d => R.reduce((s, r, i) => s + r[j] * X[i][d], 0) / N));
+      let C = Nk.map((N, j) => { let a = 0, b = 0, c = 0; X.forEach((p, i) => { const dx = p[0] - mu[j][0], dy = p[1] - mu[j][1]; a += R[i][j] * dx * dx; b += R[i][j] * dx * dy; c += R[i][j] * dy * dy; }); return [a / N, b / N, c / N]; });
+      if (type === 'tied') { const t = [0, 1, 2].map(q => C.reduce((s, cc, j) => s + cc[q] * Nk[j], 0) / n); C = C.map(() => t.slice()); }
+      if (type === 'diag') C = C.map(([a, , c]) => [a, 0, c]);
+      if (type === 'spherical') C = C.map(([a, , c]) => [(a + c) / 2, 0, (a + c) / 2]);
+      cov = C.map(([a, b, c]) => [a + reg, b, c + reg]);
+      let nll = 0;
+      R = X.map(p => {
+        const lp = cov.map(([a, b, c], j) => { const det = a * c - b * b, dx = p[0] - mu[j][0], dy = p[1] - mu[j][1], q = (c * dx * dx - 2 * b * dx * dy + a * dy * dy) / det; return Math.log(pi[j]) - Math.log(2 * Math.PI) - 0.5 * Math.log(det) - 0.5 * q; });
+        const m = Math.max(...lp), s = lp.reduce((t, v) => t + Math.exp(v - m), 0); nll += m + Math.log(s);
+        return lp.map(v => Math.exp(v - m) / s);
+      });
+      if (Math.abs(nll - ll) < 1e-3 * n * 1e-3) { ll = nll; it++; break; }
+      ll = nll;
+    }
+    const pc = { full: 3 * k, tied: 3, diag: 2 * k, spherical: k }[type], p = 2 * k + (k - 1) + pc;
+    const order = mu.map((_, j) => j).sort((a, b) => mu[a][0] - mu[b][0]);
+    return { pi: order.map(j => pi[j]), mu: order.map(j => mu[j]), cov: order.map(j => cov[j]), R: R.map(r => order.map(j => r[j])), ll, bic: -2 * ll + p * Math.log(n), it };
+  }
+  fit(type, k) { this._c = this._c || {}; const key = type + k; return this._c[key] || (this._c[key] = this.em(type, k)); }
+  renderVals() {
+    const S = this.state, X = this.data(), f = this.fit(S.type, S.k), CAT = ['var(--cat-1)', 'var(--cat-6)', 'var(--cat-8)', 'var(--cat-3)', 'var(--cat-10)', 'var(--cat-12)'];
+    const px = x => 50 + (x - .5) / 7 * 570, py = v => 300 - v / 3.5 * 286;
+    const pts = X.map((p, i) => { const r = f.R[i]; let b = 0; r.forEach((v, j) => { if (v > r[b]) b = j; }); const conf = S.k === 1 ? 1 : (r[b] - 1 / S.k) / (1 - 1 / S.k); return { cx: px(p[0]).toFixed(1), cy: py(p[1]).toFixed(1), f: CAT[b], o: (0.2 + 0.7 * conf).toFixed(2) }; });
+    const ells = f.cov.map(([a, b, c], j) => {
+      const tr = (a + c) / 2, dd = Math.sqrt(((a - c) / 2) ** 2 + b * b), l1 = tr + dd, l2 = Math.max(tr - dd, 1e-9), th = 0.5 * Math.atan2(2 * b, a - c), v1 = [Math.cos(th), Math.sin(th)], v2 = [-Math.sin(th), Math.cos(th)];
+      let d = '';
+      for (let s = 0; s <= 48; s++) { const t = s / 48 * 2 * Math.PI, u = 2 * Math.sqrt(l1) * Math.cos(t), w = 2 * Math.sqrt(l2) * Math.sin(t); d += (s ? 'L' : 'M') + px(f.mu[j][0] + u * v1[0] + w * v2[0]).toFixed(1) + ',' + py(f.mu[j][1] + u * v1[1] + w * v2[1]).toFixed(1); }
+      return { d: d + 'Z', s: CAT[j], cx: px(f.mu[j][0]).toFixed(1), cy: py(f.mu[j][1]).toFixed(1) };
+    });
+    const bics = [1, 2, 3, 4, 5, 6].map(k => this.fit(S.type, k).bic), lo = Math.min(...bics), hi = Math.max(...bics), best = bics.indexOf(lo) + 1;
+    const by = v => 72 - (v - lo) / ((hi - lo) || 1) * 60;
+    const bicLine = bics.map((v, i) => (i ? 'L' : 'M') + (20 + i * 48) + ',' + by(v).toFixed(1)).join('');
+    const bicDots = bics.map((v, i) => ({ cx: 20 + i * 48, cy: by(v).toFixed(1), k: i + 1, f: i + 1 === S.k ? 'var(--iris-600)' : 'var(--paper)', s: i + 1 === best ? 'var(--iris-600)' : 'var(--ink-600)' }));
+    const TD = { full: 'Con covariance_type="full", cada componente tiene su propia matriz completa: elipses con cualquier orientación y tamaño.', tied: 'Con "tied", todas las componentes comparten la misma covarianza: misma forma y orientación, distinto centro.', diag: 'Con "diag", cada componente tiene varianzas propias pero sin correlación: elipses alineadas con los ejes.', spherical: 'Con "spherical", cada componente tiene una sola varianza: círculos de distinto tamaño.' }[S.type];
+    const desc = `${TD} Con k = ${S.k}, BIC = ${f.bic.toFixed(1)}. Para este tipo, el menor BIC está en k = ${best}.`;
+    return {
+      typeOpts: ['full', 'tied', 'diag', 'spherical'].map(v => ({ value: v, label: v })), type: S.type, setType: v => this.setState({ type: v }),
+      k: S.k, setK: v => this.setState({ k: Math.round(v) }), fmtK: v => String(Math.round(v)),
+      pts, ells, bicLine, bicDots, bic: f.bic.toFixed(1), ll: (f.ll / X.length).toFixed(3), weights: '[' + f.pi.map(v => v.toFixed(2)).join(', ') + ']', desc
+    };
+  }
+}
+</script>
+</body>
+</html>

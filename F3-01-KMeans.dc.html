@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>K-means — Fase 3</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="index.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <span style="color:var(--text-muted);font-variant-numeric:tabular-nums">Fase 3 · 01 de 06</span>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Fase 3 · No supervisado" title="K-means" description="Agrupar observaciones sin etiquetas: elegimos k, y el algoritmo busca k centroides que dejen a cada punto lo más cerca posible del suyo."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Actualizado el 1 oct 2026 · Fuente: Alan B1 · CS4780 (Weinberger) · ISLR Cap. 12 · ESL 14.3</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">1. Intuición</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">En las fases anteriores cada observación traía una etiqueta <i style="font-family:var(--font-math);padding:0 2px">y</i>. Aquí solo tenemos <i style="font-family:var(--font-math);padding:0 2px">X</i>. El <b>clustering</b> busca grupos tales que las observaciones de un mismo grupo se parezcan entre sí y las de grupos distintos no. Sin etiqueta, el algoritmo tiene que decidir por su cuenta qué cuenta como "parecido".</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">K-means es el algoritmo de clustering más usado por su simplicidad. Fijamos de antemano un número de grupos <i style="font-family:var(--font-math);padding:0 2px">k</i>, y el algoritmo divide las <i style="font-family:var(--font-math);padding:0 2px">n</i> observaciones en <i style="font-family:var(--font-math);padding:0 2px">k</i> grupos, cada uno representado por su <b>centroide</b>: el punto promedio del grupo.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">2. La función objetivo</h2>
+  <p style="margin:0 0 8px;text-wrap:pretty">Dados <i style="font-family:var(--font-math);padding:0 2px">x₁, …, xₙ ∈ ℝᵈ</i>, K-means busca la partición <i style="font-family:var(--font-math);padding:0 2px">C₁, …, C<sub>k</sub></i> que minimiza la <b>suma de cuadrados dentro de los clusters</b> (WCSS, <i>within-cluster sum of squares</i>):</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,64px" display="{{ true }}" number="1" tex="\min_{C_1,\dots,C_k} \sum_{j=1}^{k} \sum_{x_i \in C_j} \lVert x_i - \mu_j \rVert^2, \qquad \mu_j = \frac{1}{|C_j|}\sum_{x_i \in C_j} x_i"></x-import>
+  <p style="margin:0 0 20px;text-wrap:pretty">Es decir, queremos que cada punto quede lo más cerca posible del centroide de su grupo. Resolver este problema de forma exacta es <b>NP-hard</b>: el número de particiones posibles crece de forma explosiva con <i style="font-family:var(--font-math);padding:0 2px">n</i>. En la práctica usamos una heurística.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">3. El algoritmo de Lloyd</h2>
+  <p style="margin:0 0 12px;text-wrap:pretty">Lo que casi todo el mundo llama "K-means" es el algoritmo de Lloyd. Alterna dos pasos hasta que las asignaciones dejan de cambiar:</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">1. Inicializar k centroides
+2. Repetir hasta que nada cambie:
+   a. Asignación: cada xᵢ va al centroide más cercano
+   b. Actualización: cada centroide pasa a ser el
+      promedio de los puntos que tiene asignados</pre>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,680px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <div style="display:flex;gap:20px 28px;flex-wrap:wrap;justify-content:center;align-items:center">
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="330px,32px" options="{{ dsOpts }}" value="{{ ds }}" onChange="{{ setDs }}"></x-import>
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="220px,32px" options="{{ initOpts }}" value="{{ init }}" onChange="{{ setInit }}"></x-import>
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="200px,44px" label="Clusters k" min="{{ 2 }}" max="{{ 6 }}" step="{{ 1 }}" width="{{ 200 }}" tone="focus" value="{{ k }}" onChange="{{ setK }}" format="{{ fmtInt }}"></x-import>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+      <button onClick="{{ prev }}" style="padding:7px 14px;border-radius:6px;border:1px solid var(--ink-300);background:var(--paper);font-family:var(--font-sans);font-size:14px;color:var(--ink-900);cursor:pointer" style-hover="background:var(--ink-50)">← Anterior</button>
+      <button onClick="{{ togglePlay }}" style="padding:7px 14px;border-radius:6px;border:1px solid var(--ink-800);background:var(--ink-800);font-family:var(--font-sans);font-size:14px;font-weight:600;color:var(--paper);cursor:pointer;min-width:110px">{{ playLabel }}</button>
+      <button onClick="{{ next }}" style="padding:7px 14px;border-radius:6px;border:1px solid var(--ink-300);background:var(--paper);font-family:var(--font-sans);font-size:14px;color:var(--ink-900);cursor:pointer" style-hover="background:var(--ink-50)">Siguiente →</button>
+      <button onClick="{{ reseed }}" style="padding:7px 14px;border-radius:6px;border:1px solid var(--ink-300);background:var(--paper);font-family:var(--font-sans);font-size:14px;color:var(--ink-900);cursor:pointer" style-hover="background:var(--ink-50)">Otra inicialización</button>
+    </div>
+    <div style="width:100%;max-width:920px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;align-items:start">
+      <svg viewBox="0 0 600 384" width="100%" style="display:block;grid-column:span 2;min-width:0;border:1px solid var(--ink-200);border-radius:4px">
+        <sc-for list="{{ cells }}" as="c" hint-placeholder-count="0">
+          <rect x="{{ c.x }}" y="{{ c.y }}" width="12.4" height="12.4" style="fill:{{ c.f }};fill-opacity:0.16;transition:fill 280ms var(--ease-out)"></rect>
+        </sc-for>
+        <sc-for list="{{ pts }}" as="p" hint-placeholder-count="0">
+          <circle cx="{{ p.x }}" cy="{{ p.y }}" r="4" style="fill:{{ p.f }};stroke:var(--ink-800);stroke-opacity:0.35;stroke-width:1;transition:fill 280ms var(--ease-out)"></circle>
+        </sc-for>
+        <sc-for list="{{ trails }}" as="t" hint-placeholder-count="0">
+          <path d="{{ t.d }}" style="fill:none;stroke:var(--ink-800);stroke-width:1.4;stroke-dasharray:3 3"></path>
+        </sc-for>
+        <sc-for list="{{ cents }}" as="c" hint-placeholder-count="0">
+          <g style="transform:translate({{ c.x }}px,{{ c.y }}px);transition:transform 420ms var(--ease-out)">
+            <circle cx="0" cy="0" r="9" style="fill:{{ c.f }};stroke:var(--ink-900);stroke-width:2.4"></circle>
+            <path d="M-4,0 L4,0 M0,-4 L0,4" style="stroke:var(--ink-900);stroke-width:1.8"></path>
+          </g>
+        </sc-for>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div style="display:flex;gap:28px;flex-wrap:wrap">
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="90px,70px" label="Iteración" value="{{ iter }}" size="sm"></x-import>
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="90px,70px" label="WCSS" value="{{ wcss }}" size="sm"></x-import>
+        </div>
+        <svg viewBox="0 0 300 110" width="100%" style="display:block;overflow:visible">
+          <line x1="30" y1="95" x2="295" y2="95" style="stroke:var(--ink-400)"></line>
+          <line x1="30" y1="10" x2="30" y2="95" style="stroke:var(--ink-400)"></line>
+          <text x="26" y="14" text-anchor="end" style="font-size:11px;fill:var(--ink-500)">{{ wMax }}</text>
+          <text x="26" y="98" text-anchor="end" style="font-size:11px;fill:var(--ink-500)">0</text>
+          <text x="295" y="109" text-anchor="end" style="font-size:11px;fill:var(--ink-600)">paso →</text>
+          <path d="{{ wAll }}" style="fill:none;stroke:var(--ink-300);stroke-width:1.5"></path>
+          <path d="{{ wNow }}" style="fill:none;stroke:var(--iris-600);stroke-width:2.2"></path>
+          <circle cx="{{ wx }}" cy="{{ wy }}" r="{{ wr }}" style="fill:var(--iris-600)"></circle>
+        </svg>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:120px">{{ desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> El algoritmo de Lloyd paso a paso, sobre doscientos puntos sin etiqueta. Los círculos con cruz son los centroides y la línea punteada su recorrido. El fondo marca la región más cercana a cada centroide. A la derecha, la WCSS después de cada paso.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">La curva de la derecha nunca sube, y no es casualidad. <b>Cada paso de Lloyd reduce la WCSS o la deja igual</b>:</p>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty">En la <b>asignación</b>, con los centroides fijos, mover cada punto a su centroide más cercano solo puede reducir su término de la suma.</li>
+    <li style="text-wrap:pretty">En la <b>actualización</b>, con las asignaciones fijas, la media es el punto que minimiza la suma de distancias cuadradas a un conjunto de puntos.</li>
+  </ul>
+  <p style="margin:0 0 20px;text-wrap:pretty">Como hay un número finito de particiones y la WCSS nunca sube, el algoritmo siempre converge. Pero converge a un <b>mínimo local</b>, no necesariamente al global, y cuál alcanza depende de la inicialización. En la figura 1, con inicialización aleatoria y <i style="font-family:var(--font-math);padding:0 2px">k = 4</i>, algunas semillas terminan con dos centroides compartiendo un grupo y otro grupo partido en dos.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">Cada iteración cuesta <i style="font-family:var(--font-math);padding:0 2px">O(n · k · d)</i>: calcular la distancia de los <i style="font-family:var(--font-math);padding:0 2px">n</i> puntos a los <i style="font-family:var(--font-math);padding:0 2px">k</i> centroides en <i style="font-family:var(--font-math);padding:0 2px">d</i> dimensiones. Es lineal en <i style="font-family:var(--font-math);padding:0 2px">n</i>, por eso K-means escala a millones de observaciones.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">4. Inicialización: k-means++</h2>
+  <p style="margin:0 0 8px;text-wrap:pretty">Elegir los <i style="font-family:var(--font-math);padding:0 2px">k</i> centroides completamente al azar puede dejar dos de ellos muy juntos desde el principio. <b>k-means++</b> (Arthur y Vassilvitskii, 2007) elige el primero al azar y cada uno de los siguientes con probabilidad proporcional al cuadrado de su distancia <i style="font-family:var(--font-math);padding:0 2px">D(x)</i> al centroide ya elegido más cercano:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,64px" display="{{ true }}" number="2" tex="P(x_i \text{ sea el siguiente centroide}) = \frac{D(x_i)^2}{\sum_{l} D(x_l)^2}"></x-import>
+  <p style="margin:0 0 20px;text-wrap:pretty">Los puntos lejanos a los centroides existentes tienen más probabilidad de salir, así que el arranque cubre mejor el espacio. Los autores demuestran que la WCSS esperada queda a un factor <i style="font-family:var(--font-math);padding:0 2px">O(log k)</i> del óptimo. Es el valor por defecto de scikit-learn (<code>init="k-means++"</code>).</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">Aun así, en la práctica corremos el algoritmo varias veces con inicializaciones distintas (<code>n_init</code>) y nos quedamos con el resultado de menor WCSS.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">5. Cómo elegir k</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">K-means no nos dice cuántos grupos hay: <i style="font-family:var(--font-math);padding:0 2px">k</i> es un hiperparámetro. Hay dos herramientas estándar.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty"><b>Método del codo.</b> Graficamos la WCSS contra <i style="font-family:var(--font-math);padding:0 2px">k</i>. La WCSS siempre baja al aumentar <i style="font-family:var(--font-math);padding:0 2px">k</i> (con <i style="font-family:var(--font-math);padding:0 2px">k = n</i> vale cero), pero a partir de cierto punto la mejora se vuelve marginal. Ese "codo" es un candidato razonable.</p>
+  <p style="margin:0 0 8px;text-wrap:pretty"><b>Coeficiente silhouette</b> (Rousseeuw, 1987). Para cada punto <i style="font-family:var(--font-math);padding:0 2px">i</i>, sea <i style="font-family:var(--font-math);padding:0 2px">a(i)</i> su distancia media a los puntos de su propio cluster y <i style="font-family:var(--font-math);padding:0 2px">b(i)</i> su distancia media a los del cluster vecino más cercano:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,64px" display="{{ true }}" number="3" tex="s(i) = \frac{b(i) - a(i)}{\max\{a(i),\, b(i)\}} \in [-1, 1]"></x-import>
+  <p style="margin:0 0 20px;text-wrap:pretty">Un valor cercano a 1 indica que el punto está bien metido en su grupo; cerca de 0, que está en la frontera; negativo, que probablemente quedó en el grupo equivocado. Promediamos sobre todos los puntos y elegimos el <i style="font-family:var(--font-math);padding:0 2px">k</i> con mayor promedio. A diferencia del codo, se puede maximizar directamente, sin leer la gráfica a ojo.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,560px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="300px,44px" label="Clusters k" min="{{ 1 }}" max="{{ 8 }}" step="{{ 1 }}" width="{{ 300 }}" tone="focus" value="{{ k2 }}" onChange="{{ setK2 }}" format="{{ fmtInt }}"></x-import>
+    <div style="width:100%;max-width:920px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;align-items:start">
+      <svg viewBox="0 0 600 384" width="100%" style="display:block;grid-column:span 2;min-width:0;border:1px solid var(--ink-200);border-radius:4px">
+        <sc-for list="{{ pts2 }}" as="p" hint-placeholder-count="0">
+          <circle cx="{{ p.x }}" cy="{{ p.y }}" r="4" style="fill:{{ p.f }};stroke:var(--ink-800);stroke-opacity:0.35;stroke-width:1;transition:fill 320ms var(--ease-out)"></circle>
+        </sc-for>
+        <sc-for list="{{ cents2 }}" as="c" hint-placeholder-count="0">
+          <g style="transform:translate({{ c.x }}px,{{ c.y }}px);transition:transform 420ms var(--ease-out)">
+            <circle cx="0" cy="0" r="8" style="fill:{{ c.f }};stroke:var(--ink-900);stroke-width:2.2"></circle>
+            <path d="M-3.5,0 L3.5,0 M0,-3.5 L0,3.5" style="stroke:var(--ink-900);stroke-width:1.6"></path>
+          </g>
+        </sc-for>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--text-strong)">WCSS</div>
+        <svg viewBox="0 0 300 120" width="100%" style="display:block;overflow:visible">
+          <line x1="30" y1="100" x2="290" y2="100" style="stroke:var(--ink-400)"></line>
+          <line x1="30" y1="8" x2="30" y2="100" style="stroke:var(--ink-400)"></line>
+          <sc-for list="{{ kTicks }}" as="t" hint-placeholder-count="8">
+            <text x="{{ t.x }}" y="114" text-anchor="middle" style="font-size:11px;fill:var(--ink-500)">{{ t.k }}</text>
+          </sc-for>
+          <path d="{{ elbow }}" style="fill:none;stroke:var(--ink-700);stroke-width:2"></path>
+          <sc-for list="{{ elbowPts }}" as="e" hint-placeholder-count="0">
+            <circle cx="{{ e.x }}" cy="{{ e.y }}" r="{{ e.r }}" style="fill:{{ e.f }};stroke:var(--ink-800);stroke-width:1.2"></circle>
+          </sc-for>
+        </svg>
+        <div style="font-size:13px;font-weight:700;color:var(--text-strong)">Silhouette promedio</div>
+        <svg viewBox="0 0 300 120" width="100%" style="display:block;overflow:visible">
+          <line x1="30" y1="100" x2="290" y2="100" style="stroke:var(--ink-400)"></line>
+          <line x1="30" y1="8" x2="30" y2="100" style="stroke:var(--ink-400)"></line>
+          <text x="26" y="12" text-anchor="end" style="font-size:11px;fill:var(--ink-500)">1</text>
+          <text x="26" y="103" text-anchor="end" style="font-size:11px;fill:var(--ink-500)">0</text>
+          <sc-for list="{{ kTicks }}" as="t" hint-placeholder-count="8">
+            <text x="{{ t.x }}" y="114" text-anchor="middle" style="font-size:11px;fill:var(--ink-500)">{{ t.k }}</text>
+          </sc-for>
+          <path d="{{ silP }}" style="fill:none;stroke:var(--iris-600);stroke-width:2"></path>
+          <sc-for list="{{ silPts }}" as="e" hint-placeholder-count="0">
+            <circle cx="{{ e.x }}" cy="{{ e.y }}" r="{{ e.r }}" style="fill:{{ e.f }};stroke:var(--iris-600);stroke-width:1.2"></circle>
+          </sc-for>
+        </svg>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:96px">{{ desc2 }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 2.</b> Doscientos cuarenta puntos generados a partir de cuatro grupos. Para cada <i>k</i> mostramos la mejor de seis corridas de k-means++. A la derecha, el método del codo y el silhouette promedio para cada <i>k</i>.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Ninguno de los dos criterios es infalible. Son heurísticas, no pruebas estadísticas, y en datos reales a menudo no dan una respuesta tan clara como en la figura 2. ISLR reconoce que elegir <i style="font-family:var(--font-math);padding:0 2px">k</i> sigue siendo, en buena medida, un problema abierto. Con frecuencia la decisión final depende de para qué queremos los grupos.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">6. Estandarizar antes de agrupar</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">K-means usa distancia euclidiana, así que es igual de sensible a la escala que <a href="F2-01-KNN.dc.html">KNN</a>. Si una variable está en miles y otra en unidades, la primera domina la distancia y los clusters terminan reflejando solo esa variable. <b>Estandarizamos siempre</b> (<code>StandardScaler</code>, ver <a href="F1-05-Preprocesamiento.dc.html">Preprocesamiento</a>) salvo que tengamos una razón explícita para no hacerlo, por ejemplo que todas las variables ya estén en las mismas unidades.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">7. Supuestos y limitaciones</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>Clusters aproximadamente esféricos y de tamaño parecido.</b> Con grupos alargados o en forma de medialuna, K-means los parte mal. En la figura 1 se ve con los otros dos conjuntos de datos: el mínimo de la WCSS corta las formas en lugar de seguirlas.</li>
+    <li style="text-wrap:pretty"><b>Sensible a outliers.</b> Usa la media, no la mediana, y un punto muy alejado puede arrastrar un centroide entero.</li>
+    <li style="text-wrap:pretty"><b>Hay que fijar k de antemano.</b> El <a href="F3-04-Jerarquico.dc.html">clustering jerárquico</a> construye una jerarquía completa y decidimos el corte después.</li>
+    <li style="text-wrap:pretty"><b>Sensible a la inicialización.</b> k-means++ y un <code>n_init</code> alto lo mitigan, pero no lo eliminan.</li>
+    <li style="text-wrap:pretty"><b>Asignación dura.</b> Cada punto pertenece al cien por ciento a un grupo, aunque esté justo en la frontera.</li>
+  </ul>
+  <p style="margin:0 0 20px;text-wrap:pretty">ESL 14.3 conecta varias de estas limitaciones con un modelo probabilístico. Un <a href="F3-03-GMM-EM.dc.html">modelo de mezcla gaussiana</a> ajustado con EM se reduce exactamente a K-means cuando todas las componentes tienen la misma covarianza esférica y la asignación se vuelve dura. Es decir, K-means supone covarianza esférica sin decirlo. Para formas arbitrarias y ruido, <a href="F3-05-DBSCAN.dc.html">DBSCAN</a> cambia la idea de cluster por la de región densa.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">8. Implementación</h2>
+  <p style="margin:0 0 12px;text-wrap:pretty">Desde cero, con inicialización aleatoria para ver el algoritmo base:</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">import numpy as np
+
+def kmeans(X, k, max_iter=100, seed=42):
+    rng = np.random.default_rng(seed)
+    centroids = X[rng.choice(len(X), k, replace=False)]
+
+    for _ in range(max_iter):
+        # asignación: distancia de cada punto a cada centroide
+        distances = np.linalg.norm(X[:, None, :] - centroids[None, :, :], axis=2)
+        labels = distances.argmin(axis=1)
+
+        # actualización
+        new_centroids = np.array([
+            X[labels == j].mean(axis=0) if np.any(labels == j) else centroids[j]
+            for j in range(k)
+        ])
+        if np.allclose(new_centroids, centroids):
+            break
+        centroids = new_centroids
+
+    return labels, centroids</pre>
+  <p style="margin:0 0 12px;text-wrap:pretty">Con scikit-learn, recorriendo varios <i style="font-family:var(--font-math);padding:0 2px">k</i> para el codo y el silhouette:</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import silhouette_score
+
+X_scaled = StandardScaler().fit_transform(X)
+
+wcss, sil = [], []
+for k in range(2, 10):
+    km = KMeans(n_clusters=k, init="k-means++", n_init=10,
+                random_state=42).fit(X_scaled)
+    wcss.append(km.inertia_)                     # WCSS
+    sil.append(silhouette_score(X_scaled, km.labels_))</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Ejercicios</h2>
+  <ol style="margin:0 0 20px;padding-left:22px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty">Genera datos con <code>make_blobs</code> y verifica que K-means recupera los grupos con el <i style="font-family:var(--font-math);padding:0 2px">k</i> real.</li>
+    <li style="text-wrap:pretty">Repite con <code>make_moons</code> y observa cómo falla.</li>
+    <li style="text-wrap:pretty">Calcula el codo y el silhouette sobre el mismo dataset y compara qué <i style="font-family:var(--font-math);padding:0 2px">k</i> sugiere cada uno.</li>
+    <li style="text-wrap:pretty">Corre K-means veinte veces con <code>n_init=1</code> y semillas distintas sobre grupos que se traslapan, y mira cuánto varía la WCSS final.</li>
+  </ol>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Conexiones con otras fases</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty">Usa la misma noción de distancia y el mismo problema de escala que <a href="F2-01-KNN.dc.html">KNN</a>.</li>
+    <li style="text-wrap:pretty">Se combina con <a href="F3-02-PCA.dc.html">PCA</a> para visualizar en 2D clusters encontrados en muchas dimensiones.</li>
+    <li style="text-wrap:pretty">La idea de alternar dos pasos que nunca empeoran el objetivo reaparece en el algoritmo <a href="F3-03-GMM-EM.dc.html">EM</a>.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Fuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:16px">
+    <li><a href="https://alanrvazquez.github.io/TEC-IN5148/" target="_blank">Alan R. Vázquez · TEC IN5148, B1</a></li>
+    <li><a href="https://www.cs.cornell.edu/courses/cs4780/2024sp/" target="_blank">CS4780 · Clustering: K-means</a> (Weinberger)</li>
+    <li>James, Witten, Hastie y Tibshirani. <i>An Introduction to Statistical Learning</i>, Cap. 12.4.</li>
+    <li>Hastie, Tibshirani y Friedman. <i>The Elements of Statistical Learning</i>, 14.3.</li>
+    <li>Arthur, D. y Vassilvitskii, S. (2007). "k-means++: The advantages of careful seeding." <i>SODA</i>.</li>
+    <li>Rousseeuw, P. (1987). "Silhouettes: a graphical aid to the interpretation and validation of cluster analysis." <i>J. Comput. Appl. Math.</i></li>
+    <li><a href="https://scikit-learn.org/stable/modules/clustering.html#k-means" target="_blank">scikit-learn · 2.3.2 K-means</a></li>
+  </ul>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F2-02-Perceptron.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Fase 2</div><div style="font-weight:600;color:var(--text-strong)">El Perceptrón</div></a>
+  <a href="F3-02-PCA.dc.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Siguiente →</div><div style="font-weight:600;color:var(--text-strong)">Componentes principales (PCA)</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    const r = this.rng(7), g = () => this.gauss(r), W = 600, H = 384;
+    const clip = q => [Math.min(W - 8, Math.max(8, q[0])), Math.min(H - 8, Math.max(8, q[1]))];
+    const blobs = (C, n, sd, rr) => Array.from({ length: n }, (_, i) => { const c = C[i % C.length]; return clip([c[0] * W + g() * sd, (1 - c[1]) * H + g() * sd]); });
+    const moons = Array.from({ length: 200 }, (_, i) => {
+      const t = Math.PI * r(), a = i % 2;
+      const x = a ? 1 - Math.cos(t) : Math.cos(t), y = a ? 0.5 - Math.sin(t) : Math.sin(t);
+      return clip([(x + 1.15) / 3.3 * 540 + 30 + g() * 14, H - ((y + 0.65) / 1.8 * 320 + 32) + g() * 14]);
+    });
+    const ang = 12 * Math.PI / 180, ca = Math.cos(ang), sa = Math.sin(ang);
+    const aniso = Array.from({ length: 210 }, (_, i) => {
+      const cy = [105, 192, 279][i % 3], u = g() * 95, v = g() * 13;
+      return clip([300 + u * ca - v * sa, cy + u * sa + v * ca]);
+    });
+    this.D = { b: blobs([[0.22, 0.7], [0.52, 0.28], [0.8, 0.68]], 200, 34), m: moons, a: aniso };
+    this.grid = []; for (let j = 0; j < 32; j++) for (let i = 0; i < 50; i++) this.grid.push([i * 12 + 6, j * 12 + 6]);
+    this.cache = {};
+    this.X4 = blobs([[0.2, 0.68], [0.42, 0.26], [0.72, 0.74], [0.82, 0.3]], 240, 30);
+    this.F = [];
+    for (let k = 1; k <= 8; k++) {
+      let best = null;
+      for (let s = 0; s < 6; s++) { const h = this.lloyd(this.X4, k, 'p', 100 + s * 13 + k), f = h[h.length - 1], w = this.wcss(this.X4, f.C, f.L); if (!best || w < best.w) best = { C: f.C, L: f.L, w }; }
+      best.s = k > 1 ? this.sil(this.X4, best.L, k) : null; this.F.push(best);
+    }
+    this.state = { ds: 'b', init: 'r', k: 3, seed: 1, step: 0, playing: false, k2: 4 };
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  d2(p, c) { return (p[0] - c[0]) ** 2 + (p[1] - c[1]) ** 2; }
+  near(p, C) { let b = 0, bd = Infinity; C.forEach((c, j) => { const d = this.d2(p, c); if (d < bd) { bd = d; b = j; } }); return b; }
+  wcss(X, C, L) { let s = 0; X.forEach((p, i) => { s += this.d2(p, C[L[i]]); }); return s / 1e4; }
+  lloyd(X, k, init, seed) {
+    const r = this.rng(seed); let C;
+    if (init === 'r') { const idx = []; while (idx.length < k) { const j = Math.floor(r() * X.length); if (!idx.includes(j)) idx.push(j); } C = idx.map(j => X[j].slice()); }
+    else {
+      C = [X[Math.floor(r() * X.length)].slice()];
+      while (C.length < k) { const D = X.map(p => Math.min(...C.map(c => this.d2(p, c)))), s = D.reduce((a, b) => a + b); let t = r() * s, j = 0; while (j < X.length - 1 && t > D[j]) { t -= D[j]; j++; } C.push(X[j].slice()); }
+    }
+    const H = [{ C: C.map(c => c.slice()), L: null, ph: 'init' }]; let L = null;
+    for (let it = 0; it < 60; it++) {
+      const NL = X.map(p => this.near(p, C)), ch = L ? NL.filter((l, i) => l !== L[i]).length : X.length;
+      if (L && ch === 0) break;
+      L = NL; H.push({ C: C.map(c => c.slice()), L, ph: 'assign', ch, it: it + 1 });
+      C = C.map((c, j) => { let sx = 0, sy = 0, n = 0; X.forEach((p, i) => { if (L[i] === j) { sx += p[0]; sy += p[1]; n++; } }); return n ? [sx / n, sy / n] : c.slice(); });
+      H.push({ C: C.map(c => c.slice()), L, ph: 'update', it: it + 1 });
+    }
+    H.forEach(h => { h.w = h.L ? this.wcss(X, h.C, h.L) : null; });
+    H[H.length - 1].done = true; return H;
+  }
+  sil(X, L, k) {
+    let tot = 0;
+    X.forEach((p, i) => {
+      const sum = new Array(k).fill(0), cnt = new Array(k).fill(0);
+      X.forEach((q, j) => { if (i !== j) { sum[L[j]] += Math.sqrt(this.d2(p, q)); cnt[L[j]]++; } });
+      if (!cnt[L[i]]) return;
+      const a = sum[L[i]] / cnt[L[i]]; let b = Infinity;
+      for (let c = 0; c < k; c++) if (c !== L[i] && cnt[c]) b = Math.min(b, sum[c] / cnt[c]);
+      tot += (b - a) / Math.max(a, b);
+    });
+    return tot / X.length;
+  }
+  hist() { const S = this.state, key = [S.ds, S.init, S.k, S.seed].join('|'); return this.cache[key] || (this.cache[key] = this.lloyd(this.D[S.ds], S.k, S.init, S.seed * 31 + S.k)); }
+  play() {
+    clearInterval(this.timer);
+    this.timer = setInterval(() => { const n = this.hist().length; if (this.state.step >= n - 1) { clearInterval(this.timer); this.setState({ playing: false }); } else this.setState(s => ({ step: s.step + 1 })); }, 750);
+  }
+  renderVals() {
+    const S = this.state, CAT = ['var(--cat-1)', 'var(--cat-6)', 'var(--cat-8)', 'var(--cat-3)', 'var(--cat-12)', 'var(--cat-10)', 'var(--cat-2)', 'var(--cat-11)'];
+    const X = this.D[S.ds], Hs = this.hist(), st = Math.min(S.step, Hs.length - 1), h = Hs[st];
+    const cells = this.grid.map(c => ({ x: c[0] - 6, y: c[1] - 6, f: CAT[this.near(c, h.C)] }));
+    const pts = X.map((p, i) => ({ x: p[0].toFixed(1), y: p[1].toFixed(1), f: h.L ? CAT[h.L[i]] : 'var(--ink-100)' }));
+    const trails = h.C.map((_, j) => ({ d: Hs.slice(0, st + 1).map((q, i) => (i ? 'L' : 'M') + q.C[j][0].toFixed(1) + ',' + q.C[j][1].toFixed(1)).join('') }));
+    const cents = h.C.map((c, j) => ({ x: c[0].toFixed(1), y: c[1].toFixed(1), f: CAT[j] }));
+    const ws = Hs.map(q => q.w), wm = Math.max(...ws.filter(v => v != null)) * 1.05, n = Hs.length - 1;
+    const wx = i => 30 + (n ? (i / n) : 0) * 260, wy = v => 95 - v / wm * 85;
+    const wp = up => Hs.slice(1, up + 1).map((q, i) => (i ? 'L' : 'M') + wx(i + 1).toFixed(1) + ',' + wy(q.w).toFixed(1)).join('');
+    const prevW = st > 0 ? Hs[st - 1].w : null, f1 = v => v.toFixed(1);
+    let desc;
+    if (h.ph === 'init') desc = S.init === 'r' ? `Elegimos ${S.k} puntos al azar como centroides iniciales. Todavía no asignamos ninguna observación.` : `k-means++ elige el primer centroide al azar y cada uno de los siguientes con probabilidad proporcional a D(x)², así que los ${S.k} quedan repartidos.`;
+    else if (h.done) desc = `Ninguna asignación cambió: el algoritmo convergió en ${h.it} ${h.it === 1 ? 'iteración' : 'iteraciones'} con WCSS = ${f1(h.w)}.` + (S.ds === 'm' ? ' Con medialunas, la partición que minimiza la WCSS corta cada luna en lugar de seguir su forma.' : S.ds === 'a' ? ' Con grupos alargados, los centroides cortan la nube a lo ancho: dos puntos en los extremos de un mismo grupo quedan más lejos entre sí que de los grupos vecinos.' : ' Prueba otra inicialización para ver si llega al mismo mínimo.');
+    else if (h.ph === 'assign') desc = `Asignación: cada punto toma el color de su centroide más cercano. ${st === 1 ? 'Es la primera partición.' : `Cambiaron de grupo ${h.ch} ${h.ch === 1 ? 'punto' : 'puntos'}.`}` + (prevW != null ? ` La WCSS pasó de ${f1(prevW)} a ${f1(h.w)}.` : '');
+    else desc = `Actualización: cada centroide se mueve al promedio de los puntos de su color. La WCSS pasó de ${f1(prevW)} a ${f1(h.w)}.`;
+    const reset = o => { clearInterval(this.timer); this.setState(Object.assign({ step: 0, playing: false }, o)); };
+
+    const F = this.F, f = F[S.k2 - 1], kx = k => 30 + (k - 1) / 7 * 260, em = F[0].w;
+    const ey = v => 100 - v / em * 90, sy = v => 100 - v * 90;
+    const best = F.slice(1).reduce((b, q, i) => q.s > F[b - 1].s ? i + 2 : b, 2);
+    const k2 = S.k2;
+    const desc2 = k2 === 1 ? 'Con k = 1 todos los puntos forman un solo grupo y la WCSS es la variación total de los datos. El silhouette no está definido.'
+      : k2 < best ? `Con k = ${k2} juntamos grupos que en los datos están separados. Pasar a k = ${k2 + 1} todavía reduce mucho la WCSS.`
+      : k2 === best ? `Con k = ${k2} la WCSS hace el codo y el silhouette alcanza su máximo, ${f.s.toFixed(2)}. Los dos criterios coinciden con los ${k2} grupos con los que generamos los datos.`
+      : `Con k = ${k2} partimos grupos reales. La WCSS sigue bajando, pero poco, y el silhouette cae a ${f.s.toFixed(2)}: muchos puntos quedan casi tan cerca del grupo vecino como del suyo.`;
+    return {
+      dsOpts: [{ value: 'b', label: 'Grupos redondos' }, { value: 'm', label: 'Medialunas' }, { value: 'a', label: 'Alargados' }],
+      ds: S.ds, setDs: v => reset({ ds: v, k: v === 'm' ? 2 : 3 }),
+      initOpts: [{ value: 'r', label: 'Aleatoria' }, { value: 'p', label: 'k-means++' }], init: S.init, setInit: v => reset({ init: v }),
+      k: S.k, setK: v => reset({ k: Math.round(v) }), fmtInt: v => String(Math.round(v)),
+      prev: () => { clearInterval(this.timer); this.setState(s => ({ playing: false, step: Math.max(0, Math.min(s.step, Hs.length - 1) - 1) })); },
+      next: () => { clearInterval(this.timer); this.setState(s => ({ playing: false, step: Math.min(Hs.length - 1, s.step + 1) })); },
+      togglePlay: () => { if (S.playing) { clearInterval(this.timer); this.setState({ playing: false }); } else { this.setState(s => ({ playing: true, step: s.step >= Hs.length - 1 ? 0 : s.step }), () => this.play()); } },
+      playLabel: S.playing ? 'Pausa' : st >= Hs.length - 1 ? 'Repetir' : 'Reproducir',
+      reseed: () => reset({ seed: S.seed + 1 }),
+      cells, pts, trails, cents, iter: h.ph === 'init' ? '0' : String(h.it), wcss: h.w == null ? '—' : f1(h.w),
+      wMax: f1(wm), wAll: wp(n), wNow: wp(st), wx: wx(st).toFixed(1), wy: h.w == null ? 95 : wy(h.w).toFixed(1), wr: h.w == null ? 0 : 4, desc,
+      k2, setK2: v => this.setState({ k2: Math.round(v) }),
+      pts2: this.X4.map((p, i) => ({ x: p[0].toFixed(1), y: p[1].toFixed(1), f: CAT[f.L[i]] })),
+      cents2: f.C.map((c, j) => ({ x: c[0].toFixed(1), y: c[1].toFixed(1), f: CAT[j] })),
+      kTicks: F.map((_, i) => ({ x: kx(i + 1), k: i + 1 })),
+      elbow: F.map((q, i) => (i ? 'L' : 'M') + kx(i + 1).toFixed(1) + ',' + ey(q.w).toFixed(1)).join(''),
+      elbowPts: F.map((q, i) => ({ x: kx(i + 1).toFixed(1), y: ey(q.w).toFixed(1), r: i + 1 === k2 ? 6 : 3.5, f: i + 1 === k2 ? 'var(--ink-800)' : 'var(--paper)' })),
+      silP: F.slice(1).map((q, i) => (i ? 'L' : 'M') + kx(i + 2).toFixed(1) + ',' + sy(q.s).toFixed(1)).join(''),
+      silPts: F.slice(1).map((q, i) => ({ x: kx(i + 2).toFixed(1), y: sy(q.s).toFixed(1), r: i + 2 === k2 ? 6 : 3.5, f: i + 2 === k2 ? 'var(--iris-600)' : 'var(--paper)' })),
+      desc2
+    };
+  }
+}
+</script>
+</body>
+</html>

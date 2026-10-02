@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Componentes principales (PCA) — Fase 3</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="index.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <span style="color:var(--text-muted);font-variant-numeric:tabular-nums">Fase 3 · 02 de 06</span>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Fase 3 · No supervisado" title="Análisis de componentes principales (PCA)" description="Pocas direcciones suelen capturar casi toda la variación de muchos datos. PCA las encuentra, las ordena y nos deja quedarnos con las primeras."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Actualizado el 1 oct 2026 · Fuente: Alan B2 · CS4780 (Weinberger) · ISLR Cap. 12 · ESL 14.5</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">1. Motivación</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Con muchas variables se complican varias cosas a la vez. No podemos visualizar más de dos o tres dimensiones, muchas variables suelen estar correlacionadas y repiten información, y aparece la <a href="F2-01-KNN.dc.html">maldición de la dimensionalidad</a> que vimos con KNN. PCA responde a una pregunta concreta: <i>¿cuáles son las pocas direcciones del espacio de variables que capturan la mayor parte de la variación de los datos?</i></p>
+  <p style="margin:0 0 20px;text-wrap:pretty">El resultado es un nuevo sistema de ejes, las <b>componentes principales</b>, ordenados por cuánta varianza capturan. Cada eje es una combinación lineal de las variables originales.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">2. Formalización</h2>
+  <p style="margin:0 0 8px;text-wrap:pretty">Sea <i style="font-family:var(--font-math);padding:0 2px">X ∈ ℝ<sup>n×d</sup></i> ya <b>centrada</b>: cada columna tiene media cero. La primera componente principal es la dirección unitaria <i style="font-family:var(--font-math);padding:0 2px">w₁</i> que maximiza la varianza de los datos proyectados sobre ella:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,64px" display="{{ true }}" number="1" tex="w_1 = \arg\max_{\lVert w \rVert = 1} \operatorname{Var}(Xw) = \arg\max_{\lVert w \rVert = 1} w^\top \Sigma\, w, \qquad \Sigma = \tfrac{1}{n} X^\top X"></x-import>
+  <p style="margin:0 0 20px;text-wrap:pretty">La segunda componente <i style="font-family:var(--font-math);padding:0 2px">w₂</i> resuelve el mismo problema con la restricción de ser ortogonal a <i style="font-family:var(--font-math);padding:0 2px">w₁</i>, y así sucesivamente hasta <i style="font-family:var(--font-math);padding:0 2px">d</i> componentes.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">Hay una segunda lectura del mismo problema. Proyectar un punto sobre una recta deja un <b>residuo</b>: el segmento perpendicular entre el punto y su proyección. Por Pitágoras, la varianza proyectada más el error cuadrático medio de reconstrucción suman siempre la varianza total. Así que <b>maximizar la varianza proyectada equivale a minimizar el error de reconstrucción</b>.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,620px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <div style="display:flex;gap:16px 24px;flex-wrap:wrap;justify-content:center;align-items:center">
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="300px,44px" label="Dirección w (ángulo)" min="{{ 0 }}" max="{{ 179 }}" step="{{ 1 }}" width="{{ 300 }}" tone="focus" value="{{ th }}" onChange="{{ setTh }}" format="{{ fmtDeg }}"></x-import>
+      <button onClick="{{ toPC1 }}" style="padding:7px 14px;border-radius:6px;border:1px solid var(--ink-800);background:var(--ink-800);font-family:var(--font-sans);font-size:14px;font-weight:600;color:var(--paper);cursor:pointer">Ir a la PC1</button>
+    </div>
+    <div style="width:100%;max-width:920px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;align-items:start">
+      <svg viewBox="0 0 600 384" width="100%" style="display:block;grid-column:span 2;min-width:0;border:1px solid var(--ink-200);border-radius:4px;overflow:hidden">
+        <line x1="{{ ln.x1 }}" y1="{{ ln.y1 }}" x2="{{ ln.x2 }}" y2="{{ ln.y2 }}" style="stroke:var(--iris-600);stroke-width:2"></line>
+        <sc-for list="{{ pr }}" as="p" hint-placeholder-count="0">
+          <line x1="{{ p.x }}" y1="{{ p.y }}" x2="{{ p.px }}" y2="{{ p.py }}" style="stroke:var(--coral-400);stroke-width:1;stroke-opacity:0.7"></line>
+        </sc-for>
+        <sc-for list="{{ pr }}" as="p" hint-placeholder-count="0">
+          <circle cx="{{ p.x }}" cy="{{ p.y }}" r="3.8" style="fill:var(--ink-200);stroke:var(--ink-600);stroke-width:1"></circle>
+        </sc-for>
+        <sc-for list="{{ pr }}" as="p" hint-placeholder-count="0">
+          <circle cx="{{ p.px }}" cy="{{ p.py }}" r="2.6" style="fill:var(--iris-600)"></circle>
+        </sc-for>
+        <circle cx="300" cy="192" r="5" style="fill:var(--ink-900)"></circle>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div style="display:flex;gap:28px;flex-wrap:wrap">
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="110px,70px" label="Varianza proyectada" value="{{ vP }}" size="sm"></x-import>
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="110px,70px" label="Error de reconstrucción" value="{{ vR }}" size="sm"></x-import>
+        </div>
+        <div style="display:flex;height:14px;border-radius:3px;overflow:hidden;border:1px solid var(--ink-300)">
+          <div style="width:{{ pctP }}%;background:var(--iris-400);transition:width 200ms var(--ease-out)"></div>
+          <div style="flex:1;background:var(--coral-200)"></div>
+        </div>
+        <svg viewBox="0 0 300 120" width="100%" style="display:block;overflow:visible">
+          <line x1="30" y1="100" x2="290" y2="100" style="stroke:var(--ink-400)"></line>
+          <line x1="30" y1="10" x2="30" y2="100" style="stroke:var(--ink-400)"></line>
+          <line x1="30" y1="10" x2="290" y2="10" style="stroke:var(--ink-300);stroke-dasharray:3 3"></line>
+          <text x="34" y="22" style="font-size:11px;fill:var(--ink-500)">varianza total</text>
+          <text x="30" y="114" text-anchor="middle" style="font-size:11px;fill:var(--ink-500)">0°</text>
+          <text x="160" y="114" text-anchor="middle" style="font-size:11px;fill:var(--ink-500)">90°</text>
+          <text x="290" y="114" text-anchor="middle" style="font-size:11px;fill:var(--ink-500)">180°</text>
+          <path d="{{ vCurve }}" style="fill:none;stroke:var(--iris-600);stroke-width:2"></path>
+          <circle cx="{{ vx }}" cy="{{ vy }}" r="5" style="fill:var(--iris-600)"></circle>
+        </svg>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:96px">{{ desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> Ciento veinte puntos centrados y una dirección <i>w</i> (morado). Cada punto se proyecta sobre la recta; los segmentos coral son los residuos. La barra reparte la varianza total entre lo que la recta captura (morado) y lo que pierde (coral). Abajo, la varianza proyectada para cada ángulo.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">3. De dónde sale la solución</h2>
+  <p style="margin:0 0 8px;text-wrap:pretty">Maximizar <i style="font-family:var(--font-math);padding:0 2px">wᵀΣw</i> sujeto a <i style="font-family:var(--font-math);padding:0 2px">‖w‖ = 1</i> es una optimización con restricción. La resolvemos con un multiplicador de Lagrange:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="2" tex="\mathcal{L}(w, \lambda) = w^\top \Sigma\, w - \lambda\,(w^\top w - 1)"></x-import>
+  <p style="margin:0 0 8px;text-wrap:pretty">Derivamos respecto a <i style="font-family:var(--font-math);padding:0 2px">w</i> e igualamos a cero:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="3" tex="\Sigma\, w = \lambda\, w"></x-import>
+  <p style="margin:0 0 20px;text-wrap:pretty">Es la ecuación de eigenvectores. Si multiplicamos ambos lados por <i style="font-family:var(--font-math);padding:0 2px">wᵀ</i>, queda <i style="font-family:var(--font-math);padding:0 2px">wᵀΣw = λ</i>: <b>la varianza capturada por un eigenvector es su eigenvalor</b>. Para maximizarla tomamos el eigenvector con el eigenvalor más grande. La segunda componente es el del segundo eigenvalor, y así sucesivamente.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">Como <i style="font-family:var(--font-math);padding:0 2px">Σ</i> es simétrica, sus eigenvectores son ortogonales entre sí. Por eso las proyecciones sobre componentes distintas nunca están correlacionadas: cada componente captura variación que las anteriores no habían capturado.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">4. La otra forma de calcularlo: SVD</h2>
+  <p style="margin:0 0 8px;text-wrap:pretty">En la práctica casi nunca formamos <i style="font-family:var(--font-math);padding:0 2px">Σ</i> para sacar sus eigenvectores, porque es numéricamente menos estable. Usamos la <b>descomposición en valores singulares</b> de la matriz centrada:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="4" tex="X = U S V^\top, \qquad \lambda_i = \frac{s_i^2}{n}"></x-import>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty">Las columnas de <i style="font-family:var(--font-math);padding:0 2px">V</i> son las componentes principales, los mismos eigenvectores de <i style="font-family:var(--font-math);padding:0 2px">Σ</i>.</li>
+    <li style="text-wrap:pretty">Los valores singulares <i style="font-family:var(--font-math);padding:0 2px">sᵢ</i> dan los eigenvalores.</li>
+    <li style="text-wrap:pretty"><i style="font-family:var(--font-math);padding:0 2px">US</i> son los <b>scores</b>: cada observación expresada en el nuevo sistema de coordenadas.</li>
+  </ul>
+  <p style="margin:0 0 20px;text-wrap:pretty"><code>sklearn.decomposition.PCA</code> usa SVD por debajo. "Componentes principales" y "eigenvectores de la covarianza" son el mismo objeto calculado por dos caminos.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">5. Cuántas componentes usar</h2>
+  <p style="margin:0 0 8px;text-wrap:pretty">Cada componente explica una proporción de la varianza total:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,64px" display="{{ true }}" number="5" tex="\text{PVE}_i = \frac{\lambda_i}{\sum_{j=1}^{d} \lambda_j}"></x-import>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>Scree plot</b>: graficamos la proporción explicada por componente y buscamos el codo, con la misma lógica que en <a href="F3-01-KMeans.dc.html">K-means</a>.</li>
+    <li style="text-wrap:pretty"><b>Varianza acumulada objetivo</b>: nos quedamos con las primeras componentes que juntas explican, por ejemplo, 90 o 95 %.</li>
+  </ul>
+  <p style="margin:0 0 20px;text-wrap:pretty">La respuesta depende del objetivo. Para visualizar usamos dos o tres componentes, expliquen lo que expliquen. Para comprimir o preprocesar antes de otro modelo sí importa retener suficiente varianza, y conviene elegir el número con validación cruzada sobre el modelo final.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">6. Centrar y escalar</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">PCA busca direcciones de máxima varianza alrededor del origen. Si no centramos, la primera "componente" apunta hacia la media de los datos en lugar de seguir su variación. Y si las variables están en escalas distintas, la que tiene mayor varianza numérica domina la varianza total, sea o no la más informativa. El flujo estándar es <b>estandarizar y después aplicar PCA</b>, salvo que todas las variables ya estén en unidades comparables por diseño. Estandarizar equivale a hacer PCA sobre la matriz de correlación en lugar de la de covarianza.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,560px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <div style="display:flex;gap:16px 24px;flex-wrap:wrap;justify-content:center;align-items:center">
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="260px,32px" options="{{ stdOpts }}" value="{{ std }}" onChange="{{ setStd }}"></x-import>
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="200px,32px" options="{{ pcOpts }}" value="{{ pc }}" onChange="{{ setPc }}"></x-import>
+    </div>
+    <div style="width:100%;max-width:920px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:36px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--text-strong)">Varianza explicada</div>
+        <svg viewBox="0 0 400 230" width="100%" style="display:block;overflow:visible">
+          <line x1="40" y1="200" x2="390" y2="200" style="stroke:var(--ink-400)"></line>
+          <line x1="40" y1="10" x2="40" y2="200" style="stroke:var(--ink-400)"></line>
+          <text x="34" y="14" text-anchor="end" style="font-size:11px;fill:var(--ink-500)">100 %</text>
+          <text x="34" y="109" text-anchor="end" style="font-size:11px;fill:var(--ink-500)">50 %</text>
+          <text x="34" y="204" text-anchor="end" style="font-size:11px;fill:var(--ink-500)">0</text>
+          <sc-for list="{{ scree }}" as="b" hint-placeholder-count="6">
+            <rect x="{{ b.x }}" y="{{ b.y }}" width="40" height="{{ b.h }}" rx="2" style="fill:{{ b.f }};stroke:var(--iris-400);stroke-width:1;transition:y 420ms var(--ease-out),height 420ms var(--ease-out)"></rect>
+            <text x="{{ b.cx }}" y="216" text-anchor="middle" style="font-size:11px;fill:var(--ink-600)">{{ b.lab }}</text>
+            <text x="{{ b.cx }}" y="{{ b.ty }}" text-anchor="middle" style="font-size:11px;font-family:var(--font-mono);fill:var(--ink-700)">{{ b.v }}</text>
+          </sc-for>
+          <path d="{{ cum }}" style="fill:none;stroke:var(--ink-800);stroke-width:1.6;stroke-dasharray:4 3"></path>
+          <sc-for list="{{ cumPts }}" as="c" hint-placeholder-count="0">
+            <circle cx="{{ c.x }}" cy="{{ c.y }}" r="3.5" style="fill:var(--paper);stroke:var(--ink-800);stroke-width:1.4"></circle>
+          </sc-for>
+          <text x="388" y="{{ cumLy }}" text-anchor="end" style="font-family:var(--font-serif);font-style:italic;font-size:13px;fill:var(--ink-700)">acumulada</text>
+        </svg>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--text-strong)">Loadings de la {{ pcName }}</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <sc-for list="{{ loads }}" as="l" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:130px minmax(0,1fr) 48px;gap:10px;align-items:center;font-size:14px">
+              <span style="color:var(--text-body)">{{ l.name }}</span>
+              <div style="position:relative;height:16px;background:var(--ink-50);border-radius:3px">
+                <div style="position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--ink-500)"></div>
+                <div style="position:absolute;top:2px;bottom:2px;left:{{ l.left }}%;width:{{ l.w }}%;background:{{ l.f }};border:1px solid {{ l.s }};border-radius:3px;transition:left 420ms var(--ease-out),width 420ms var(--ease-out)"></div>
+              </div>
+              <span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-700);text-align:right">{{ l.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:120px;margin-top:8px">{{ desc2 }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 2.</b> PCA sobre trescientos estudiantes simulados con seis variables en unidades distintas. Las tres primeras dependen de un mismo factor de compromiso; sueño y trabajo, de un factor de carga; la distancia es independiente. A la izquierda, la proporción de varianza por componente y la acumulada. A la derecha, el peso de cada variable en la componente elegida.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">7. Interpretar las componentes</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Cada componente es una combinación lineal <i style="font-family:var(--font-math);padding:0 2px">PC₁ = w₁₁x₁ + w₁₂x₂ + … + w₁<sub>d</sub>x<sub>d</sub></i>. Los coeficientes son los <b>loadings</b>: cuánto pesa cada variable original en esa componente. Mirar los loadings más grandes en valor absoluto suele dar una interpretación. En la figura 2, ya estandarizada, la PC1 carga en horas de estudio, asistencia y calificación, y la podemos leer como un eje de compromiso académico. El signo de una componente es arbitrario: <i style="font-family:var(--font-math);padding:0 2px">w</i> y <i style="font-family:var(--font-math);padding:0 2px">−w</i> capturan la misma varianza.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">8. Limitaciones</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>Solo relaciones lineales.</b> Si la estructura es curva, como una espiral, PCA no la encuentra. Para eso están <a href="F3-06-tSNE-UMAP.dc.html">t-SNE y UMAP</a>, y los autoencoders de la Fase 7.</li>
+    <li style="text-wrap:pretty"><b>Sensible a outliers</b>, igual que la media y la varianza en las que se basa.</li>
+    <li style="text-wrap:pretty"><b>Más varianza no siempre significa más información útil.</b> Si el objetivo final es clasificar, la dirección de mayor varianza no tiene por qué ser la que mejor separa las clases. LDA (<i>linear discriminant analysis</i>) sí usa las etiquetas.</li>
+    <li style="text-wrap:pretty"><b>Mezcla todas las variables.</b> A diferencia de Lasso (Fase 4), PCA no elige un subconjunto de variables interpretable: cada componente usa todas.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">9. Implementación</h2>
+  <p style="margin:0 0 12px;text-wrap:pretty">Desde cero, con eigenvectores de la covarianza:</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">import numpy as np
+
+def pca(X, n_components):
+    X_centered = X - X.mean(axis=0)
+    cov = np.cov(X_centered, rowvar=False)
+    eigenvalues, eigenvectors = np.linalg.eigh(cov)   # eigh: matrices simétricas
+
+    order = np.argsort(eigenvalues)[::-1]              # de mayor a menor
+    eigenvalues = eigenvalues[order]
+    eigenvectors = eigenvectors[:, order]
+
+    components = eigenvectors[:, :n_components]
+    scores = X_centered @ components
+    explained_variance_ratio = eigenvalues[:n_components] / eigenvalues.sum()
+    return scores, components, explained_variance_ratio</pre>
+  <p style="margin:0 0 12px;text-wrap:pretty">Con scikit-learn. Si PCA va antes de un modelo supervisado, lo metemos en un pipeline para que se ajuste solo con los datos de entrenamiento de cada fold:</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+
+pipe = make_pipeline(StandardScaler(), PCA(n_components=0.90))
+scores = pipe.fit_transform(X)        # 0.90: elige k para retener 90 %
+
+pca = pipe.named_steps["pca"]
+print(pca.explained_variance_ratio_)           # por componente
+print(pca.explained_variance_ratio_.cumsum())  # acumulada
+print(pca.components_)                         # loadings</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Ejercicios</h2>
+  <ol style="margin:0 0 20px;padding-left:22px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty">Aplica PCA a <code>load_wine</code> (trece variables), grafica el scree plot y decide cuántas componentes retener.</li>
+    <li style="text-wrap:pretty">Proyecta el mismo dataset a dos componentes y colorea por la etiqueta real, aunque PCA no la use. ¿Se separan las clases?</li>
+    <li style="text-wrap:pretty">Compara los resultados con y sin estandarizar.</li>
+    <li style="text-wrap:pretty">Corre K-means sobre los datos originales y visualiza los clusters en las dos primeras componentes.</li>
+  </ol>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Conexiones con otras fases</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty">Combate la maldición de la dimensionalidad de <a href="F2-01-KNN.dc.html">KNN</a>.</li>
+    <li style="text-wrap:pretty">Sirve para visualizar los grupos de <a href="F3-01-KMeans.dc.html">K-means</a> en alta dimensión.</li>
+    <li style="text-wrap:pretty">La multicolinealidad de la Fase 4 es la otra cara del mismo fenómeno: variables muy correlacionadas son justo lo que permite que pocas componentes capturen casi toda la varianza.</li>
+    <li style="text-wrap:pretty">Los autoencoders de la Fase 7 son la generalización no lineal de esta idea.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Fuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:16px">
+    <li><a href="https://alanrvazquez.github.io/TEC-IN5148/" target="_blank">Alan R. Vázquez · TEC IN5148, B2</a></li>
+    <li><a href="https://www.cs.cornell.edu/courses/cs4780/2024sp/" target="_blank">CS4780 · PCA</a> (Weinberger)</li>
+    <li>James, Witten, Hastie y Tibshirani. <i>An Introduction to Statistical Learning</i>, Cap. 12.2.</li>
+    <li>Hastie, Tibshirani y Friedman. <i>The Elements of Statistical Learning</i>, 14.5.</li>
+    <li>Pearson, K. (1901). "On lines and planes of closest fit to systems of points in space." <i>Philosophical Magazine</i>.</li>
+    <li>Hotelling, H. (1933). "Analysis of a complex of statistical variables into principal components." <i>J. Educational Psychology</i>.</li>
+    <li><a href="https://scikit-learn.org/stable/modules/decomposition.html#pca" target="_blank">scikit-learn · 2.5.1 PCA</a></li>
+  </ul>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F3-01-KMeans.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Anterior</div><div style="font-weight:600;color:var(--text-strong)">K-means</div></a>
+  <a href="F3-03-GMM-EM.dc.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Siguiente →</div><div style="font-weight:600;color:var(--text-strong)">Mezclas gaussianas y EM</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    const r = this.rng(5), g = () => this.gauss(r);
+    const a = 28 * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+    let P = Array.from({ length: 120 }, () => { const u = g() * 105, v = g() * 32; return [u * ca - v * sa, -(u * sa + v * ca)]; });
+    const mx = P.reduce((s, q) => s + q[0], 0) / 120, my = P.reduce((s, q) => s + q[1], 0) / 120;
+    this.P = P.map(q => [q[0] - mx, q[1] - my]);
+    let sxx = 0, syy = 0, sxy = 0; this.P.forEach(q => { sxx += q[0] * q[0]; syy += q[1] * q[1]; sxy += q[0] * q[1]; });
+    this.S2 = [sxx / 120 / 100, syy / 120 / 100, sxy / 120 / 100];
+    const pc = 0.5 * Math.atan2(2 * this.S2[2], this.S2[0] - this.S2[1]);
+    this.pc1 = ((Math.round(-pc * 180 / Math.PI) % 180) + 180) % 180;
+    this.names = ['Horas de estudio', 'Asistencia (%)', 'Calificación', 'Horas de sueño', 'Horas de trabajo', 'Distancia (km)'];
+    const rows = Array.from({ length: 300 }, () => {
+      const z1 = g(), z2 = g(), z3 = g();
+      return [12 + 4.5 * (0.85 * z1 + 0.5 * g()), 85 + 9 * (0.8 * z1 + 0.6 * g()), 75 + 12 * (0.75 * z1 - 0.25 * z2 + 0.6 * g()),
+        7 + 1.0 * (-0.75 * z2 + 0.65 * g()), 10 + 7 * (0.85 * z2 + 0.5 * g()), 8 + 6 * (0.9 * z3 + 0.4 * g())];
+    });
+    const d = 6, n = rows.length, mu = Array.from({ length: d }, (_, j) => rows.reduce((s, q) => s + q[j], 0) / n);
+    const C = Array.from({ length: d }, (_, i) => Array.from({ length: d }, (_, j) => rows.reduce((s, q) => s + (q[i] - mu[i]) * (q[j] - mu[j]), 0) / (n - 1)));
+    const R = C.map((row, i) => row.map((v, j) => v / Math.sqrt(C[i][i] * C[j][j])));
+    this.E = { s: this.eig(R), n: this.eig(C) };
+    this.state = { th: 0, std: 's', pc: 0 };
+  }
+  rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  eig(A) {
+    const n = A.length, a = A.map(r => r.slice()), V = a.map((_, i) => a.map((_, j) => i === j ? 1 : 0));
+    for (let sw = 0; sw < 80; sw++) {
+      let off = 0; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) off += a[i][j] ** 2;
+      if (off < 1e-14) break;
+      for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) {
+        if (Math.abs(a[p][q]) < 1e-15) continue;
+        const th = (a[q][q] - a[p][p]) / (2 * a[p][q]), t = (th >= 0 ? 1 : -1) / (Math.abs(th) + Math.sqrt(th * th + 1)), c = 1 / Math.sqrt(t * t + 1), s = t * c;
+        for (let k = 0; k < n; k++) { const x = a[k][p], y = a[k][q]; a[k][p] = c * x - s * y; a[k][q] = s * x + c * y; }
+        for (let k = 0; k < n; k++) { const x = a[p][k], y = a[q][k]; a[p][k] = c * x - s * y; a[q][k] = s * x + c * y; }
+        for (let k = 0; k < n; k++) { const x = V[k][p], y = V[k][q]; V[k][p] = c * x - s * y; V[k][q] = s * x + c * y; }
+      }
+    }
+    const vals = a.map((r, i) => r[i]), ord = vals.map((_, i) => i).sort((x, y) => vals[y] - vals[x]);
+    return { vals: ord.map(i => vals[i]), vecs: ord.map(i => { const v = V.map(r => r[i]); let m = 0; v.forEach(x => { if (Math.abs(x) > Math.abs(m)) m = x; }); return m < 0 ? v.map(x => -x) : v; }) };
+  }
+  renderVals() {
+    const S = this.state, t = S.th * Math.PI / 180, ux = Math.cos(t), uy = -Math.sin(t);
+    const [sxx, syy, sxy] = this.S2, tot = sxx + syy;
+    const pv = th => { const c = Math.cos(th), s = -Math.sin(th); return c * c * sxx + s * s * syy + 2 * c * s * sxy; };
+    const vp = pv(t), vr = tot - vp;
+    const pr = this.P.map(q => { const k = q[0] * ux + q[1] * uy; return { x: (300 + q[0]).toFixed(1), y: (192 + q[1]).toFixed(1), px: (300 + k * ux).toFixed(1), py: (192 + k * uy).toFixed(1) }; });
+    const cx = d => 30 + d / 180 * 260, cy = v => 100 - v / tot * 90;
+    const vCurve = Array.from({ length: 181 }, (_, d) => (d ? 'L' : 'M') + cx(d).toFixed(1) + ',' + cy(pv(d * Math.PI / 180)).toFixed(1)).join('');
+    const diff = Math.min(Math.abs(S.th - this.pc1), 180 - Math.abs(S.th - this.pc1)), pct = vp / tot * 100;
+    const desc = diff <= 1 ? `Esta es la primera componente principal. Captura el ${pct.toFixed(0)} % de la varianza total y deja el error de reconstrucción más pequeño posible para una recta. La PC2 es la perpendicular y captura el resto.`
+      : diff >= 89 ? `Perpendicular a la PC1: es la segunda componente y la dirección de menor varianza. La recta captura solo el ${pct.toFixed(0)} % y los residuos son lo más largos posible.`
+      : `A ${diff}° de la PC1, la recta captura el ${pct.toFixed(0)} % de la varianza. Al girarla, lo que gana la proyección lo pierde el residuo y viceversa: las dos cantidades siempre suman la varianza total.`;
+
+    const E = this.E[S.std], sum = E.vals.reduce((a, b) => a + b, 0), pve = E.vals.map(v => v / sum);
+    const bx = i => 50 + i * 56, by = v => 200 - v * 190;
+    let acc = 0; const cumV = pve.map(v => (acc += v));
+    const scree = pve.map((v, i) => ({ x: bx(i), y: by(v).toFixed(1), h: (v * 190).toFixed(1), cx: bx(i) + 20, ty: (by(v) - 5).toFixed(1), lab: 'PC' + (i + 1), v: Math.round(v * 100) + '%', f: i === S.pc ? 'var(--iris-400)' : 'var(--iris-200)' }));
+    const vec = E.vecs[S.pc];
+    const loads = vec.map((v, i) => ({ name: this.names[i], v: (v >= 0 ? ' ' : '') + v.toFixed(2), left: v >= 0 ? 50 : 50 + v * 50, w: Math.abs(v) * 50, f: v >= 0 ? 'var(--coral-200)' : 'var(--sky-200)', s: v >= 0 ? 'var(--coral-400)' : 'var(--sky-400)' }));
+    const top = vec.map((v, i) => [Math.abs(v), i]).sort((a, b) => b[0] - a[0]);
+    const nm = i => this.names[i].replace(/ \(.*\)/, '').toLowerCase();
+    const pcN = 'PC' + (S.pc + 1), share = Math.round(pve[S.pc] * 100);
+    let desc2;
+    if (S.std === 'n') desc2 = `Sin estandarizar, la ${pcN} explica el ${share} % y casi todo su peso está en ${nm(top[0][1])}${top[1][0] > 0.3 ? ' y ' + nm(top[1][1]) : ''}. No es que sean más informativas: sus unidades producen las varianzas numéricas más grandes. Horas de sueño, con desviación de una hora, casi no aparece.`;
+    else if (S.pc === 0) desc2 = `Estandarizada, la PC1 explica el ${share} % y carga en ${nm(top[0][1])}, ${nm(top[1][1])} y ${nm(top[2][1])}: recupera el factor de compromiso con que simulamos los datos. Las dos primeras componentes juntas explican el ${Math.round(cumV[1] * 100)} %.`;
+    else if (S.pc === 1) desc2 = `La PC2 explica el ${share} % y opone ${nm(top[0][1])} a ${nm(top[1][1])}: es el factor de carga. Como es ortogonal a la PC1, no repite nada del compromiso académico.`;
+    else desc2 = `La PC3 explica el ${share} % y está dominada por ${nm(top[0][1])}, la variable independiente de las demás. Ninguna otra variable comparte su variación, así que necesita su propia componente.`;
+    return {
+      th: S.th, setTh: v => this.setState({ th: Math.round(v) }), fmtDeg: v => Math.round(v) + '°', toPC1: () => this.setState({ th: this.pc1 }),
+      ln: { x1: (300 - 500 * ux).toFixed(1), y1: (192 - 500 * uy).toFixed(1), x2: (300 + 500 * ux).toFixed(1), y2: (192 + 500 * uy).toFixed(1) },
+      pr, vP: vp.toFixed(1), vR: vr.toFixed(1), pctP: pct.toFixed(1), vCurve, vx: cx(S.th).toFixed(1), vy: cy(vp).toFixed(1), desc,
+      stdOpts: [{ value: 's', label: 'Estandarizado' }, { value: 'n', label: 'Sin estandarizar' }], std: S.std, setStd: v => this.setState({ std: v }),
+      pcOpts: [0, 1, 2].map(i => ({ value: i, label: 'PC' + (i + 1) })), pc: S.pc, setPc: v => this.setState({ pc: Number(v) }), pcName: pcN,
+      scree, cum: cumV.map((v, i) => (i ? 'L' : 'M') + (bx(i) + 20) + ',' + by(v).toFixed(1)).join(''),
+      cumPts: cumV.map((v, i) => ({ x: bx(i) + 20, y: by(v).toFixed(1) })), cumLy: (by(cumV[5]) + 16).toFixed(1),
+      loads, desc2
+    };
+  }
+}
+</script>
+</body>
+</html>

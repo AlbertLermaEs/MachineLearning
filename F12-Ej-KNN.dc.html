@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>K vecinos más cercanos · Ejemplos por modelo</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="index.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <a href="F12-Guia-Sklearn.dc.html" style="color:var(--text-muted);text-decoration:none">Fase 12 · Ejemplos por modelo</a>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Ejemplos por modelo · Fase 2" title="K vecinos más cercanos" description="Clasificamos flores de iris por la votación de sus vecinos. Primero armamos el pipeline con escalado; después vemos cómo cambia la frontera con k y cómo leer las probabilidades que devuelve."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Teoría: <a href="F2-01-KNN.dc.html">Fase 2 · K vecinos más cercanos</a> · scikit-learn 1.9.1</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">1. El dataset</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty"><code>load_iris</code> tiene 150 flores de tres especies, 50 de cada una: setosa, versicolor y virginica. Cada flor tiene cuatro medidas en centímetros: largo y ancho del sépalo y del pétalo. Es pequeño y limpio, así que sirve para ver el método sin distracciones.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.datasets import load_iris
+
+X, y = load_iris(return_X_y=True, as_frame=True)
+X.shape            # (150, 4)
+y.value_counts()   # 50 por clase</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">2. Código paso a paso</h2>
+  <p style="margin:0 0 12px;text-wrap:pretty">Primero separamos un 25 % para test. Con <code>stratify=y</code>, las tres especies quedan en la misma proporción de los dos lados.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.model_selection import train_test_split
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.25, stratify=y, random_state=42)</pre>
+  <p style="margin:0 0 12px;text-wrap:pretty">Después armamos el pipeline. KNN compara distancias, así que escalamos dentro del pipeline para que ninguna medida domine por sus unidades. <code>fit</code> solo guarda los datos de train ya escalados; el trabajo ocurre en <code>predict</code>, que busca los vecinos de cada punto nuevo.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+
+knn = make_pipeline(StandardScaler(), KNeighborsClassifier(n_neighbors=5))
+knn.fit(X_train, y_train)</pre>
+  <p style="margin:0 0 12px;text-wrap:pretty">Finalmente, medimos en test. Con clases balanceadas accuracy es razonable, pero <code>classification_report</code> da precisión, recall y F1 por especie.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.metrics import classification_report
+
+knn.score(X_test, y_test)    # accuracy
+print(classification_report(y_test, knn.predict(X_test)))</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">3. Elegir k</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">El hiperparámetro principal es <code>n_neighbors</code>. El segundo es <code>weights</code>: con <code>"uniform"</code> todos los vecinos votan igual; con <code>"distance"</code>, los cercanos pesan más. Con solo las dos medidas del pétalo podemos ver la frontera completa.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,560px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <div style="display:flex;gap:16px 28px;flex-wrap:wrap;justify-content:center;align-items:center"><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="300px,44px" label="n_neighbors" min="{{ 1 }}" max="{{ 50 }}" step="{{ 1 }}" width="{{ 300 }}" tone="focus" value="{{ k }}" onChange="{{ setK }}" format="{{ fmtK }}"></x-import><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="220px,32px" options="{{ wOpts }}" value="{{ w }}" onChange="{{ setW }}"></x-import></div>
+    <div style="width:100%;max-width:920px;display:flex;flex-wrap:wrap;gap:28px;align-items:center;justify-content:center">
+      <svg viewBox="0 0 640 340" width="100%"  style="display:block;overflow:visible;flex:2 1 460px;min-width:0;max-width:640px">
+        <sc-for list="{{ cells }}" as="c" hint-placeholder-count="0"><rect x="{{ c.x }}" y="{{ c.y }}" width="{{ c.w }}" height="{{ c.h }}" style="fill:{{ c.f }};fill-opacity:0.18"></rect></sc-for>
+        <sc-for list="{{ pts }}" as="p" hint-placeholder-count="0"><circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="3.6" style="fill:{{ p.f }};stroke:{{ p.s }};stroke-width:{{ p.sw }}"></circle></sc-for>
+        <defs><clipPath id="pc"><rect x="50" y="14" width="570" height="286"></rect></clipPath></defs>
+        <line x1="50" y1="300" x2="620" y2="300" style="stroke:var(--ink-400);stroke-width:1"></line>
+        <line x1="50" y1="14" x2="50" y2="300" style="stroke:var(--ink-400);stroke-width:1"></line>
+        <text x="90.7" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">1</text><text x="172.1" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">2</text><text x="253.6" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">3</text><text x="335.0" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">4</text><text x="416.4" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">5</text><text x="497.9" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">6</text><text x="579.3" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">7</text>
+        <text x="42" y="304.0" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">0</text><text x="42" y="222.3" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">1</text><text x="42" y="140.6" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">2</text><text x="42" y="58.9" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">3</text>
+        <text x="620" y="334" text-anchor="end" style="font-size:13px;fill:var(--ink-600)">largo del pétalo (cm)</text>
+        <text x="56" y="10" style="font-size:13px;fill:var(--ink-600)">ancho del pétalo (cm)</text>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0;flex:1 1 240px">
+        <div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px 10px;align-items:center;font-size:14px">
+          <span style="color:var(--ink-700)">accuracy train</span><div style="height:12px;background:var(--ink-50);border-radius:3px;position:relative;overflow:hidden"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ atrW }}%;background:var(--ink-300);transition:width 320ms var(--ease-out)"></div></div><span style="font-family:var(--font-mono);color:var(--ink-900)">{{ atr }}</span>
+          <span style="color:var(--ink-700)">accuracy test</span><div style="height:12px;background:var(--ink-50);border-radius:3px;position:relative;overflow:hidden"><div style="position:absolute;left:0;top:0;bottom:0;width:{{ ateW }}%;background:var(--iris-400);transition:width 320ms var(--ease-out)"></div></div><span style="font-family:var(--font-mono);color:var(--ink-900)">{{ ate }}</span>
+        </div>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:96px">{{ desc }}</div>
+        <div style="display:flex;gap:8px 16px;flex-wrap:wrap;font-size:13px;color:var(--text-muted)"><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;box-sizing:border-box;background:var(--cat-1);border:1.5px solid var(--cat-1)"></span>setosa</span><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;box-sizing:border-box;background:var(--cat-6);border:1.5px solid var(--cat-6)"></span>versicolor</span><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;box-sizing:border-box;background:var(--cat-8);border:1.5px solid var(--cat-8)"></span>virginica</span><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;box-sizing:border-box;background:var(--paper);border:1.5px solid var(--ink-900)"></span>test</span></div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> <code>KNeighborsClassifier</code> sobre largo y ancho del pétalo: 112 flores de train y 38 de test, las de test con borde oscuro. El fondo es la especie que predeciría el modelo en cada punto del plano. Para que corra en el navegador usamos 150 flores simuladas con la media y la desviación de cada especie; la frontera y los aciertos se calculan en vivo.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Con k chico la frontera rodea puntos aislados; al subir k se suaviza, hasta que la vecindad es tan grande que empieza a cruzar a la especie de al lado. Para elegir k en serio usamos validación cruzada sobre train:</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.model_selection import GridSearchCV
+
+grid = GridSearchCV(knn, {
+    "kneighborsclassifier__n_neighbors": range(1, 31),
+    "kneighborsclassifier__weights": ["uniform", "distance"],
+}, cv=5)
+grid.fit(X_train, y_train)
+grid.best_params_</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">4. Cómo interpretar la salida</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty"><code>predict_proba</code> no es una probabilidad calibrada: es la fracción de los k vecinos que votó por cada clase, ponderada por 1/d si usamos <code>weights="distance"</code>. Con k = 5 y pesos uniformes solo puede valer 0, 0.2, 0.4, 0.6, 0.8 o 1. Para explicar una predicción concreta, <code>kneighbors</code> devuelve quiénes son esos vecinos y a qué distancia están.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">knn.predict_proba(X_test.iloc[:3])   # filas que suman 1
+
+escalador, modelo = knn[0], knn[-1]
+dist, idx = modelo.kneighbors(escalador.transform(X_test.iloc[:1]))
+y_train.iloc[idx[0]]                 # especies de los 5 vecinos</pre>
+  <p style="margin:0 0 20px;text-wrap:pretty"><code>kneighbors</code> se llama sobre el último paso, así que primero aplicamos el escalador a mano. Los índices se refieren a las filas de <code>X_train</code>.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">5. Errores frecuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>No escalar.</b> Si una variable va de 0 a 1000 y otra de 0 a 1, la distancia la decide la primera. Va dentro del pipeline, no antes del split.</li>
+    <li style="text-wrap:pretty"><b>Medir en train.</b> Con k = 1 o con <code>weights="distance"</code>, el acierto en train es 1.000 por construcción y no dice nada.</li>
+    <li style="text-wrap:pretty"><b>Usar k par con dos clases.</b> Puede haber empates; scikit-learn los resuelve a favor de la clase que aparece primero en <code>classes_</code>. Un k impar los evita.</li>
+    <li style="text-wrap:pretty"><b>Esperar que fit sea lo caro.</b> Ajustar es casi instantáneo y predecir es lo lento: cada punto nuevo busca vecinos entre todo train. Con muchos datos, <code>algorithm="auto"</code> elige un KD-tree o un ball tree.</li>
+    <li style="text-wrap:pretty"><b>Agregar variables irrelevantes.</b> Cada dimensión extra mete ruido en la distancia. Es la maldición de la dimensionalidad que vimos en la teoría.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Fuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:16px">
+    <li><a href="https://scikit-learn.org/stable/modules/neighbors.html#classification" target="_blank">scikit-learn · 1.6.2 Nearest Neighbors Classification</a></li>
+    <li><a href="https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html" target="_blank">scikit-learn · KNeighborsClassifier</a></li>
+    <li><a href="https://scikit-learn.org/stable/datasets/toy_dataset.html#iris-dataset" target="_blank">scikit-learn · Iris dataset</a></li>
+  </ul>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F12-Guia-Sklearn.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Anterior</div><div style="font-weight:600;color:var(--text-strong)">Guía de scikit-learn</div></a>
+  <a href="F12-Ej-Perceptron.dc.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Siguiente →</div><div style="font-weight:600;color:var(--text-strong)">Perceptrón</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { k: 5, w: 'uniform' };
+  rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  data() {
+    if (this._d) return this._d;
+    const r = this.rng(3), g = () => this.gauss(r), S = [[1.46, .17, .25, .10, .33], [4.26, .47, 1.33, .20, .79], [5.55, .55, 2.03, .27, .32]], tr = [], te = [];
+    S.forEach(([ml, sl, mw, sw, rho], c) => { for (let i = 0; i < 50; i++) { const a = g(), b = g(); const p = [Math.max(1, ml + sl * a), Math.max(0.1, mw + sw * (rho * a + Math.sqrt(1 - rho * rho) * b)), c]; (i < (c < 2 ? 13 : 12) ? te : tr).push(p); } });
+    return (this._d = { tr, te });
+  }
+  pred(T, q, k, w) {
+    const d = T.map(p => [Math.hypot(p[0] - q[0], p[1] - q[1]), p[2]]).sort((a, b) => a[0] - b[0]).slice(0, k), v = [0, 0, 0];
+    if (w === 'distance' && d[0][0] === 0) d.forEach(([dd, c]) => { if (dd === 0) v[c]++; });
+    else d.forEach(([dd, c]) => { v[c] += w === 'distance' ? 1 / dd : 1; });
+    let b = 0; for (let c = 1; c < 3; c++) if (v[c] > v[b]) b = c; return b;
+  }
+  renderVals() {
+    const S = this.state, D = this.data(), CAT = ['var(--cat-1)', 'var(--cat-6)', 'var(--cat-8)'];
+    const x0 = 0.5, x1 = 7.5, y0 = 0, y1 = 3.5, px = x => 50 + (x - x0) / (x1 - x0) * 570, py = y => 300 - (y - y0) / (y1 - y0) * 286;
+    const key = S.k + S.w;
+    if (this._key !== key) {
+      const NX = 48, NY = 24, cw = 570 / NX, ch = 286 / NY, cells = [];
+      for (let i = 0; i < NX; i++) for (let j = 0; j < NY; j++) { const q = [x0 + (i + .5) / NX * (x1 - x0), y1 - (j + .5) / NY * (y1 - y0)]; cells.push({ x: (50 + i * cw).toFixed(2), y: (14 + j * ch).toFixed(2), w: (cw + .4).toFixed(2), h: (ch + .4).toFixed(2), f: CAT[this.pred(D.tr, q, S.k, S.w)] }); }
+      const acc = A => A.filter(p => this.pred(D.tr, p, S.k, S.w) === p[2]).length / A.length;
+      this._c = { cells, atr: acc(D.tr), ate: acc(D.te) }; this._key = key;
+    }
+    if (!this._pts) this._pts = [...D.tr.map(p => ({ cx: px(p[0]).toFixed(1), cy: py(p[1]).toFixed(1), f: CAT[p[2]], s: 'var(--paper)', sw: 0.8 })), ...D.te.map(p => ({ cx: px(p[0]).toFixed(1), cy: py(p[1]).toFixed(1), f: CAT[p[2]], s: 'var(--ink-900)', sw: 1.6 }))];
+    const { atr, ate } = this._c, gap = atr - ate;
+    const desc = S.w === 'distance' ? `Con weights="distance" cada vecino vota con peso 1/d. En train cada flor es su propia vecina a distancia cero, así que train da siempre 1.000 y solo test sirve para comparar. Test: ${ate.toFixed(3)}.`
+      : S.k === 1 ? 'Con k = 1, cada flor de train es su propia vecina más cercana: train da 1.000 y la frontera rodea puntos aislados de la otra especie.'
+      : gap > 0.03 ? `Con k = ${S.k}, train supera a test por ${gap.toFixed(3)}. La frontera todavía sigue detalles de esta muestra en particular.`
+      : `Con k = ${S.k}, train y test quedan cerca (${atr.toFixed(3)} y ${ate.toFixed(3)}). La frontera entre versicolor y virginica es más suave.`;
+    return {
+      k: S.k, setK: v => this.setState({ k: Math.round(v) }), fmtK: v => String(Math.round(v)),
+      wOpts: [{ value: 'uniform', label: 'uniform' }, { value: 'distance', label: 'distance' }], w: S.w, setW: v => this.setState({ w: v }),
+      cells: this._c.cells, pts: this._pts, atr: atr.toFixed(3), ate: ate.toFixed(3), atrW: (atr * 100).toFixed(1), ateW: (ate * 100).toFixed(1), desc
+    };
+  }
+}
+</script>
+</body>
+</html>

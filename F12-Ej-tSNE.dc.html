@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>t-SNE · Ejemplos por modelo</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="index.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <a href="F12-Guia-Sklearn.dc.html" style="color:var(--text-muted);text-decoration:none">Fase 12 · Ejemplos por modelo</a>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Ejemplos por modelo · Fase 3" title="t-SNE" description="Hacemos un mapa en dos dimensiones de imágenes de dígitos. Primero reducimos con PCA y corremos TSNE; después vemos qué cambia con la perplejidad y la semilla, y qué se puede leer en el mapa."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Teoría: <a href="F3-06-tSNE-UMAP.dc.html">Fase 3 · t-SNE y UMAP</a> · scikit-learn 1.9.1</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">1. El dataset</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty"><code>load_digits</code> tiene 1797 imágenes de dígitos escritos a mano, de 8 × 8 píxeles, con intensidades de 0 a 16. Cada imagen es un vector de 64 variables. Es el ejemplo clásico para t-SNE: en 64 dimensiones no podemos ver nada, y en dos queremos saber si los dígitos forman grupos.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.datasets import load_digits
+
+X, y = load_digits(return_X_y=True)
+X.shape    # (1797, 64)</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">2. Código paso a paso</h2>
+  <p style="margin:0 0 12px;text-wrap:pretty">Primero reducimos con PCA a unas 30 o 50 dimensiones. Quita ruido y acelera t-SNE, que compara todos los pares de puntos. Los píxeles ya comparten escala, así que aquí no estandarizamos.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.decomposition import PCA
+
+X_pca = PCA(n_components=30, random_state=0).fit_transform(X)</pre>
+  <p style="margin:0 0 12px;text-wrap:pretty">Después corremos t-SNE. Solo tiene <code>fit_transform</code>: no aprende una función que se pueda aplicar a puntos nuevos.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.manifold import TSNE
+
+tsne = TSNE(n_components=2, perplexity=30, init="pca",
+            max_iter=1000, random_state=0)
+emb = tsne.fit_transform(X_pca)   # (1797, 2)
+tsne.kl_divergence_               # costo final</pre>
+  <p style="margin:0 0 12px;text-wrap:pretty">Finalmente graficamos, usando <code>y</code> solo para colorear.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">import matplotlib.pyplot as plt
+
+plt.scatter(emb[:, 0], emb[:, 1], c=y, cmap="tab10", s=6)
+plt.colorbar()</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">3. Perplejidad, inicialización y semilla</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty"><code>perplexity</code> es el número efectivo de vecinos que mira cada punto; el valor por defecto es 30 y debe ser menor que el número de puntos. <code>init="pca"</code> es el valor por defecto desde la versión 1.2 y suele conservar mejor la estructura global que <code>"random"</code>.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,620px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <div style="display:flex;gap:16px 28px;flex-wrap:wrap;justify-content:center;align-items:center"><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="300px,44px" label="perplexity" min="{{ 2 }}" max="{{ 50 }}" step="{{ 1 }}" width="{{ 300 }}" tone="focus" value="{{ perp }}" onChange="{{ setPerp }}" format="{{ fmtPerp }}"></x-import><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="280px,32px" options="{{ initOpts }}" value="{{ init }}" onChange="{{ setInit }}"></x-import><button onClick="{{ reseed }}" style="padding:7px 14px;border-radius:4px;border:1px solid var(--ink-300);background:var(--paper);font-family:var(--font-sans);font-size:14px;font-weight:600;color:var(--ink-800);cursor:pointer" style-hover="background:var(--ink-50)">Otra semilla</button></div>
+    <div style="width:100%;max-width:920px;display:flex;flex-wrap:wrap;gap:28px;align-items:center;justify-content:center">
+      <svg viewBox="0 0 600 360" width="100%" style="display:block;flex:2 1 460px;min-width:0;max-width:640px;border:1px solid var(--ink-200);border-radius:4px">
+        <sc-for list="{{ pts }}" as="p" hint-placeholder-count="0"><circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="4" style="fill:{{ p.f }};fill-opacity:0.8"></circle></sc-for>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0;flex:1 1 240px">
+        <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;align-items:baseline;font-size:14px">
+          <span style="color:var(--ink-700)">iteración</span><span style="font-family:var(--font-mono);color:var(--ink-900);overflow-wrap:anywhere">{{ iter }}</span>
+          <span style="color:var(--ink-700)">kl_divergence_</span><span style="font-family:var(--font-mono);color:var(--ink-900);overflow-wrap:anywhere">{{ kl }}</span>
+          <span style="color:var(--ink-700)">random_state</span><span style="font-family:var(--font-mono);color:var(--ink-900);overflow-wrap:anywhere">{{ seed }}</span>
+        </div>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:96px">{{ desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> t-SNE exacto sobre 150 puntos simulados en 16 dimensiones: seis grupos de 25, dos de ellos cercanos entre sí, como pasa con algunos dígitos parecidos en <code>load_digits</code>. Los colores solo se usan para pintar; t-SNE no los ve. La optimización corre en vivo, 1000 iteraciones.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Un mapa de t-SNE no es un resultado único. Antes de concluir algo, lo repetimos con dos o tres perplejidades y semillas y nos quedamos con lo que se mantiene en todas.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">4. Cómo interpretar la salida</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Las coordenadas de <code>emb</code> no tienen unidades ni significado por sí solas. Se puede leer qué puntos quedan cerca de cuáles: si dos imágenes son vecinas en el mapa, probablemente lo son en 64 dimensiones. No se puede leer el tamaño de un grupo ni la distancia entre grupos. <code>kl_divergence_</code> sirve para comparar corridas con la misma perplejidad, no entre perplejidades distintas.</p>
+  <p style="margin:0 0 20px;text-wrap:pretty">Si necesitamos proyectar puntos nuevos sobre un mapa ya ajustado, UMAP sí tiene <code>transform</code>. No viene en scikit-learn; está en el paquete <code>umap-learn</code>, con la misma API:</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">import umap   # pip install umap-learn
+
+red = umap.UMAP(n_neighbors=15, min_dist=0.1, random_state=0)
+emb_u = red.fit_transform(X_pca)
+red.transform(X_pca[:5])   # proyecta puntos nuevos</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">5. Errores frecuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>Usar t-SNE como preprocesamiento.</b> No tiene <code>transform</code> y el mapa cambia con cada corrida; no sirve como entrada de un modelo supervisado. Para eso está PCA.</li>
+    <li style="text-wrap:pretty"><b>Leer tamaños y distancias entre grupos.</b> t-SNE ajusta la escala a la densidad local de cada punto. Solo la vecindad es confiable.</li>
+    <li style="text-wrap:pretty"><b>Una sola perplejidad.</b> Valores muy bajos fabrican grumos; valores muy altos juntan grupos. Comparamos varios.</li>
+    <li style="text-wrap:pretty"><b>Correrlo sobre datos crudos de alta dimensión.</b> Con cientos de variables conviene pasar antes por PCA a unas 50.</li>
+    <li style="text-wrap:pretty"><b>Usar el nombre viejo del parámetro.</b> Desde la versión 1.5, el número de iteraciones se llama <code>max_iter</code>; <code>n_iter</code> ya no existe.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Fuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:16px">
+    <li><a href="https://scikit-learn.org/stable/modules/manifold.html#t-sne" target="_blank">scikit-learn · 2.2.8 t-distributed Stochastic Neighbor Embedding</a></li>
+    <li><a href="https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html" target="_blank">scikit-learn · TSNE</a></li>
+    <li><a href="https://umap-learn.readthedocs.io/en/latest/" target="_blank">umap-learn · Documentación</a></li>
+  </ul>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F12-Ej-DBSCAN.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Anterior</div><div style="font-weight:600;color:var(--text-strong)">DBSCAN</div></a>
+  <a href="F12-Ej-Regresion-Lineal.dc.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Siguiente →</div><div style="font-weight:600;color:var(--text-strong)">Regresión lineal</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    const r = this.rng(29), g = () => this.gauss(r), d = 16;
+    const base = Array.from({ length: 6 }, () => Array.from({ length: d }, () => g() * 3.2));
+    base[5] = base[4].map(v => v + g() * 1.1);
+    this.X = []; this.lab = [];
+    base.forEach((c, k) => { for (let i = 0; i < 25; i++) { this.X.push(c.map(v => v + g())); this.lab.push(k); } });
+    this.n = this.X.length;
+    this.D2 = this.X.map(a => this.X.map(b => a.reduce((s, v, j) => s + (v - b[j]) ** 2, 0)));
+    const mu = Array.from({ length: d }, (_, j) => this.X.reduce((s, q) => s + q[j], 0) / this.n), Xc = this.X.map(q => q.map((v, j) => v - mu[j]));
+    const C = Array.from({ length: d }, (_, i) => Array.from({ length: d }, (_, j) => Xc.reduce((s, q) => s + q[i] * q[j], 0) / this.n));
+    const V = this.topEig(C, 2); this.pc = Xc.map(q => [q.reduce((s, v, j) => s + v * V[0][j], 0), q.reduce((s, v, j) => s + v * V[1][j], 0)]);
+    this.Pc = {}; this.seed = 1;
+    this.state = { perp: 30, init: 'pca', seed: 1, iter: 0, Y: null, kl: null };
+  }
+  componentDidMount() { this.restart(); }
+  componentWillUnmount() { clearTimeout(this.raf); clearTimeout(this.tmo); }
+  rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  topEig(C, k) {
+    const out = [], A = C.map(r => r.slice());
+    for (let m = 0; m < k; m++) {
+      let v = A.map((_, i) => 1 / (i + 1));
+      for (let it = 0; it < 300; it++) { const w = A.map(row => row.reduce((s, a, j) => s + a * v[j], 0)), nr = Math.hypot(...w); v = w.map(x => x / nr); }
+      const lam = v.reduce((s, x, i) => s + x * A[i].reduce((t, a, j) => t + a * v[j], 0), 0);
+      for (let i = 0; i < A.length; i++) for (let j = 0; j < A.length; j++) A[i][j] -= lam * v[i] * v[j];
+      out.push(v);
+    }
+    return out;
+  }
+  condP(perp) {
+    if (this.Pc[perp]) return this.Pc[perp];
+    const n = this.n, H = Math.log(perp), P = [];
+    for (let i = 0; i < n; i++) {
+      let beta = 1 / 50, lo = -Infinity, hi = Infinity, row;
+      for (let it = 0; it < 80; it++) {
+        let s = 0; row = this.D2[i].map((d, j) => { const v = j === i ? 0 : Math.exp(-d * beta); s += v; return v; });
+        let h = 0; row = row.map(v => v / s); row.forEach(v => { if (v > 1e-12) h -= v * Math.log(v); });
+        if (Math.abs(h - H) < 1e-5) break;
+        if (h > H) { lo = beta; beta = hi === Infinity ? beta * 2 : (beta + hi) / 2; } else { hi = beta; beta = lo === -Infinity ? beta / 2 : (beta + lo) / 2; }
+      }
+      P.push(row);
+    }
+    return (this.Pc[perp] = P);
+  }
+  restart() {
+    clearTimeout(this.raf);
+    const n = this.n, P = this.condP(this.state.perp), r = this.rng(this.state.seed * 101);
+    this.Pj = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => Math.max((P[i][j] + P[j][i]) / (2 * n), 1e-12)));
+    if (this.state.init === 'pca') { const sd = Math.sqrt(this.pc.reduce((s, q) => s + q[0] * q[0], 0) / n); this.Y = this.pc.map(q => [q[0] / sd * 1e-4, q[1] / sd * 1e-4]); }
+    else this.Y = Array.from({ length: n }, () => [this.gauss(r) * 1e-4, this.gauss(r) * 1e-4]);
+    this.st = this.Y.map(() => [0, 0]); this.gn = this.Y.map(() => [1, 1]); this.it = 0;
+    this.setState({ iter: 0, Y: this.Y.map(q => q.slice()), kl: null });
+    const loop = () => { for (let k = 0; k < 10 && this.it < 1000; k++) this.step(); this.setState({ iter: this.it, Y: this.Y.map(q => q.slice()), kl: this.it % 50 === 0 || this.it >= 1000 ? this.cost() : this.state.kl }); if (this.it < 1000) this.raf = setTimeout(loop, 16); };
+    this.raf = setTimeout(loop, 16);
+  }
+  step() {
+    const n = this.n, Y = this.Y, P = this.Pj, ex = this.it < 250 ? 12 : 1, mom = this.it < 250 ? 0.5 : 0.8;
+    const num = Array.from({ length: n }, () => new Float64Array(n)); let Z = 0;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const v = 1 / (1 + (Y[i][0] - Y[j][0]) ** 2 + (Y[i][1] - Y[j][1]) ** 2); num[i][j] = num[j][i] = v; Z += 2 * v; }
+    const gr = Y.map(() => [0, 0]);
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { if (i === j) continue; const m = 4 * (ex * P[i][j] - num[i][j] / Z) * num[i][j]; gr[i][0] += m * (Y[i][0] - Y[j][0]); gr[i][1] += m * (Y[i][1] - Y[j][1]); }
+    for (let i = 0; i < n; i++) for (let d = 0; d < 2; d++) {
+      const gid = gr[i][d], sid = this.st[i][d]; let gain = this.gn[i][d];
+      gain = Math.sign(gid) === Math.sign(sid) ? gain * 0.8 : gain + 0.2; if (gain < 0.01) gain = 0.01; this.gn[i][d] = gain;
+      const ns = mom * sid - 12 * gain * gid; this.st[i][d] = ns; Y[i][d] += ns;
+    }
+    let mx = 0, my = 0; Y.forEach(q => { mx += q[0]; my += q[1]; }); mx /= n; my /= n; Y.forEach(q => { q[0] -= mx; q[1] -= my; });
+    this.it++;
+  }
+  cost() {
+    const n = this.n, Y = this.Y, P = this.Pj; let Z = 0; const num = [];
+    for (let i = 0; i < n; i++) { num.push([]); for (let j = 0; j < n; j++) { const v = i === j ? 0 : 1 / (1 + (Y[i][0] - Y[j][0]) ** 2 + (Y[i][1] - Y[j][1]) ** 2); num[i].push(v); Z += v; } }
+    let c = 0; for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (i !== j) c += P[i][j] * Math.log(P[i][j] / Math.max(num[i][j] / Z, 1e-12));
+    return c;
+  }
+  fit(Y) {
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity; Y.forEach(q => { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); });
+    const s = Math.min(560 / ((x1 - x0) || 1), 324 / ((y1 - y0) || 1)), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    return Y.map(q => [300 + (q[0] - cx) * s, 180 - (q[1] - cy) * s]);
+  }
+  renderVals() {
+    const S = this.state, CAT = ['var(--cat-1)', 'var(--cat-6)', 'var(--cat-8)', 'var(--cat-3)', 'var(--cat-10)', 'var(--cat-12)'];
+    const Y = S.Y ? this.fit(S.Y) : this.pc.map(() => [300, 180]);
+    const pts = Y.map((q, i) => ({ cx: q[0].toFixed(1), cy: q[1].toFixed(1), f: CAT[this.lab[i]] }));
+    const later = () => { clearTimeout(this.tmo); this.tmo = setTimeout(() => this.restart(), 250); };
+    const desc = S.iter < 250 ? 'Exageración temprana: las afinidades P se multiplican por 12 y los grupos se compactan y se separan rápido.'
+      : S.iter < 1000 ? 'Afinando con la P original. Los puntos se reacomodan dentro de cada grupo y la KL sigue bajando.'
+      : S.perp <= 4 ? `Terminó. Con perplexity = ${S.perp}, cada punto mira a muy pocos vecinos y los grupos se rompen en grumos que no existen en los datos.`
+      : `Terminó con KL = ${S.kl.toFixed(3)}. Los colores 4 y 5 están cerca en 16 dimensiones; si quedan juntos o separados en el mapa depende de la perplejidad y de la semilla.` + (S.init === 'pca' ? ' Con init="pca" el punto de partida no depende de la semilla.' : '');
+    return {
+      perp: S.perp, setPerp: v => { const pv = Math.round(v); if (pv !== this.state.perp) this.setState({ perp: pv }, later); }, fmtPerp: v => String(Math.round(v)),
+      initOpts: [{ value: 'pca', label: 'init="pca"' }, { value: 'random', label: 'init="random"' }], init: S.init, setInit: v => this.setState({ init: v }, later),
+      reseed: () => this.setState({ seed: this.state.seed + 1 }, () => this.restart()),
+      pts, iter: String(S.iter), kl: S.kl == null ? '—' : S.kl.toFixed(3), seed: String(S.seed), desc
+    };
+  }
+}
+</script>
+</body>
+</html>

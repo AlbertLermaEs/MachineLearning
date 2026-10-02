@@ -112,6 +112,38 @@
     <li style="text-wrap:pretty">¿Cuál es la diferencia de fondo entre KNN, que memoriza, y el perceptrón, que aprende parámetros?</li>
   </ol>
 
+  <div id="fase-3" style="display:flex;align-items:center;gap:12px;margin:64px 0 8px;flex-wrap:wrap">
+    <span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500)">Fase 3</span>
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Tag" hint-size="80px,22px" tone="neutral">6 artículos</x-import>
+  </div>
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:0 0 12px;color:var(--text-strong)">No supervisado</h2>
+  <p style="margin:0 0 28px;text-wrap:pretty;color:var(--text-muted)">Encontrar estructura en datos sin etiquetas, de dos maneras: agrupar observaciones parecidas y reducir dimensiones conservando lo importante. Son de las primeras herramientas que usamos para explorar un dataset nuevo antes de modelarlo.</p>
+
+  <div style="display:flex;flex-direction:column;border-bottom:1px solid var(--border-rule)">
+    <sc-for list="{{ articles3 }}" as="a" hint-placeholder-count="6">
+      <a href="{{ a.href }}" onMouseEnter="{{ a.hover }}" onMouseLeave="{{ a.leave }}" style="display:grid;grid-template-columns:40px minmax(0,1fr) 20px;gap:12px;align-items:start;padding:18px 8px;border-top:1px solid var(--border-rule);text-decoration:none;color:inherit;background:{{ a.bg }};transition:background 240ms var(--ease-out)">
+        <span style="font-family:var(--font-mono);font-size:14px;color:var(--ink-500);padding-top:3px">{{ a.num }}</span>
+        <span style="display:flex;flex-direction:column;gap:4px;min-width:0">
+          <span style="font-size:19px;font-weight:700;line-height:1.3;color:var(--text-strong)">{{ a.title }}</span>
+          <span style="font-size:16px;line-height:1.5;color:var(--text-muted);text-wrap:pretty">{{ a.desc }}</span>
+          <span style="font-size:13px;color:var(--text-subtle)">{{ a.src }}</span>
+        </span>
+        <span style="font-size:18px;color:var(--ink-500);padding-top:2px;transform:translateX({{ a.shift }}px);transition:transform 240ms var(--ease-out)">→</span>
+      </a>
+    </sc-for>
+  </div>
+
+  <h3 style="font-size:20px;line-height:1.25;margin:48px 0 12px;color:var(--text-strong)">Preguntas de repaso</h3>
+  <p style="margin:0 0 12px;font-size:16px;color:var(--text-muted)">Al terminar la fase deberíamos poder responder sin ver los artículos:</p>
+  <ol style="margin:0 0 20px;padding-left:22px;display:flex;flex-direction:column;gap:8px">
+    <li style="text-wrap:pretty">¿Qué función objetivo minimiza K-means, y por qué el algoritmo de Lloyd no garantiza el óptimo global?</li>
+    <li style="text-wrap:pretty">¿Por qué hay que estandarizar los datos antes de K-means y antes de PCA?</li>
+    <li style="text-wrap:pretty">¿Qué es una componente principal en términos de varianza, sin usar "eigenvector" como muletilla?</li>
+    <li style="text-wrap:pretty">¿Cómo decidimos cuántos clusters o cuántas componentes usar, y qué herramienta sirve para cada decisión?</li>
+    <li style="text-wrap:pretty">¿Qué supuesto de K-means relaja GMM, y cuál relaja DBSCAN?</li>
+    <li style="text-wrap:pretty">¿Qué se puede y qué no se puede leer en un mapa de t-SNE?</li>
+  </ol>
+
   <div id="fase-12" style="display:flex;align-items:center;gap:12px;margin:64px 0 8px;flex-wrap:wrap">
     <span style="font-family:var(--font-mono);font-size:13px;color:var(--ink-500)">Fase 12</span>
     <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Tag" hint-size="80px,22px" tone="neutral">Guía transversal</x-import>
@@ -123,7 +155,7 @@
       <span style="font-family:var(--font-mono);font-size:14px;color:var(--ink-500);padding-top:3px">01</span>
       <span style="display:flex;flex-direction:column;gap:4px;min-width:0">
         <span style="font-size:19px;font-weight:700;line-height:1.3;color:var(--text-strong)">Guía de scikit-learn</span>
-        <span style="font-size:16px;line-height:1.5;color:var(--text-muted);text-wrap:pretty">La API común de los estimadores, pipelines, validación cruzada y qué parte de la biblioteca usa cada fase del curso.</span>
+        <span style="font-size:16px;line-height:1.5;color:var(--text-muted);text-wrap:pretty">La API común de los estimadores, pipelines y validación cruzada, con un ejemplo completo por modelo: KNN, perceptrón, K-means, PCA, mezclas gaussianas, clustering jerárquico, DBSCAN, t-SNE y regresión lineal.</span>
         <span style="font-size:13px;color:var(--text-subtle)">scikit-learn User Guide</span>
       </span>
       <span style="font-size:18px;color:var(--ink-500);padding-top:2px;transform:translateX({{ g.shift }}px);transition:transform 240ms var(--ease-out)">→</span>
@@ -182,9 +214,9 @@ class Component extends DCLogic {
       ['Transformers', 'Transformers', ''],
       ['NLP', 'NLP', 'Procesamiento de lenguaje natural (CS4740)'],
       ['Consolidación', 'Cierre', ''],
-      ['Guía de scikit-learn', 'scikit-learn', 'API de estimadores, pipelines, validación cruzada, módulos por fase']
+      ['Guía de scikit-learn', 'scikit-learn', 'API de estimadores, pipelines, validación cruzada, ejemplos por modelo']
     ];
-    const isAv = i => i <= 1 || i === 11, hrefOf = i => i === 0 ? '#fase-1' : i === 1 ? '#fase-2' : i === 11 ? '#fase-12' : undefined;
+    const isAv = i => i <= 2 || i === 11, hrefOf = i => i <= 2 ? '#fase-' + (i + 1) : i === 11 ? '#fase-12' : undefined;
     const hover = i => () => this.setState({ hot: i }), leave = () => this.setState({ hot: -1 });
     const track = P.map(([, short], i) => {
       const av = isAv(i), hot = S.hot === i;
@@ -219,8 +251,20 @@ class Component extends DCLogic {
       num, title, desc, src, href, hover: () => this.setState({ hotA: 10 + i }), leave: () => this.setState({ hotA: -1 }),
       bg: S.hotA === 10 + i ? 'var(--ink-50)' : 'transparent', shift: S.hotA === 10 + i ? 4 : 0
     }));
+    const A3 = [
+      ['01', 'K-means', 'La función objetivo WCSS, el algoritmo de Lloyd paso a paso, k-means++ y cómo elegir k con el codo y el silhouette.', 'Alan B1 · CS4780 · ISLR Cap. 12 · ESL 14.3', 'F3-01-KMeans.dc.html'],
+      ['02', 'Análisis de componentes principales (PCA)', 'Direcciones de máxima varianza, eigenvectores y SVD, varianza explicada, loadings y por qué estandarizar.', 'Alan B2 · CS4780 · ISLR Cap. 12 · ESL 14.5', 'F3-02-PCA.dc.html'],
+      ['03', 'Mezclas gaussianas y EM', 'Clustering probabilístico con covarianzas propias, el algoritmo EM y K-means como caso límite. Elegir k con BIC.', 'ESL 8.5 · Bishop Cap. 9 · Dempster et al. (1977)', 'F3-03-GMM-EM.dc.html'],
+      ['04', 'Clustering jerárquico', 'El algoritmo aglomerativo, los cuatro criterios de enlace, el dendrograma y dónde cortarlo.', 'ISLR Cap. 12 · ESL 14.3', 'F3-04-Jerarquico.dc.html'],
+      ['05', 'DBSCAN', 'Clusters como regiones densas: puntos núcleo, frontera y ruido, y cómo elegir eps con la gráfica de k-distancias.', 'Ester et al. (1996) · Schubert et al. (2017)', 'F3-05-DBSCAN.dc.html'],
+      ['06', 't-SNE y UMAP', 'Reducción no lineal para visualizar: perplejidad, la t de Student, cómo leer un mapa sin engañarnos y en qué se distingue UMAP.', 'van der Maaten y Hinton (2008) · McInnes et al. (2018)', 'F3-06-tSNE-UMAP.dc.html']
+    ];
+    const articles3 = A3.map(([num, title, desc, src, href], i) => ({
+      num, title, desc, src, href, hover: () => this.setState({ hotA: 20 + i }), leave: () => this.setState({ hotA: -1 }),
+      bg: S.hotA === 20 + i ? 'var(--ink-50)' : 'transparent', shift: S.hotA === 20 + i ? 4 : 0
+    }));
     const g = { hover: () => this.setState({ hotA: 99 }), leave: () => this.setState({ hotA: -1 }), bg: S.hotA === 99 ? 'var(--ink-50)' : 'transparent', shift: S.hotA === 99 ? 4 : 0 };
-    return { track, trackW: 0, phases, articles, articles2, g };
+    return { track, trackW: 0, phases, articles, articles2, articles3, g };
   }
 }
 </script>

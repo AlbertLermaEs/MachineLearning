@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>t-SNE y UMAP — Fase 3</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="index.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <span style="color:var(--text-muted);font-variant-numeric:tabular-nums">Fase 3 · 06 de 06</span>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Fase 3 · No supervisado" title="t-SNE y UMAP" description="Reducción de dimensionalidad no lineal para visualizar: en lugar de conservar la varianza, conservamos quién es vecino de quién."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Actualizado el 1 oct 2026 · Fuente: van der Maaten y Hinton (2008) · McInnes et al. (2018) · Wattenberg et al. (2016)</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">1. Lo que PCA no puede hacer</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty"><a href="F3-02-PCA.dc.html">PCA</a> proyecta sobre las direcciones de mayor varianza. Es lineal y conserva bien la estructura global, pero dos grupos que en muchas dimensiones están separados pueden caer uno encima del otro en las dos primeras componentes si su separación no está en las direcciones de mayor varianza. Y si los datos viven sobre una superficie curva, ninguna proyección lineal la "desenrolla".</p>
+  <p style="margin:0 0 20px;text-wrap:pretty"><b>t-SNE</b> (<i>t-distributed stochastic neighbor embedding</i>) y <b>UMAP</b> (<i>uniform manifold approximation and projection</i>) cambian el objetivo. Buscan una configuración en 2D en la que <b>los vecinos cercanos en alta dimensión sigan siendo vecinos cercanos</b>. Lo que pase con las distancias grandes importa mucho menos. Son herramientas de visualización, y esa elección de objetivo explica tanto lo que muestran bien como las formas en que engañan.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">2. Similitudes en alta dimensión</h2>
+  <p style="margin:0 0 8px;text-wrap:pretty">Primero convertimos distancias en probabilidades. Centramos una gaussiana en cada punto <i style="font-family:var(--font-math);padding:0 2px">xᵢ</i> y definimos la probabilidad de que <i style="font-family:var(--font-math);padding:0 2px">xᵢ</i> "elija" a <i style="font-family:var(--font-math);padding:0 2px">xⱼ</i> como vecino:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,64px" display="{{ true }}" number="1" tex="p_{j|i} = \frac{\exp\!\left(-\lVert x_i - x_j \rVert^2 / 2\sigma_i^2\right)}{\sum_{k \ne i} \exp\!\left(-\lVert x_i - x_k \rVert^2 / 2\sigma_i^2\right)}, \qquad p_{ij} = \frac{p_{j|i} + p_{i|j}}{2n}"></x-import>
+  <p style="margin:0 0 8px;text-wrap:pretty">Cada punto tiene su propio ancho <i style="font-family:var(--font-math);padding:0 2px">σᵢ</i>. Lo elegimos para que la distribución <i style="font-family:var(--font-math);padding:0 2px">P<sub>i</sub></i> tenga una <b>perplejidad</b> fija, que el usuario elige:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,56px" display="{{ true }}" number="2" tex="\text{Perp}(P_i) = 2^{H(P_i)}, \qquad H(P_i) = -\sum_j p_{j|i} \log_2 p_{j|i}"></x-import>
+  <p style="margin:0 0 20px;text-wrap:pretty">La perplejidad se interpreta como el <b>número efectivo de vecinos</b>. En una región densa, <i style="font-family:var(--font-math);padding:0 2px">σᵢ</i> sale pequeño; en una dispersa, grande. Así cada punto mira aproximadamente a la misma cantidad de vecinos, sin importar la densidad local.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,560px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="300px,44px" label="Perplejidad" min="{{ 2 }}" max="{{ 60 }}" step="{{ 1 }}" width="{{ 300 }}" tone="focus" value="{{ perp }}" onChange="{{ setPerp }}" format="{{ fmtInt }}"></x-import>
+    <div style="width:100%;max-width:920px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;align-items:start">
+      <svg viewBox="0 0 600 384" width="100%" onClick="{{ pick }}" style="display:block;grid-column:span 2;min-width:0;border:1px solid var(--ink-200);border-radius:4px;cursor:pointer">
+        <sc-for list="{{ pPts }}" as="p" hint-placeholder-count="0">
+          <circle cx="{{ p.x }}" cy="{{ p.y }}" r="{{ p.r }}" style="fill:{{ p.f }};fill-opacity:{{ p.o }};stroke:var(--ink-800);stroke-opacity:{{ p.so }};stroke-width:1;transition:fill-opacity 260ms var(--ease-out),r 260ms var(--ease-out)"></circle>
+        </sc-for>
+        <circle cx="{{ sel.x }}" cy="{{ sel.y }}" r="8" style="fill:none;stroke:var(--ink-900);stroke-width:2.4"></circle>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div style="display:flex;gap:28px;flex-wrap:wrap">
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="90px,70px" label="σᵢ" value="{{ sigma }}" size="sm"></x-import>
+          <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Metric" hint-size="140px,70px" label="Masa en su propio grupo" value="{{ ownMass }}" size="sm"></x-import>
+        </div>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:120px">{{ pDesc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> Ciento sesenta puntos en diez dimensiones, de cuatro grupos, vistos en sus dos primeras componentes principales. Haz clic en un punto para elegirlo. La opacidad y el tamaño de los demás puntos muestran <i>p<sub>j|i</sub></i>: cuánto los considera vecinos el punto elegido, calculado en las diez dimensiones.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">En la figura 1, los grupos verde y morado se traslapan en las dos primeras componentes, pero en diez dimensiones están separados: con perplejidad baja, un punto de uno de ellos casi no le asigna probabilidad al otro.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">3. Similitudes en el mapa y la función objetivo</h2>
+  <p style="margin:0 0 8px;text-wrap:pretty">En el mapa de dos dimensiones, con posiciones <i style="font-family:var(--font-math);padding:0 2px">yᵢ</i>, medimos similitudes con una <b>t de Student de un grado de libertad</b> en lugar de una gaussiana:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,64px" display="{{ true }}" number="3" tex="q_{ij} = \frac{\left(1 + \lVert y_i - y_j \rVert^2\right)^{-1}}{\sum_{k \ne l} \left(1 + \lVert y_k - y_l \rVert^2\right)^{-1}}"></x-import>
+  <p style="margin:0 0 20px;text-wrap:pretty">La t tiene colas pesadas. Eso resuelve el <b>problema de aglomeración</b> (<i>crowding problem</i>): en diez dimensiones caben muchos puntos a distancia moderada de un punto dado, pero en dos no hay espacio para todos. Con colas pesadas, una distancia moderada en alta dimensión se puede representar con una distancia mayor en el mapa, y los grupos se separan.</p>
+  <p style="margin:0 0 8px;text-wrap:pretty">Buscamos las posiciones que hacen a <i style="font-family:var(--font-math);padding:0 2px">Q</i> lo más parecida posible a <i style="font-family:var(--font-math);padding:0 2px">P</i>, minimizando la divergencia de Kullback–Leibler con descenso de gradiente:</p>
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Equation" hint-size="100%,64px" display="{{ true }}" number="4" tex="C = \mathrm{KL}(P \,\Vert\, Q) = \sum_{i \ne j} p_{ij} \log \frac{p_{ij}}{q_{ij}}, \qquad \frac{\partial C}{\partial y_i} = 4 \sum_j (p_{ij} - q_{ij})\,\frac{y_i - y_j}{1 + \lVert y_i - y_j \rVert^2}"></x-import>
+  <p style="margin:0 0 20px;text-wrap:pretty">La KL es asimétrica, y eso define qué conserva t-SNE. Si dos puntos son vecinos en alta dimensión (<i style="font-family:var(--font-math);padding:0 2px">p<sub>ij</sub></i> grande) y quedan lejos en el mapa (<i style="font-family:var(--font-math);padding:0 2px">q<sub>ij</sub></i> pequeño), el costo es alto. Si están lejos en alta dimensión y quedan cerca en el mapa, el costo es pequeño. Por eso <b>la estructura local se conserva y las distancias grandes no</b>. Durante las primeras iteraciones se multiplica <i style="font-family:var(--font-math);padding:0 2px">P</i> por una constante (<i>early exaggeration</i>) para que los grupos se formen y se separen antes de afinar.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,560px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <div style="display:flex;gap:16px 24px;flex-wrap:wrap;justify-content:center;align-items:center">
+      <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="300px,44px" label="Perplejidad" min="{{ 2 }}" max="{{ 60 }}" step="{{ 1 }}" width="{{ 300 }}" tone="focus" value="{{ perp }}" onChange="{{ setPerp }}" format="{{ fmtInt }}"></x-import>
+      <button onClick="{{ restart }}" style="padding:7px 14px;border-radius:6px;border:1px solid var(--ink-800);background:var(--ink-800);font-family:var(--font-sans);font-size:14px;font-weight:600;color:var(--paper);cursor:pointer">Otra semilla</button>
+    </div>
+    <div style="width:100%;max-width:960px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--text-strong)">PCA, dos primeras componentes</div>
+        <svg viewBox="0 0 600 384" width="100%" style="display:block;border:1px solid var(--ink-200);border-radius:4px">
+          <sc-for list="{{ pcaPts }}" as="p" hint-placeholder-count="0">
+            <circle cx="{{ p.x }}" cy="{{ p.y }}" r="5" style="fill:{{ p.f }};stroke:var(--ink-800);stroke-opacity:0.35;stroke-width:1"></circle>
+          </sc-for>
+        </svg>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
+        <div style="display:flex;justify-content:space-between;gap:12px;font-size:13px"><span style="font-weight:700;color:var(--text-strong)">t-SNE</span><span style="font-family:var(--font-mono);color:var(--ink-600)">iteración {{ iter }} · KL {{ kl }}</span></div>
+        <svg viewBox="0 0 600 384" width="100%" style="display:block;border:1px solid var(--ink-200);border-radius:4px">
+          <sc-for list="{{ tPts }}" as="p" hint-placeholder-count="0">
+            <circle cx="{{ p.x }}" cy="{{ p.y }}" r="5" style="fill:{{ p.f }};stroke:var(--ink-800);stroke-opacity:0.35;stroke-width:1"></circle>
+          </sc-for>
+        </svg>
+      </div>
+    </div>
+    <div style="max-width:680px;font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:72px">{{ tDesc }}</div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 2.</b> Los mismos datos de la figura 1. A la derecha, t-SNE optimizándose en vivo desde posiciones aleatorias, con exageración temprana en las primeras cien iteraciones. Los colores son los grupos reales, que t-SNE no usa. El rojo es un grupo muy compacto, el azul muy disperso y el rojo está mucho más lejos de los demás que ellos entre sí.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">4. Cómo leer un mapa de t-SNE</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Wattenberg, Viégas y Johnson (2016) muestran con ejemplos sencillos varias trampas de lectura. La figura 2 reproduce las principales:</p>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>El tamaño de los grupos no significa nada.</b> Como <i style="font-family:var(--font-math);padding:0 2px">σᵢ</i> se adapta a la densidad local, un grupo compacto y uno disperso terminan con tamaños parecidos en el mapa. En la figura, el rojo y el azul no se distinguen por tamaño.</li>
+    <li style="text-wrap:pretty"><b>Las distancias entre grupos pueden no significar nada.</b> El rojo está mucho más lejos de los otros tres en diez dimensiones, pero en el mapa queda a una distancia parecida. PCA sí lo muestra.</li>
+    <li style="text-wrap:pretty"><b>La perplejidad cambia el resultado.</b> Con valores muy bajos, cada punto mira a muy pocos vecinos y aparecen subgrupos que no existen. Con valores cercanos al número de puntos por grupo, la estructura se estabiliza. Conviene mirar varios valores.</li>
+    <li style="text-wrap:pretty"><b>Cada corrida es distinta.</b> El objetivo no es convexo y la semilla importa. Usamos suficientes iteraciones y comparamos corridas.</li>
+    <li style="text-wrap:pretty"><b>El ruido puede parecer estructura.</b> Con perplejidad baja, datos sin grupos también producen grumos.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">5. UMAP</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">UMAP (McInnes, Healy y Melville, 2018) sigue la misma idea general con otra construcción. Primero arma un grafo de los <code>n_neighbors</code> vecinos más cercanos de cada punto, con pesos que decaen con la distancia y se normalizan por la distancia al vecino más cercano de cada punto. Después busca una disposición en 2D cuyo grafo se parezca al original, minimizando una entropía cruzada en lugar de la KL.</p>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><code>n_neighbors</code> cumple el papel de la perplejidad: valores bajos enfatizan la estructura local y valores altos la global.</li>
+    <li style="text-wrap:pretty"><code>min_dist</code> controla qué tan apretados pueden quedar los puntos en el mapa. Valores bajos producen grupos compactos.</li>
+    <li style="text-wrap:pretty">Es más rápido que t-SNE en datos grandes y tiene <code>transform</code>: puede proyectar puntos nuevos sobre un mapa ya ajustado. t-SNE en scikit-learn no lo permite.</li>
+    <li style="text-wrap:pretty">Se suele decir que conserva mejor la estructura global. Kobak y Linderman (2021) muestran que buena parte de esa diferencia viene de la inicialización: t-SNE inicializado con PCA conserva la estructura global de forma parecida.</li>
+  </ul>
+  <p style="margin:0 0 20px;text-wrap:pretty">Las advertencias de la sección 4 aplican igual a UMAP: tamaños y distancias entre grupos se leen con cuidado.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">6. PCA, t-SNE y UMAP lado a lado</h2>
+  <div style="display:grid;grid-template-columns:minmax(0,120px) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);gap:0 16px;margin:0 0 20px;border-top:2px solid var(--ink-800);border-bottom:2px solid var(--ink-800);font-size:15px;line-height:1.45">
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-400)"></div>
+    <div style="padding:10px 0;font-weight:700;border-bottom:1px solid var(--ink-400);color:var(--text-strong)">PCA</div>
+    <div style="padding:10px 0;font-weight:700;border-bottom:1px solid var(--ink-400);color:var(--text-strong)">t-SNE</div>
+    <div style="padding:10px 0;font-weight:700;border-bottom:1px solid var(--ink-400);color:var(--text-strong)">UMAP</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100);color:var(--text-strong)">Tipo</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Lineal</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">No lineal</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">No lineal</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100);color:var(--text-strong)">Conserva</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Varianza global</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Vecindades locales</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Vecindades locales, algo de global</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100);color:var(--text-strong)">Determinístico</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Sí</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">No</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">No</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100);color:var(--text-strong)">Puntos nuevos</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)"><code>transform</code></div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)">Hay que reajustar</div>
+    <div style="padding:10px 0;border-bottom:1px solid var(--ink-100)"><code>transform</code></div>
+    <div style="padding:10px 0;color:var(--text-strong)">Uso típico</div>
+    <div style="padding:10px 0">Preprocesar, comprimir, visualizar</div>
+    <div style="padding:10px 0">Visualizar</div>
+    <div style="padding:10px 0">Visualizar; a veces preprocesar</div>
+  </div>
+  <p style="margin:0 0 20px;text-wrap:pretty">Un flujo común en datos de muchas dimensiones es aplicar primero PCA a unas cincuenta componentes, para quitar ruido y acelerar, y después t-SNE o UMAP sobre esas componentes. No conviene agrupar con K-means o DBSCAN sobre las coordenadas de t-SNE y tratar los grupos como hallazgos: el mapa ya deformó tamaños y distancias.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">7. Implementación</h2>
+  <p style="margin:0 0 12px;text-wrap:pretty">t-SNE está en scikit-learn. UMAP vive en el paquete <code>umap-learn</code>, con una interfaz compatible:</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+import umap   # pip install umap-learn
+
+X_scaled = StandardScaler().fit_transform(X)
+X_pca = PCA(n_components=50).fit_transform(X_scaled)
+
+emb_tsne = TSNE(n_components=2, perplexity=30, init="pca",
+                random_state=42).fit_transform(X_pca)
+
+reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, random_state=42)
+emb_umap = reducer.fit_transform(X_pca)</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Ejercicios</h2>
+  <ol style="margin:0 0 20px;padding-left:22px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty">Aplica PCA, t-SNE y UMAP a <code>load_digits</code> (64 variables) y colorea por dígito. ¿Cuál separa mejor las clases?</li>
+    <li style="text-wrap:pretty">Corre t-SNE con perplejidad 5, 30 y 100 sobre los mismos datos y describe qué cambia.</li>
+    <li style="text-wrap:pretty">Genera datos uniformes sin estructura y aplica t-SNE con perplejidad baja. ¿Aparecen grupos?</li>
+  </ol>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Conexiones con otras fases</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty">Parte de la misma noción de vecindad que <a href="F2-01-KNN.dc.html">KNN</a> y <a href="F3-05-DBSCAN.dc.html">DBSCAN</a>.</li>
+    <li style="text-wrap:pretty">Complementa a <a href="F3-02-PCA.dc.html">PCA</a>: uno conserva la geometría global, el otro la local.</li>
+    <li style="text-wrap:pretty">En la Fase 7 usaremos t-SNE y UMAP para visualizar representaciones internas de redes neuronales y embeddings.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Fuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:16px">
+    <li>van der Maaten, L. y Hinton, G. (2008). "Visualizing data using t-SNE." <i>JMLR</i>.</li>
+    <li>McInnes, L., Healy, J. y Melville, J. (2018). "UMAP: Uniform manifold approximation and projection for dimension reduction." <i>arXiv:1802.03426</i>.</li>
+    <li><a href="https://distill.pub/2016/misread-tsne/" target="_blank">Wattenberg, M., Viégas, F. y Johnson, I. (2016). "How to use t-SNE effectively." <i>Distill</i>.</a></li>
+    <li>Kobak, D. y Linderman, G. (2021). "Initialization is critical for preserving global data structure in both t-SNE and UMAP." <i>Nature Biotechnology</i>.</li>
+    <li><a href="https://scikit-learn.org/stable/modules/manifold.html#t-sne" target="_blank">scikit-learn · 2.2.9 t-SNE</a></li>
+    <li><a href="https://umap-learn.readthedocs.io/" target="_blank">Documentación de umap-learn</a></li>
+  </ul>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F3-05-DBSCAN.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Anterior</div><div style="font-weight:600;color:var(--text-strong)">DBSCAN</div></a>
+  <a href="index.html#fase-3" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Fin de la fase →</div><div style="font-weight:600;color:var(--text-strong)">Volver al índice</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(p) {
+    super(p);
+    const r = this.rng(17), g = () => this.gauss(r), d = 10;
+    const mk = (off, sd) => { const c = Array.from({ length: d }, (_, j) => off[j] || 0); return Array.from({ length: 40 }, () => c.map(v => v + g() * sd)); };
+    const C0 = mk([16, 0, 0, 0, 0, 0, 0, 0, 0, 6], 0.5), C1 = mk([0, 6], 2.2), C2 = mk([0, -3, 0, 0, 0, 0, 0, 3.4], 0.9), C3 = mk([0, -3, 0, 0, 0, 0, 0, -3.4], 0.9);
+    this.X = [...C0, ...C1, ...C2, ...C3]; this.lab = this.X.map((_, i) => Math.floor(i / 40));
+    const n = this.X.length; this.n = n;
+    this.D2 = this.X.map(a => this.X.map(b => a.reduce((s, v, j) => s + (v - b[j]) ** 2, 0)));
+    const mu = Array.from({ length: d }, (_, j) => this.X.reduce((s, q) => s + q[j], 0) / n), Xc = this.X.map(q => q.map((v, j) => v - mu[j]));
+    const C = Array.from({ length: d }, (_, i) => Array.from({ length: d }, (_, j) => Xc.reduce((s, q) => s + q[i] * q[j], 0) / n));
+    const V = this.topEig(C, 2), sc = Xc.map(q => [q.reduce((s, v, j) => s + v * V[0][j], 0), q.reduce((s, v, j) => s + v * V[1][j], 0)]);
+    this.pca = this.fit(sc);
+    this.Pc = {}; this.seed = 1;
+    this.state = { perp: 20, sel: 50, iter: 0, Y: null, kl: null };
+  }
+  componentDidMount() { this.restart(); }
+  componentWillUnmount() { cancelAnimationFrame(this.raf); }
+  rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  topEig(C, k) {
+    const out = [], A = C.map(r => r.slice());
+    for (let m = 0; m < k; m++) {
+      let v = A.map((_, i) => 1 / (i + 1));
+      for (let it = 0; it < 300; it++) { const w = A.map(row => row.reduce((s, a, j) => s + a * v[j], 0)), nr = Math.hypot(...w); v = w.map(x => x / nr); }
+      const lam = v.reduce((s, x, i) => s + x * A[i].reduce((t, a, j) => t + a * v[j], 0), 0);
+      for (let i = 0; i < A.length; i++) for (let j = 0; j < A.length; j++) A[i][j] -= lam * v[i] * v[j];
+      out.push(v);
+    }
+    return out;
+  }
+  fit(Y) {
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity; Y.forEach(q => { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); });
+    const s = Math.min(560 / ((x1 - x0) || 1), 344 / ((y1 - y0) || 1)), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    return Y.map(q => [300 + (q[0] - cx) * s, 192 - (q[1] - cy) * s]);
+  }
+  condP(perp) {
+    if (this.Pc[perp]) return this.Pc[perp];
+    const n = this.n, H = Math.log(perp), P = [], sig = [];
+    for (let i = 0; i < n; i++) {
+      let beta = 1, lo = -Infinity, hi = Infinity, row;
+      for (let it = 0; it < 60; it++) {
+        let s = 0; row = this.D2[i].map((d, j) => { const v = j === i ? 0 : Math.exp(-d * beta); s += v; return v; });
+        let h = 0; row = row.map(v => v / s); row.forEach((v, j) => { if (v > 1e-12) h -= v * Math.log(v); });
+        if (Math.abs(h - H) < 1e-5) break;
+        if (h > H) { lo = beta; beta = hi === Infinity ? beta * 2 : (beta + hi) / 2; } else { hi = beta; beta = lo === -Infinity ? beta / 2 : (beta + lo) / 2; }
+      }
+      P.push(row); sig.push(Math.sqrt(1 / (2 * beta)));
+    }
+    return (this.Pc[perp] = { P, sig });
+  }
+  restart() {
+    cancelAnimationFrame(this.raf);
+    const n = this.n, { P } = this.condP(this.state.perp), r = this.rng(this.seed * 101);
+    this.Pj = Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => Math.max((P[i][j] + P[j][i]) / (2 * n), 1e-12)));
+    this.Y = Array.from({ length: n }, () => [this.gauss(r) * 1e-2, this.gauss(r) * 1e-2]);
+    this.st = this.Y.map(() => [0, 0]); this.gn = this.Y.map(() => [1, 1]); this.it = 0;
+    this.setState({ iter: 0, Y: this.Y.map(q => q.slice()), kl: null });
+    const loop = () => { for (let k = 0; k < 8 && this.it < 1000; k++) this.step(); this.setState({ iter: this.it, Y: this.Y.map(q => q.slice()), kl: this.it % 40 === 0 || this.it >= 1000 ? this.cost() : this.state.kl }); if (this.it < 1000) this.raf = requestAnimationFrame(loop); };
+    this.raf = requestAnimationFrame(loop);
+  }
+  step() {
+    const n = this.n, Y = this.Y, P = this.Pj, ex = this.it < 100 ? 4 : 1, mom = this.it < 250 ? 0.5 : 0.8;
+    const num = Array.from({ length: n }, () => new Float64Array(n)); let Z = 0;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const v = 1 / (1 + (Y[i][0] - Y[j][0]) ** 2 + (Y[i][1] - Y[j][1]) ** 2); num[i][j] = num[j][i] = v; Z += 2 * v; }
+    const gr = Y.map(() => [0, 0]);
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { if (i === j) continue; const q = num[i][j] / Z, m = 4 * (ex * P[i][j] - q) * num[i][j]; gr[i][0] += m * (Y[i][0] - Y[j][0]); gr[i][1] += m * (Y[i][1] - Y[j][1]); }
+    let mx = 0, my = 0;
+    for (let i = 0; i < n; i++) for (let d = 0; d < 2; d++) {
+      const gid = gr[i][d], sid = this.st[i][d]; let gain = this.gn[i][d];
+      gain = Math.sign(gid) === Math.sign(sid) ? gain * 0.8 : gain + 0.2; if (gain < 0.01) gain = 0.01; this.gn[i][d] = gain;
+      const ns = mom * sid - 10 * gain * gid; this.st[i][d] = ns; Y[i][d] += ns;
+    }
+    Y.forEach(q => { mx += q[0]; my += q[1]; }); mx /= n; my /= n; Y.forEach(q => { q[0] -= mx; q[1] -= my; });
+    this.it++;
+  }
+  cost() {
+    const n = this.n, Y = this.Y, P = this.Pj; let Z = 0; const num = [];
+    for (let i = 0; i < n; i++) { num.push([]); for (let j = 0; j < n; j++) { const v = i === j ? 0 : 1 / (1 + (Y[i][0] - Y[j][0]) ** 2 + (Y[i][1] - Y[j][1]) ** 2); num[i].push(v); Z += v; } }
+    let c = 0; for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (i !== j) c += P[i][j] * Math.log(P[i][j] / Math.max(num[i][j] / Z, 1e-12));
+    return c;
+  }
+  renderVals() {
+    const S = this.state, CAT = ['var(--cat-1)', 'var(--cat-6)', 'var(--cat-8)', 'var(--cat-3)'], NM = ['rojo', 'azul', 'verde', 'morado'];
+    const { P, sig } = this.condP(S.perp), row = P[S.sel], mx = Math.max(...row);
+    const pPts = this.pca.map((q, j) => { const w = j === S.sel ? 1 : Math.pow(row[j] / mx, 0.35); return { x: q[0].toFixed(1), y: q[1].toFixed(1), r: (2.5 + 4.5 * Math.sqrt(w)).toFixed(2), f: CAT[this.lab[j]], o: (0.2 + 0.8 * w).toFixed(3), so: (0.1 + 0.4 * w).toFixed(3) }; });
+    const own = row.reduce((s, v, j) => s + (this.lab[j] === this.lab[S.sel] ? v : 0), 0), lb = this.lab[S.sel];
+    const pDesc = `El punto elegido es del grupo ${NM[lb]}. Con perplejidad ${S.perp}, su gaussiana tiene ancho σ = ${sig[S.sel].toFixed(2)} y reparte el ${Math.round(own * 100)} % de su probabilidad entre puntos de su propio grupo. ` + (S.perp >= 40 ? 'Con 40 puntos por grupo, una perplejidad así obliga a la gaussiana a abrirse hasta alcanzar otros grupos.' : lb === 1 ? 'El grupo azul es disperso, así que σ sale más grande que en los grupos compactos para alcanzar el mismo número efectivo de vecinos.' : lb === 0 ? 'El grupo rojo es muy compacto: σ sale pequeño.' : 'Compara con un punto del grupo azul: es más disperso y necesita un σ mayor.');
+    const sp = this.pca[S.sel];
+    const Y = S.Y ? this.fit(S.Y) : this.pca.map(() => [300, 192]);
+    const tDesc = S.iter < 100 ? 'Exageración temprana: P multiplicada por 4. Los grupos se compactan y se separan rápido.'
+      : S.iter < 1000 ? 'Afinando con la P original. Las posiciones dentro de cada grupo se reacomodan y la KL sigue bajando.'
+      : S.perp <= 4 ? `Con perplejidad ${S.perp}, cada punto mira a muy pocos vecinos y los grupos se rompen en grumos que no existen en los datos.` : `Terminó. Los cuatro grupos aparecen separados con tamaños parecidos, aunque el azul es mucho más disperso que el rojo, y el rojo no se ve más lejano que los demás. PCA, a la izquierda, sí muestra esa distancia pero junta al verde con el morado.`;
+    return {
+      perp: S.perp, setPerp: v => { const pv = Math.round(v); if (pv !== this.state.perp) this.setState({ perp: pv }, () => { clearTimeout(this.tmo); this.tmo = setTimeout(() => this.restart(), 250); }); }, fmtInt: v => String(Math.round(v)),
+      pick: e => { const bb = e.currentTarget.getBoundingClientRect(), x = (e.clientX - bb.left) / bb.width * 600, y = (e.clientY - bb.top) / bb.height * 384; let b = 0, bd = Infinity; this.pca.forEach((q, i) => { const d = (q[0] - x) ** 2 + (q[1] - y) ** 2; if (d < bd) { bd = d; b = i; } }); this.setState({ sel: b }); },
+      pPts, sel: { x: sp[0].toFixed(1), y: sp[1].toFixed(1) }, sigma: sig[S.sel].toFixed(2), ownMass: Math.round(own * 100) + ' %', pDesc,
+      restart: () => { this.seed++; this.restart(); },
+      pcaPts: this.pca.map((q, i) => ({ x: q[0].toFixed(1), y: q[1].toFixed(1), f: CAT[this.lab[i]] })),
+      tPts: Y.map((q, i) => ({ x: q[0].toFixed(1), y: q[1].toFixed(1), f: CAT[this.lab[i]] })),
+      iter: String(S.iter), kl: S.kl == null ? '—' : S.kl.toFixed(3), tDesc
+    };
+  }
+}
+</script>
+</body>
+</html>

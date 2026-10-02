@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>K-means · Ejemplos por modelo</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="index.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <a href="F12-Guia-Sklearn.dc.html" style="color:var(--text-muted);text-decoration:none">Fase 12 · Ejemplos por modelo</a>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Ejemplos por modelo · Fase 3" title="K-means" description="Agrupamos las flores de iris sin usar la especie. Primero ajustamos KMeans con datos escalados; después vemos qué k prefieren las métricas y qué tanto se parecen los grupos a las especies reales."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Teoría: <a href="F3-01-KMeans.dc.html">Fase 3 · K-means</a> · scikit-learn 1.9.1</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">1. El dataset</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Usamos otra vez <code>load_iris</code>, ahora sin mirar <code>y</code> para ajustar. Es un buen caso de prueba para clustering porque sí conocemos la respuesta: después de agrupar podemos comparar contra las tres especies y ver qué tanto recuperó el algoritmo por su cuenta.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.datasets import load_iris
+
+X, y = load_iris(return_X_y=True, as_frame=True)
+X.shape    # (150, 4); y solo se usa al final para comparar</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">2. Código paso a paso</h2>
+  <p style="margin:0 0 12px;text-wrap:pretty">Primero escalamos. K-means minimiza distancias euclidianas al cuadrado, así que una variable con más rango pesaría más. En clustering no hay train y test: ajustamos con todos los datos.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.preprocessing import StandardScaler
+
+X_esc = StandardScaler().fit_transform(X)</pre>
+  <p style="margin:0 0 12px;text-wrap:pretty">Después ajustamos. <code>n_init</code> repite el algoritmo con distintas inicializaciones k-means++ y se queda con la de menor inercia; <code>"auto"</code> usa una sola corrida con k-means++.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.cluster import KMeans
+
+km = KMeans(n_clusters=3, n_init=10, random_state=42)
+etiquetas = km.fit_predict(X_esc)
+km.cluster_centers_   # (3, 4), en escala estandarizada
+km.inertia_           # suma de distancias² al centroide
+km.n_iter_            # iteraciones de Lloyd</pre>
+  <p style="margin:0 0 12px;text-wrap:pretty">Finalmente, evaluamos. Sin etiquetas usamos silhouette; aquí, como sí las tenemos, también comparamos con ARI, que vale 1 si los grupos coinciden con las especies y alrededor de 0 si son aleatorios.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.metrics import silhouette_score, adjusted_rand_score
+
+silhouette_score(X_esc, etiquetas)
+adjusted_rand_score(y, etiquetas)</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">3. Elegir k</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty"><code>inertia_</code> siempre baja al subir k, así que no sirve sola para elegir. Silhouette compara, para cada punto, la distancia media a su propio cluster con la del cluster vecino más cercano.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,600px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <div style="display:flex;gap:16px 28px;flex-wrap:wrap;justify-content:center;align-items:center"><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="300px,44px" label="n_clusters" min="{{ 1 }}" max="{{ 8 }}" step="{{ 1 }}" width="{{ 300 }}" tone="focus" value="{{ k }}" onChange="{{ setK }}" format="{{ fmtK }}"></x-import><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="240px,32px" options="{{ colOpts }}" value="{{ color }}" onChange="{{ setColor }}"></x-import></div>
+    <div style="width:100%;max-width:920px;display:flex;flex-wrap:wrap;gap:28px;align-items:center;justify-content:center">
+      <svg viewBox="0 0 640 340" width="100%"  style="display:block;overflow:visible;flex:2 1 460px;min-width:0;max-width:640px">
+        <sc-for list="{{ pts }}" as="p" hint-placeholder-count="0"><circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="3.6" style="fill:{{ p.f }};fill-opacity:0.75;transition:fill 320ms var(--ease-out)"></circle></sc-for>
+        <sc-for list="{{ cents }}" as="c" hint-placeholder-count="0"><path d="{{ c.d }}" style="fill:none;stroke:var(--ink-900);stroke-width:2.5;stroke-linecap:round"></path></sc-for>
+        <defs><clipPath id="pc"><rect x="50" y="14" width="570" height="286"></rect></clipPath></defs>
+        <line x1="50" y1="300" x2="620" y2="300" style="stroke:var(--ink-400);stroke-width:1"></line>
+        <line x1="50" y1="14" x2="50" y2="300" style="stroke:var(--ink-400);stroke-width:1"></line>
+        <text x="90.7" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">1</text><text x="172.1" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">2</text><text x="253.6" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">3</text><text x="335.0" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">4</text><text x="416.4" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">5</text><text x="497.9" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">6</text><text x="579.3" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">7</text>
+        <text x="42" y="304.0" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">0</text><text x="42" y="222.3" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">1</text><text x="42" y="140.6" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">2</text><text x="42" y="58.9" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">3</text>
+        <text x="620" y="334" text-anchor="end" style="font-size:13px;fill:var(--ink-600)">largo del pétalo (cm)</text>
+        <text x="56" y="10" style="font-size:13px;fill:var(--ink-600)">ancho del pétalo (cm)</text>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0;flex:1 1 240px">
+        <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;align-items:baseline;font-size:14px">
+          <span style="color:var(--ink-700)">inertia_</span><span style="font-family:var(--font-mono);color:var(--ink-900);overflow-wrap:anywhere">{{ inertia }}</span>
+          <span style="color:var(--ink-700)">silhouette_score</span><span style="font-family:var(--font-mono);color:var(--ink-900);overflow-wrap:anywhere">{{ sil }}</span>
+          <span style="color:var(--ink-700)">adjusted_rand_score</span><span style="font-family:var(--font-mono);color:var(--ink-900);overflow-wrap:anywhere">{{ ari }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:13px;font-weight:700;color:var(--ink-600)">Silhouette por k</span>
+        <svg viewBox="0 0 280 92" width="100%" style="display:block;max-width:280px">
+          <sc-for list="{{ silBars }}" as="b" hint-placeholder-count="0"><rect x="{{ b.x }}" y="{{ b.y }}" width="24" height="{{ b.h }}" rx="2" style="fill:{{ b.f }};transition:fill 240ms var(--ease-out)"></rect><text x="{{ b.tx }}" y="88" text-anchor="middle" style="font-size:11px;fill:var(--ink-500)">{{ b.k }}</text></sc-for>
+          <line x1="0" y1="70.5" x2="280" y2="70.5" style="stroke:var(--ink-400);stroke-width:1"></line>
+        </svg></div>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:96px">{{ desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> <code>KMeans</code> con k-means++ y cinco inicializaciones sobre largo y ancho del pétalo; las cruces son <code>cluster_centers_</code>. Usamos 150 flores simuladas con la media y la desviación de cada especie; los clusters y las tres métricas se calculan en vivo. ARI usa la especie, que en un problema real no tendríamos.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">El silhouette y la respuesta correcta no tienen por qué coincidir. Silhouette premia grupos compactos y separados; si dos especies se tocan, para el algoritmo son un solo grupo. Elegir k es una decisión que combina métricas con lo que sabemos del problema.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">for k in range(2, 9):
+    km = KMeans(n_clusters=k, n_init=10, random_state=42).fit(X_esc)
+    print(k, round(km.inertia_, 1),
+          round(silhouette_score(X_esc, km.labels_), 3))</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">4. Cómo interpretar la salida</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Los números de cluster son arbitrarios: el cluster 0 de una corrida puede ser el 2 de otra. Para describirlos miramos los centroides en las unidades originales y una tabla cruzada contra lo que sepamos de los datos.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">import pandas as pd
+
+esc = StandardScaler().fit(X)
+km = KMeans(n_clusters=3, n_init=10, random_state=42).fit(esc.transform(X))
+pd.DataFrame(esc.inverse_transform(km.cluster_centers_), columns=X.columns)
+pd.crosstab(y, km.labels_)   # filas: especie, columnas: cluster</pre>
+  <p style="margin:0 0 20px;text-wrap:pretty">KMeans tiene <code>predict</code>: asigna un punto nuevo al centroide más cercano. Por eso puede ir dentro de un pipeline y aplicarse a datos que llegan después, a diferencia de DBSCAN o del clustering jerárquico.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">5. Errores frecuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>No escalar.</b> Con variables en unidades distintas, los clusters se forman casi solo sobre la de mayor rango.</li>
+    <li style="text-wrap:pretty"><b>Leer el número de cluster como una clase.</b> <code>labels_</code> no tiene orden ni significado; para compararlo con etiquetas usamos ARI o una tabla cruzada, nunca accuracy directo.</li>
+    <li style="text-wrap:pretty"><b>Elegir k con la inercia.</b> Siempre baja al subir k. Usamos el codo, silhouette o conocimiento del problema.</li>
+    <li style="text-wrap:pretty"><b>Una sola inicialización.</b> Lloyd converge a un mínimo local. <code>n_init</code> mayor que 1 reduce el riesgo.</li>
+    <li style="text-wrap:pretty"><b>Usarlo con grupos alargados o de densidad distinta.</b> K-means supone grupos redondos de tamaño parecido. Para otras formas están GMM, DBSCAN o el clustering jerárquico.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Fuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:16px">
+    <li><a href="https://scikit-learn.org/stable/modules/clustering.html#k-means" target="_blank">scikit-learn · 2.3.2 K-means</a></li>
+    <li><a href="https://scikit-learn.org/stable/modules/clustering.html#silhouette-coefficient" target="_blank">scikit-learn · Silhouette Coefficient</a></li>
+    <li><a href="https://scikit-learn.org/stable/modules/clustering.html#rand-index" target="_blank">scikit-learn · Rand index</a></li>
+  </ul>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F12-Ej-Perceptron.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Anterior</div><div style="font-weight:600;color:var(--text-strong)">Perceptrón</div></a>
+  <a href="F12-Ej-PCA.dc.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Siguiente →</div><div style="font-weight:600;color:var(--text-strong)">PCA</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { k: 3, color: 'clu' };
+  rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  data() {
+    if (this._d) return this._d;
+    const r = this.rng(3), g = () => this.gauss(r), S = [[1.46, .17, .25, .10, .33], [4.26, .47, 1.33, .20, .79], [5.55, .55, 2.03, .27, .32]], X = [], y = [];
+    S.forEach(([ml, sl, mw, sw, rho], c) => { for (let i = 0; i < 50; i++) { const a = g(), b = g(); X.push([Math.max(1, ml + sl * a), Math.max(0.1, mw + sw * (rho * a + Math.sqrt(1 - rho * rho) * b))]); y.push(c); } });
+    const D = X.map(a => X.map(b => Math.hypot(a[0] - b[0], a[1] - b[1])));
+    return (this._d = { X, y, D });
+  }
+  kmeans(X, k, seed) {
+    const r = this.rng(seed), n = X.length, d2 = (a, b) => (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2;
+    const C = [X[Math.floor(r() * n)].slice()];
+    while (C.length < k) { const w = X.map(p => Math.min(...C.map(c => d2(p, c)))), s = w.reduce((a, b) => a + b, 0); let u = r() * s, i = 0; while (u > w[i] && i < n - 1) { u -= w[i]; i++; } C.push(X[i].slice()); }
+    let lab = new Array(n).fill(-1);
+    for (let it = 0; it < 100; it++) {
+      const nl = X.map(p => { let b = 0; for (let j = 1; j < k; j++) if (d2(p, C[j]) < d2(p, C[b])) b = j; return b; });
+      const same = nl.every((v, i) => v === lab[i]); lab = nl; if (same) break;
+      for (let j = 0; j < k; j++) { const m = X.filter((_, i) => lab[i] === j); if (m.length) C[j] = [m.reduce((s, p) => s + p[0], 0) / m.length, m.reduce((s, p) => s + p[1], 0) / m.length]; }
+    }
+    return { C, lab, inertia: X.reduce((s, p, i) => s + d2(p, C[lab[i]]), 0) };
+  }
+  sil(lab, k) {
+    const { D } = this.data(), n = lab.length; let tot = 0;
+    for (let i = 0; i < n; i++) {
+      const sum = new Array(k).fill(0), cnt = new Array(k).fill(0);
+      for (let j = 0; j < n; j++) if (j !== i) { sum[lab[j]] += D[i][j]; cnt[lab[j]]++; }
+      if (!cnt[lab[i]]) continue;
+      const a = sum[lab[i]] / cnt[lab[i]]; let b = Infinity;
+      for (let c = 0; c < k; c++) if (c !== lab[i] && cnt[c]) b = Math.min(b, sum[c] / cnt[c]);
+      tot += (b - a) / Math.max(a, b);
+    }
+    return tot / n;
+  }
+  ari(a, b) {
+    const n = a.length, c2 = x => x * (x - 1) / 2, T = {}, A = {}, B = {};
+    a.forEach((v, i) => { const key = v + ',' + b[i]; T[key] = (T[key] || 0) + 1; A[v] = (A[v] || 0) + 1; B[b[i]] = (B[b[i]] || 0) + 1; });
+    const sij = Object.values(T).reduce((s, x) => s + c2(x), 0), sa = Object.values(A).reduce((s, x) => s + c2(x), 0), sb = Object.values(B).reduce((s, x) => s + c2(x), 0), e = sa * sb / c2(n), mx = (sa + sb) / 2;
+    return mx === e ? 0 : (sij - e) / (mx - e);
+  }
+  fits() {
+    if (this._f) return this._f;
+    const { X, y } = this.data(), F = {};
+    for (let k = 1; k <= 8; k++) {
+      let best = null;
+      for (let s = 1; s <= 5; s++) { const f = this.kmeans(X, k, s * 31 + k); if (!best || f.inertia < best.inertia) best = f; }
+      const order = best.C.map((c, j) => j).sort((i, j) => best.C[i][0] - best.C[j][0]), re = []; order.forEach((j, r) => re[j] = r);
+      const lab = best.lab.map(l => re[l]), C = order.map(j => best.C[j]);
+      F[k] = { lab, C, inertia: best.inertia, sil: k > 1 ? this.sil(lab, k) : null, ari: this.ari(lab, y) };
+    }
+    return (this._f = F);
+  }
+  renderVals() {
+    const S = this.state, { X, y } = this.data(), F = this.fits(), f = F[S.k];
+    const CAT = ['var(--cat-1)', 'var(--cat-6)', 'var(--cat-8)', 'var(--cat-3)', 'var(--cat-10)', 'var(--cat-12)', 'var(--cat-5)', 'var(--cat-14)'], SPC = ['var(--cat-1)', 'var(--cat-6)', 'var(--cat-8)'];
+    const px = x => 50 + (x - .5) / 7 * 570, py = v => 300 - v / 3.5 * 286;
+    const pts = X.map((p, i) => ({ cx: px(p[0]).toFixed(1), cy: py(p[1]).toFixed(1), f: S.color === 'clu' ? CAT[f.lab[i]] : SPC[y[i]] }));
+    const cents = S.color === 'clu' ? f.C.map(c => ({ d: `M${(px(c[0]) - 7).toFixed(1)},${py(c[1]).toFixed(1)}h14M${px(c[0]).toFixed(1)},${(py(c[1]) - 7).toFixed(1)}v14` })) : [];
+    const ks = [2, 3, 4, 5, 6, 7, 8], sils = ks.map(k => F[k].sil), smax = Math.max(...sils), bestS = ks[sils.indexOf(smax)];
+    const aris = ks.map(k => F[k].ari), bestA = ks[aris.indexOf(Math.max(...aris))];
+    const silBars = ks.map((k, i) => { const h = Math.max(0, sils[i]) / smax * 60; return { x: (i * 40 + 6).toFixed(0), y: (70 - h).toFixed(1), h: h.toFixed(1), tx: (i * 40 + 18).toFixed(0), k, f: k === S.k ? 'var(--iris-400)' : 'var(--ink-200)' }; });
+    let desc = S.k === 1 ? 'Con k = 1 todo es un solo cluster: inertia_ es la dispersión total alrededor de la media y no hay silhouette.'
+      : `Con k = ${S.k}: inertia_ = ${f.inertia.toFixed(1)}, silhouette = ${f.sil.toFixed(3)} y ARI contra la especie = ${f.ari.toFixed(3)}.`;
+    if (S.k === bestS) desc += ' Es el k con mejor silhouette.';
+    if (S.k === bestA) desc += ' Es el k que mejor recupera las especies.';
+    if (S.k > 1 && bestS !== bestA && (S.k === bestS || S.k === bestA)) desc += ` El silhouette prefiere k = ${bestS}, pero las especies son ${bestA === 3 ? 'tres' : bestA}: versicolor y virginica se traslapan y, sin etiquetas, parecen un solo grupo.`;
+    return {
+      k: S.k, setK: v => this.setState({ k: Math.round(v) }), fmtK: v => String(Math.round(v)),
+      colOpts: [{ value: 'clu', label: 'labels_' }, { value: 'sp', label: 'Especie real' }], color: S.color, setColor: v => this.setState({ color: v }),
+      pts, cents, silBars, inertia: f.inertia.toFixed(1), sil: f.sil == null ? '—' : f.sil.toFixed(3), ari: f.ari.toFixed(3), desc
+    };
+  }
+}
+</script>
+</body>
+</html>

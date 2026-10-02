@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Clustering jerárquico · Ejemplos por modelo</title>
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/colors.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/typography.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/motion.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/tokens/base.css">
+<link rel="stylesheet" href="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/styles.css">
+<script src="_ds/marginalia-design-system-e96b41e4-d9ae-45e1-9e04-1ac9fc0024df/_ds_bundle.js"></script>
+<style>body{margin:0}a{color:var(--text-link)}a:hover{color:var(--text-link-hover)}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--paper);font-family:var(--font-sans);color:var(--text-body)">
+
+<nav style="max-width:960px;margin:0 auto;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;gap:16px;border-bottom:1px solid var(--border-rule);font-size:14px">
+  <a href="index.html" style="font-weight:700;text-decoration:none;color:var(--text-strong)">Curso de Machine Learning</a>
+  <a href="F12-Guia-Sklearn.dc.html" style="color:var(--text-muted);text-decoration:none">Fase 12 · Ejemplos por modelo</a>
+</nav>
+
+<div style="padding:72px 24px 24px">
+  <x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.ArticleHeader" hint-size="100%,200px" kicker="Ejemplos por modelo · Fase 3" title="Clustering jerárquico" description="Agrupamos dos medias lunas uniendo puntos de abajo hacia arriba. Primero ajustamos AgglomerativeClustering; después comparamos los cuatro criterios de enlace y vemos cómo los afecta el ruido."></x-import>
+  <p style="max-width:960px;margin:12px auto 0;font-size:14px;color:var(--text-subtle)">Teoría: <a href="F3-04-Jerarquico.dc.html">Fase 3 · Clustering jerárquico</a> · scikit-learn 1.9.1</p>
+</div>
+
+<article style="max-width:680px;margin:0 auto;padding:24px 24px 0;font-size:18px;line-height:1.65">
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:32px 0 16px;color:var(--text-strong)">1. El dataset</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">Para este ejemplo generamos los datos con <code>make_moons</code>: dos medias lunas entrelazadas. Ningún método que busque grupos redondos las separa bien, y por eso sirven para ver en qué se distinguen los criterios de enlace. <code>noise</code> es la desviación estándar del ruido gaussiano que se suma a cada punto.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.datasets import make_moons
+
+X, y = make_moons(n_samples=120, noise=0.08, random_state=0)
+X.shape    # (120, 2); y solo para comparar al final</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">2. Código paso a paso</h2>
+  <p style="margin:0 0 12px;text-wrap:pretty">Primero ajustamos. Las dos variables ya están en la misma escala; con datos reales escalaríamos antes. <code>AgglomerativeClustering</code> no tiene <code>predict</code>: las etiquetas salen del mismo ajuste.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.cluster import AgglomerativeClustering
+
+hc = AgglomerativeClustering(n_clusters=2, linkage="single")
+etiquetas = hc.fit_predict(X)
+hc.n_leaves_, hc.children_.shape   # 120 hojas, 119 fusiones</pre>
+  <p style="margin:0 0 12px;text-wrap:pretty">Después comparamos contra las lunas reales con ARI, igual que en K-means.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from sklearn.metrics import adjusted_rand_score
+
+adjusted_rand_score(y, etiquetas)</pre>
+  <p style="margin:0 0 12px;text-wrap:pretty">Si en vez de fijar el número de clusters queremos cortar el dendrograma a una altura, pasamos <code>distance_threshold</code> con <code>n_clusters=None</code>.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">hc = AgglomerativeClustering(n_clusters=None, distance_threshold=0.5,
+                             linkage="single").fit(X)
+hc.n_clusters_          # cuántos clusters quedaron bajo esa altura
+hc.distances_[-5:]      # alturas de las últimas fusiones</pre>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">3. Criterio de enlace</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty"><code>linkage</code> define la distancia entre dos grupos y cambia por completo el resultado. Con <code>"single"</code> y poco ruido, el enlace sigue cada luna punto a punto; al subir el ruido, aparecen puntos sueltos entre las lunas.</p>
+</article>
+
+<x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Figure" hint-size="100%,620px" width="page">
+  <div style="width:100%;display:flex;flex-direction:column;gap:18px;align-items:center">
+    <div style="display:flex;gap:16px 28px;flex-wrap:wrap;justify-content:center;align-items:center"><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="360px,32px" options="{{ linkOpts }}" value="{{ link }}" onChange="{{ setLink }}"></x-import><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.SegmentedControl" hint-size="260px,32px" options="{{ noiseOpts }}" value="{{ noise }}" onChange="{{ setNoise }}"></x-import><x-import component-from-global-scope="MarginaliaDesignSystem_e96b41.Slider" hint-size="300px,44px" label="n_clusters" min="{{ 2 }}" max="{{ 6 }}" step="{{ 1 }}" width="{{ 300 }}" tone="focus" value="{{ m }}" onChange="{{ setM }}" format="{{ fmtM }}"></x-import></div>
+    <div style="width:100%;max-width:920px;display:flex;flex-wrap:wrap;gap:28px;align-items:center;justify-content:center">
+      <svg viewBox="0 0 640 340" width="100%"  style="display:block;overflow:visible;flex:2 1 460px;min-width:0;max-width:640px">
+        <sc-for list="{{ pts }}" as="p" hint-placeholder-count="0"><circle cx="{{ p.cx }}" cy="{{ p.cy }}" r="3.8" style="fill:{{ p.f }};fill-opacity:0.8;transition:fill 320ms var(--ease-out)"></circle></sc-for>
+        <defs><clipPath id="pc"><rect x="50" y="14" width="570" height="286"></rect></clipPath></defs>
+        <line x1="50" y1="300" x2="620" y2="300" style="stroke:var(--ink-400);stroke-width:1"></line>
+        <line x1="50" y1="14" x2="50" y2="300" style="stroke:var(--ink-400);stroke-width:1"></line>
+        <text x="121.3" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">-1</text><text x="263.8" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">0</text><text x="406.3" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">1</text><text x="548.8" y="316" text-anchor="middle" style="font-size:12px;fill:var(--ink-500)">2</text>
+        <text x="42" y="304.0" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">-1</text><text x="42" y="246.8" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">-0.5</text><text x="42" y="189.6" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">0</text><text x="42" y="132.4" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">0.5</text><text x="42" y="75.2" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">1</text><text x="42" y="18.0" text-anchor="end" style="font-size:12px;fill:var(--ink-500)">1.5</text>
+        <text x="620" y="334" text-anchor="end" style="font-size:13px;fill:var(--ink-600)">x₁</text>
+        <text x="56" y="10" style="font-size:13px;fill:var(--ink-600)">x₂</text>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0;flex:1 1 240px">
+        <div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;align-items:baseline;font-size:14px">
+          <span style="color:var(--ink-700)">tamaños</span><span style="font-family:var(--font-mono);color:var(--ink-900);overflow-wrap:anywhere">{{ sizes }}</span>
+          <span style="color:var(--ink-700)">ARI contra las lunas</span><span style="font-family:var(--font-mono);color:var(--ink-900);overflow-wrap:anywhere">{{ ari }}</span>
+        </div>
+        <div style="font-size:16px;line-height:1.55;color:var(--text-muted);text-wrap:pretty;min-height:96px">{{ desc }}</div>
+      </div>
+    </div>
+    <figcaption style="max-width:680px;width:100%;margin:0 auto;font-size:14px;line-height:1.45;color:var(--text-muted);text-wrap:pretty"><b style="color:var(--text-body)">Figura 1.</b> <code>AgglomerativeClustering</code> con los cuatro criterios de enlace sobre <code>make_moons(n_samples=120, noise=…)</code>. Los colores van del cluster más grande al más chico. El algoritmo completo corre en vivo en el navegador.</figcaption>
+  </div>
+</x-import>
+
+<article style="max-width:680px;margin:0 auto;padding:0 24px;font-size:18px;line-height:1.65">
+  <p style="margin:0 0 20px;text-wrap:pretty">Single es el único que recupera formas no convexas, pero es el más frágil: con ruido, la última fusión puede ser un punto aislado en vez de la otra luna, o un puente de puntos puede unir las dos. Es el efecto cadena que vimos en la teoría. Los otros tres criterios prefieren grupos compactos y cortan las lunas.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">4. Cómo interpretar la salida</h2>
+  <p style="margin:0 0 20px;text-wrap:pretty">El dendrograma no lo dibuja scikit-learn. La forma directa es con SciPy, que usa los mismos criterios de enlace. La altura de cada unión es la distancia entre los grupos que se fusionaron; un salto grande entre alturas consecutivas sugiere dónde cortar.</p>
+  <pre style="margin:0 0 24px;padding:16px 18px;background:var(--ink-50);border-radius:6px;font-family:var(--font-mono);font-size:14px;line-height:1.6;color:var(--ink-900);overflow-x:auto">from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
+import matplotlib.pyplot as plt
+
+Z = linkage(X, method="ward")
+dendrogram(Z, truncate_mode="lastp", p=20)
+plt.show()
+
+etiquetas = fcluster(Z, t=2, criterion="maxclust")   # de 1 a 2</pre>
+  <p style="margin:0 0 20px;text-wrap:pretty"><code>children_</code> guarda las fusiones en orden: en el paso <i style="font-family:var(--font-math);padding:0 2px">i</i> se unen los nodos <code>children_[i]</code>. Los índices menores que <i style="font-family:var(--font-math);padding:0 2px">n</i> son puntos originales; los mayores, grupos creados en pasos anteriores.</p>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">5. Errores frecuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:10px">
+    <li style="text-wrap:pretty"><b>Usar ward con otra métrica.</b> Ward solo funciona con distancia euclidiana. Para otras métricas usamos <code>"average"</code> o <code>"complete"</code> con <code>metric=</code>.</li>
+    <li style="text-wrap:pretty"><b>Elegir single sin mirar el ruido.</b> Un solo puente de puntos une dos grupos. Revisamos los tamaños de los clusters: uno de tamaño 1 es una señal.</li>
+    <li style="text-wrap:pretty"><b>Esperar predict.</b> Para asignar puntos nuevos, entrenamos un clasificador (por ejemplo KNN) con <code>X</code> y las etiquetas obtenidas.</li>
+    <li style="text-wrap:pretty"><b>Aplicarlo a datos grandes.</b> Necesita la matriz de distancias completa: memoria cuadrática en el número de puntos. Para decenas de miles, una opción es pasar <code>connectivity</code> con un grafo de vecinos.</li>
+    <li style="text-wrap:pretty"><b>Comparar alturas entre criterios.</b> La escala de <code>distances_</code> depende del enlace; ward da alturas mucho mayores que single.</li>
+  </ul>
+
+  <h2 style="font-size:26px;line-height:1.25;letter-spacing:-0.012em;margin:56px 0 16px;color:var(--text-strong)">Fuentes</h2>
+  <ul style="margin:0 0 20px;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:16px">
+    <li><a href="https://scikit-learn.org/stable/modules/clustering.html#hierarchical-clustering" target="_blank">scikit-learn · 2.3.6 Hierarchical clustering</a></li>
+    <li><a href="https://scikit-learn.org/stable/modules/generated/sklearn.cluster.AgglomerativeClustering.html" target="_blank">scikit-learn · AgglomerativeClustering</a></li>
+    <li><a href="https://docs.scipy.org/doc/scipy/reference/cluster.hierarchy.html" target="_blank">SciPy · Hierarchical clustering</a></li>
+  </ul>
+</article>
+
+<nav style="max-width:680px;margin:72px auto 0;padding:20px 24px 96px;display:grid;grid-template-columns:1fr 1fr;gap:24px;border-top:1px solid var(--border-rule);font-size:15px">
+  <a href="F12-Ej-GMM.dc.html" style="text-decoration:none"><div style="font-size:13px;color:var(--text-subtle)">← Anterior</div><div style="font-weight:600;color:var(--text-strong)">Mezclas gaussianas</div></a>
+  <a href="F12-Ej-DBSCAN.dc.html" style="text-decoration:none;text-align:right"><div style="font-size:13px;color:var(--text-subtle)">Siguiente →</div><div style="font-weight:600;color:var(--text-strong)">DBSCAN</div></a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { link: 'ward', noise: '0.08', m: 2 };
+  rng(s) { return () => { s |= 0; s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  gauss(r) { let u = 0; while (!u) u = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * r()); }
+  moons(sd) {
+    this._m = this._m || {};
+    if (this._m[sd]) return this._m[sd];
+    const r = this.rng(21), X = [], y = [];
+    for (let i = 0; i < 60; i++) { const t = Math.PI * i / 59; X.push([Math.cos(t) + sd * this.gauss(r), Math.sin(t) + sd * this.gauss(r)]); y.push(0); }
+    for (let i = 0; i < 60; i++) { const t = Math.PI * i / 59; X.push([1 - Math.cos(t) + sd * this.gauss(r), 0.5 - Math.sin(t) + sd * this.gauss(r)]); y.push(1); }
+    return (this._m[sd] = { X, y });
+  }
+  agglo(X, link) {
+    const n = X.length, D = X.map(a => X.map(b => { const d = (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2; return link === 'ward' ? d : Math.sqrt(d); })), sz = new Array(n).fill(1), act = new Array(n).fill(true), merges = [];
+    for (let step = 0; step < n - 1; step++) {
+      let bi = -1, bj = -1, bd = Infinity;
+      for (let i = 0; i < n; i++) if (act[i]) for (let j = i + 1; j < n; j++) if (act[j] && D[i][j] < bd) { bd = D[i][j]; bi = i; bj = j; }
+      for (let k = 0; k < n; k++) if (act[k] && k !== bi && k !== bj) {
+        const a = D[k][bi], b = D[k][bj]; let v;
+        if (link === 'single') v = Math.min(a, b); else if (link === 'complete') v = Math.max(a, b);
+        else if (link === 'average') v = (sz[bi] * a + sz[bj] * b) / (sz[bi] + sz[bj]);
+        else v = ((sz[k] + sz[bi]) * a + (sz[k] + sz[bj]) * b - sz[k] * D[bi][bj]) / (sz[k] + sz[bi] + sz[bj]);
+        D[k][bi] = D[bi][k] = v;
+      }
+      sz[bi] += sz[bj]; act[bj] = false; merges.push([bi, bj]);
+    }
+    return merges;
+  }
+  cut(n, merges, m) {
+    const par = Array.from({ length: n }, (_, i) => i), f = i => par[i] === i ? i : (par[i] = f(par[i]));
+    for (let s = 0; s < n - m; s++) par[f(merges[s][1])] = f(merges[s][0]);
+    const roots = [...new Set(par.map((_, i) => f(i)))];
+    return par.map((_, i) => roots.indexOf(f(i)));
+  }
+  ari(a, b) {
+    const n = a.length, c2 = x => x * (x - 1) / 2, T = {}, A = {}, B = {};
+    a.forEach((v, i) => { const key = v + ',' + b[i]; T[key] = (T[key] || 0) + 1; A[v] = (A[v] || 0) + 1; B[b[i]] = (B[b[i]] || 0) + 1; });
+    const sij = Object.values(T).reduce((s, x) => s + c2(x), 0), sa = Object.values(A).reduce((s, x) => s + c2(x), 0), sb = Object.values(B).reduce((s, x) => s + c2(x), 0), e = sa * sb / c2(n), mx = (sa + sb) / 2;
+    return mx === e ? 0 : (sij - e) / (mx - e);
+  }
+  renderVals() {
+    const S = this.state, { X, y } = this.moons(+S.noise), key = S.link + S.noise;
+    this._g = this._g || {};
+    const merges = this._g[key] || (this._g[key] = this.agglo(X, S.link));
+    let lab = this.cut(X.length, merges, S.m);
+    const sizes = []; lab.forEach(l => sizes[l] = (sizes[l] || 0) + 1);
+    const ord = sizes.map((_, j) => j).sort((a, b) => sizes[b] - sizes[a]), re = []; ord.forEach((j, r) => re[j] = r); lab = lab.map(l => re[l]);
+    const sz = ord.map(j => sizes[j]), ari = this.ari(lab, y);
+    const CAT = ['var(--cat-1)', 'var(--cat-6)', 'var(--cat-8)', 'var(--cat-3)', 'var(--cat-10)', 'var(--cat-12)'];
+    const px = x => 50 + (x + 1.5) / 4 * 570, py = v => 300 - (v + 1) / 2.5 * 286;
+    const pts = X.map((p, i) => ({ cx: px(p[0]).toFixed(1), cy: py(p[1]).toFixed(1), f: CAT[lab[i]] }));
+    const LD = { ward: 'Ward une los dos grupos que menos aumentan la varianza dentro de los clusters, así que prefiere grupos compactos y de tamaño parecido.', complete: 'Complete mide la distancia entre los dos puntos más lejanos de cada grupo, así que evita clusters con diámetro grande.', average: 'Average promedia todas las distancias entre pares de puntos de los dos grupos.', single: 'Single mide la distancia entre los dos puntos más cercanos de cada grupo, así que puede seguir cadenas de puntos.' }[S.link];
+    const tiny = sz[sz.length - 1] <= 3;
+    const out = S.m !== 2 ? `Con ${S.m} clusters, los tamaños son ${sz.join(', ')}.`
+      : ari > 0.9 ? `Con dos clusters recupera las dos lunas (ARI ${ari.toFixed(3)}).`
+      : tiny ? `Con dos clusters, uno tiene solo ${sz[1]} ${sz[1] === 1 ? 'punto' : 'puntos'}: el último en unirse fue un punto aislado, no la otra luna (ARI ${ari.toFixed(3)}).`
+      : `Con dos clusters corta las lunas de lado a lado en vez de seguir su forma (ARI ${ari.toFixed(3)}).`;
+    return {
+      linkOpts: ['ward', 'complete', 'average', 'single'].map(v => ({ value: v, label: v })), link: S.link, setLink: v => this.setState({ link: v }),
+      noiseOpts: [{ value: '0.05', label: 'noise 0.05' }, { value: '0.08', label: '0.08' }, { value: '0.12', label: '0.12' }], noise: S.noise, setNoise: v => this.setState({ noise: v }),
+      m: S.m, setM: v => this.setState({ m: Math.round(v) }), fmtM: v => String(Math.round(v)),
+      pts, ari: ari.toFixed(3), sizes: sz.join(' · '), desc: LD + ' ' + out
+    };
+  }
+}
+</script>
+</body>
+</html>
